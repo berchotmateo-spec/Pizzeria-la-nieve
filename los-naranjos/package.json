@@ -4,12 +4,15 @@
   "private": true,
   "description": "Sitio web y sistema de turnos de Los Naranjos - Padel, Pickleball, Futbol y Gym. Dorrego 333, Mar del Plata.",
   "type": "module",
-  "engines": { "node": ">=22.5.0" },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node --no-warnings server/index.js",
     "dev": "node --no-warnings --watch server/index.js",
     "test": "node --no-warnings server/test.js",
-    "reset": "node --no-warnings server/reset.js"
+    "reset": "node --no-warnings server/reset.js",
+    "vista-previa": "node --no-warnings herramientas/armar-vista-previa.mjs"
   },
   "dependencies": {}
 }

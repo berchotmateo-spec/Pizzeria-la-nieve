@@ -13,6 +13,42 @@ No hay `npm install`, ni build, ni servicios de terceros.
 
 ---
 
+## Ver el sitio
+
+Un repositorio guarda archivos, no páginas funcionando. Hay tres formas de ver esto:
+
+### 1. La vista previa, sin instalar nada
+
+`vista-previa/index.html` es el sitio entero en **un solo archivo**: se abre con
+doble clic y anda. Se puede navegar, reservar un turno de verdad y después
+consultarlo o cancelarlo. El sistema de turnos corre dentro del navegador y los
+datos quedan guardados en ese dispositivo, así que **no le llegan al club** —hay
+un cartel arriba que lo aclara—. También se puede subir a cualquier hosting
+estático o mandar por mail.
+
+No incluye el panel del club (necesita el servidor) ni el botón de agendar en el
+calendario.
+
+Para regenerarla después de tocar textos, colores o configuración:
+
+```bash
+npm run vista-previa
+```
+
+### 2. Corriendo el proyecto
+
+```bash
+npm start        # → http://localhost:3000
+```
+
+Es el sitio completo, con el sistema de turnos y el panel del club de verdad.
+
+### 3. Publicado en una dirección propia
+
+Ver [Publicar](#publicar), más abajo.
+
+---
+
 ## Arrancar
 
 ```bash
@@ -26,6 +62,7 @@ npm start           # http://localhost:3000
 | `npm run dev` | Igual, pero reinicia solo al guardar un archivo. |
 | `npm test` | Corre las pruebas del sistema de turnos. |
 | `node server/seed.js --limpiar` | Llena la base con turnos de ejemplo para ver el panel. |
+| `npm run vista-previa` | Regenera `vista-previa/index.html`, el sitio en un solo archivo. |
 
 Variables de entorno:
 
@@ -131,6 +168,8 @@ de cancelación.
 
 ---
 
+<a id="publicar"></a>
+
 ## Publicar
 
 El proyecto es un servidor Node común: sirve en cualquier VPS, Railway, Render,
@@ -199,3 +238,29 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 - [ ] ¿Quieren **turnos fijos semanales** para los grupos de siempre?
 - [ ] ¿El panel del club lo usa **más de una persona**? Hoy hay una sola clave
       compartida; si hace falta, se puede pasar a usuarios con nombre.
+
+---
+
+## Dónde quedó todo
+
+| Qué | Dónde |
+| --- | --- |
+| Código | Rama `claude/los-naranjos-paddle-site-rp8ckw`, carpeta `los-naranjos/` |
+| Pull request | [Pizzeria-la-nieve#1](https://github.com/berchotmateo-spec/Pizzeria-la-nieve/pull/1) — abierto, sin conflictos |
+| Vista previa navegable | [claude.ai/code/artifact/ba140d58](https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d) (privada) |
+| Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
+| Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
+
+El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
+así que los dos sitios pueden convivir sin pisarse.
+
+### Los tres pasos siguientes
+
+1. **Completar los datos del club** en `server/config.js` (todo lo marcado con
+   `⚠️ VERIFICAR`). Lo que más destraba: cuántas canchas de pádel hay y cuáles
+   son techadas, los horarios exactos y las tarifas.
+2. **Definir `ADMIN_TOKEN`** antes de publicar nada. Con la clave por defecto
+   cualquiera entra al panel del club; el propio panel lo avisa en pantalla.
+3. **Elegir dónde publicarlo.** El sistema de turnos necesita un hosting con
+   Node (Railway, Render, Fly.io o un VPS). Un hosting compartido común alcanza
+   sólo para el sitio, sin reservas online.
