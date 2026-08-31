@@ -1,0 +1,11 @@
+{
+  "name": "Los Naranjos — Multiespacio deportivo",
+  "short_name": "Los Naranjos",
+  "description": "Pádel, pickleball, fútbol y gym en Dorrego 333, Mar del Plata. Reservá tu cancha online.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0C0E",
+  "theme_color": "#0B0C0E",
+  "lang": "es-AR",
+  "icons": [{ "src": "/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

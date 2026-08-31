@@ -1,0 +1,201 @@
+# Los Naranjos — sitio web y sistema de turnos
+
+Sitio institucional y sistema de reservas online para **Los Naranjos**, multiespacio
+deportivo de Dorrego 333, Mar del Plata: pádel, pickleball, fútbol 5 y gimnasio.
+
+- **Sitio público** — presentación del complejo, disciplinas, escuela, tarifas y ubicación.
+- **Reservas online** — grilla en tiempo real, confirmación al instante y código de turno.
+- **Panel del socio** — consultá y cancelá tus turnos con el teléfono y el código.
+- **Panel del club** — grilla del día por cancha, cancelaciones y bloqueos.
+
+Está hecho **sin dependencias externas**: sólo Node 22 y su SQLite embebido.
+No hay `npm install`, ni build, ni servicios de terceros.
+
+---
+
+## Arrancar
+
+```bash
+cd los-naranjos
+npm start           # http://localhost:3000
+```
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm start` | Levanta el sitio y el API en el puerto 3000. |
+| `npm run dev` | Igual, pero reinicia solo al guardar un archivo. |
+| `npm test` | Corre las pruebas del sistema de turnos. |
+| `node server/seed.js --limpiar` | Llena la base con turnos de ejemplo para ver el panel. |
+
+Variables de entorno:
+
+| Variable | Para qué | Por defecto |
+| --- | --- | --- |
+| `PORT` | Puerto del servidor | `3000` |
+| `HOST` | Interfaz donde escucha | `0.0.0.0` |
+| `ADMIN_TOKEN` | **Clave del panel del club** | `naranjos-dev` |
+| `DB_PATH` | Ubicación de la base SQLite | `data/turnos.db` |
+
+> **Antes de publicar el sitio hay que definir `ADMIN_TOKEN`.** Con la clave por
+> defecto cualquiera entra al panel; el propio panel muestra un cartel de aviso
+> mientras eso no se cambie.
+
+---
+
+## Qué se toca para cambiar algo
+
+Casi todo vive en **`server/config.js`**, que es la única fuente de verdad y alimenta
+tanto al sistema de turnos como al sitio:
+
+| Querés cambiar… | Dónde |
+| --- | --- |
+| Dirección, teléfono, WhatsApp, mail, redes | `CLUB` en `server/config.js` |
+| Horarios de apertura por día | `HORARIOS` |
+| Feriados y cierres puntuales | `FERIADOS` |
+| Deportes, duraciones y precios | `DISCIPLINAS` |
+| Cantidad y nombre de las canchas | `CANCHAS` |
+| Anticipación, cancelaciones, topes | `RESERVAS` |
+| Publicar precios en el sitio | `PRECIOS_PUBLICADOS` |
+| Textos de la home | `public/index.html` |
+| Colores y tipografías | `public/css/base.css` (bloque `:root`) |
+
+### Publicar las tarifas
+
+Los precios arrancan ocultos: el sitio muestra “Consultar” en vez de números que
+podrían estar desactualizados. Para publicarlos:
+
+1. Completá `precios` en cada disciplina de `DISCIPLINAS`.
+2. Poné `PRECIOS_PUBLICADOS = true`.
+
+El sitio pasa a mostrar los importes formateados en pesos automáticamente.
+
+---
+
+## Cómo está armado
+
+```
+los-naranjos/
+├── server/
+│   ├── config.js     Datos del club, canchas, horarios y reglas  ← se edita acá
+│   ├── tiempo.js     Fechas y horas en zona horaria de Mar del Plata
+│   ├── db.js         SQLite: esquema, transacciones y consultas
+│   ├── turnos.js     Disponibilidad, validaciones y alta de reservas
+│   ├── api.js        Endpoints JSON
+│   ├── index.js      Servidor HTTP y archivos estáticos
+│   ├── seed.js       Turnos de ejemplo
+│   └── test.js       Pruebas
+├── public/
+│   ├── index.html        Home
+│   ├── reservar.html     Flujo de reserva
+│   ├── mis-turnos.html   Panel del socio
+│   ├── admin.html        Panel del club
+│   ├── 404.html
+│   ├── css/{base,site,app}.css
+│   ├── js/{comun,reservar,mis-turnos,admin}.js
+│   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
+│                        vive en assets/iconos.svg y va incrustada en cada página)
+└── data/turnos.db    Base de datos (no se versiona)
+```
+
+### Cómo se evita la doble reserva
+
+Cada turno ocupa casilleros de 30 minutos en la tabla `ocupacion`, cuya clave
+primaria es `(cancha_id, fecha, slot)`. Dos personas no pueden tomar el mismo
+casillero de la misma cancha: la segunda reserva choca contra la base y recibe
+un `409`. El alta corre dentro de una transacción `BEGIN IMMEDIATE`, así que la
+regla se cumple aunque entren dos pedidos en el mismo instante.
+
+---
+
+## API
+
+Todo devuelve JSON. Las rutas de administración necesitan `Authorization: Bearer <ADMIN_TOKEN>`.
+
+| Método | Ruta | Para qué |
+| --- | --- | --- |
+| `GET` | `/api/config` | Datos del club, disciplinas, canchas y reglas |
+| `GET` | `/api/disponibilidad?fecha=&disciplina=&duracion=` | Grilla de horarios con canchas libres |
+| `POST` | `/api/reservas` | Crear un turno |
+| `GET` | `/api/reservas?telefono=&codigo=` | Consultar turnos |
+| `POST` | `/api/reservas/cancelar` | Cancelar con código + teléfono |
+| `POST` | `/api/admin/sesion` | Validar la clave del panel |
+| `GET` | `/api/admin/dia?fecha=` | Grilla y turnos del día |
+| `GET` | `/api/admin/agenda?desde=&hasta=` | Turnos de un rango de fechas |
+| `POST` | `/api/admin/bloqueos` | Bloquear una cancha |
+| `POST` | `/api/admin/cancelar` | Cancelar cualquier turno |
+
+Reglas que aplica el servidor: horarios de apertura, anticipación mínima para
+turnos de hoy, tope de días para adelante, duraciones permitidas por disciplina,
+máximo de turnos activos por teléfono, límite de altas por IP y hora, y ventana
+de cancelación.
+
+---
+
+## Publicar
+
+El proyecto es un servidor Node común: sirve en cualquier VPS, Railway, Render,
+Fly.io o una máquina propia.
+
+```bash
+ADMIN_TOKEN='una-clave-larga-y-propia' PORT=3000 npm start
+```
+
+Detrás de Nginx o Caddy conviene pasar `X-Forwarded-For` para que el límite por
+IP funcione bien. La base es un único archivo (`data/turnos.db`): para respaldar,
+alcanza con copiarlo.
+
+**Sobre hosting compartido:** un plan de hosting web clásico (tipo Hostinger sin
+Node) alcanza para el sitio, pero **no** para el sistema de turnos, que necesita
+un proceso Node corriendo. Si se publica sólo la carpeta `public/` como sitio
+estático, las páginas siguen funcionando y muestran el camino alternativo por
+WhatsApp y teléfono en lugar de la grilla.
+
+---
+
+## Pendiente de confirmar con el club
+
+Los datos se tomaron de fuentes públicas y **hay que verificarlos**. Están todos
+marcados con `⚠️ VERIFICAR` en `server/config.js`.
+
+### Datos del club
+
+- [ ] **Número de WhatsApp** real de reservas (hoy hay un provisorio en `CLUB.whatsapp`).
+- [ ] **Correo** de contacto y reservas.
+- [ ] **Horarios exactos**: las fuentes públicas se contradicen (7:30–22:30 según
+      Instagram; 8:00–24:00 de lunes a sábado y 9:00–22:00 domingos según directorios).
+- [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
+- [ ] **Coordenadas** exactas del predio, para el mapa.
+
+### Canchas y deportes
+
+- [ ] **Cuántas canchas de pádel** hay realmente y cómo se llaman (hoy están cargadas
+      18: doce numeradas del 1 al 12 y seis más, con una mezcla supuesta de blindex,
+      muro y techadas).
+- [ ] **Cuáles están techadas** y cuáles son de blindex o de muro.
+- [ ] **Cuántas canchas de pickleball** hay.
+- [ ] **Cuántas canchas de fútbol** y de qué tipo (fútbol 5, 7, 11).
+
+### Tarifas y reglas
+
+- [ ] **Precios** por disciplina y duración, y si cambian según el horario o el día.
+- [ ] **Abono / cuota** del gimnasio y de la escuela.
+- [ ] **Seña**: ¿se cobra al reservar? Si sí, hay que sumar un medio de pago
+      (Mercado Pago es lo más directo en Argentina).
+- [ ] **Política de cancelación** real (hoy está puesta en 6 horas antes).
+- [ ] **Anticipación** con la que se puede reservar (hoy, 14 días).
+
+### Material
+
+- [ ] **Fotos** del complejo: canchas, gimnasio, bar y parrilla, vestuarios.
+      Es lo que más le falta al sitio; hoy la estética se resuelve con tipografía
+      y trazados de cancha.
+- [ ] **Logo** oficial en vector, si existe. El isotipo actual —una rodaja de
+      naranja que también es el plano de una cancha— es una propuesta.
+
+### Decisiones a tomar
+
+- [ ] ¿Hace falta **avisar por WhatsApp o mail** cuando alguien reserva? Eso
+      requiere contratar un servicio de envío.
+- [ ] ¿Quieren **turnos fijos semanales** para los grupos de siempre?
+- [ ] ¿El panel del club lo usa **más de una persona**? Hoy hay una sola clave
+      compartida; si hace falta, se puede pasar a usuarios con nombre.
