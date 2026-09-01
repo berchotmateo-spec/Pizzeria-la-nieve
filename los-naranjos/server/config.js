@@ -26,9 +26,9 @@ export const CLUB = {
   // ── Contacto ───────────────────────────────────────────────────────────────
   telefono: '(0223) 472-9295',
   telefonoLink: '+542234729295',
-  // ⚠️ VERIFICAR — es el dato más importante que falta: hoy TODAS las reservas
-  // del club pasan por WhatsApp, así que el número tiene que ser el correcto.
-  whatsapp: '5492234729295',
+  // El canal por el que hoy se reservan TODOS los turnos: 223 547-0343.
+  // Formato para wa.me: 54 + 9 (móvil) + área sin el 0 + número sin el 15.
+  whatsapp: '5492235470343',
   email: 'reservas@losnaranjos.com.ar', // ⚠️ VERIFICAR — mail de reservas
 
   // ── Redes ──────────────────────────────────────────────────────────────────
@@ -46,19 +46,20 @@ export const CLUB = {
  * Horario de atención por día de la semana (0 = domingo … 6 = sábado).
  * `abre` / `cierra` en formato HH:MM, hora local de Mar del Plata.
  * Poné `null` para un día cerrado.
- * ⚠️ VERIFICAR — y ojo con esto, porque se presta a confusión:
+ * Ojo con esto, porque se presta a confusión: `cierra` es la hora en que cierra
+ * el complejo, NO la hora del último turno. El sistema ofrece un turno sólo si
+ * termina antes del cierre.
  *
- * `cierra` es la hora en que cierra el complejo, NO la hora del último turno.
- * El sistema ofrece un turno sólo si termina antes del cierre, así que el
- * último turno de 90 minutos arranca a `cierra` menos hora y media.
+ * Con el cierre a las 23:30 que está puesto acá:
+ *   · el último turno de 90 minutos arranca a las 22:00
+ *   · el último turno de 60 minutos arranca a las 22:30
  *
- * En el Instagram del club el último turno figura a las 22:00. Para que ese
- * turno de 22:00 exista con 90 minutos de pádel, el cierre tiene que ser a las
- * 23:30 — que es lo que está puesto acá. Si en realidad cierran a las 23:00,
- * entonces el turno de las 22:00 es de una hora y el último de 90 minutos
- * arranca a las 21:30.
+ * Las dos cosas coinciden con lo que el club publica en Instagram, así que
+ * 23:30 es la mejor hipótesis disponible.
  *
- * Preguntar en el club cuál de las dos cosas es, y ajustar acá.
+ * ⚠️ VERIFICAR igual: el club no publica su horario, esto es una deducción a
+ * partir de los turnos que ofrece. Confirmar sobre todo la hora de APERTURA,
+ * para la que no hay ningún dato propio (7:30 sale de directorios de terceros).
  */
 export const HORARIOS = {
   0: { abre: '09:00', cierra: '22:30' }, // domingo

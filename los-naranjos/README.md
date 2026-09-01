@@ -209,17 +209,19 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
   sistema existente.
 - **No tienen sitio web.** Sólo Instagram y WhatsApp. Aparecen en directorios de
   terceros, pero no hay una página propia del complejo.
-- **El último turno figura a las 22:00** en Instagram. De ahí sale el horario de
-  cierre, con la salvedad que está explicada en `HORARIOS` dentro de
-  `server/config.js`: el cierre no es la hora del último turno.
+- **El WhatsApp de reservas es el 223 547-0343** (distinto del fijo). Ya está
+  cargado en `CLUB.whatsapp`.
+- **El club no publica su horario.** Los últimos turnos que ofrece en Instagram
+  son a las 22:00 y a las 22:30, lo que encaja con un cierre a las 23:30: ver la
+  explicación en `HORARIOS` dentro de `server/config.js`. Falta la hora de
+  apertura, para la que no hay ningún dato propio del club.
 
 ### Datos del club
 
-- [ ] **Número de WhatsApp** real de reservas. Es el dato más urgente: hoy es el
-      único canal por el que reservan. En `CLUB.whatsapp` hay un provisorio.
+- [x] ~~**Número de WhatsApp** de reservas~~ → 223 547-0343, ya cargado.
 - [ ] **Correo** de contacto y reservas.
-- [ ] **Horario de cierre**: ¿cierran 23:00 o 23:30? Define si el turno de las
-      22:00 es de una hora o de una hora y media. Ver el comentario de `HORARIOS`.
+- [ ] **Hora de apertura**: es el dato que falta. El cierre a las 23:30 se deduce
+      de los turnos que ofrecen; la apertura (7:30) sale de directorios de terceros.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
 - [ ] **Coordenadas** exactas del predio, para el mapa.
 
