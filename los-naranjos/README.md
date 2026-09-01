@@ -131,6 +131,12 @@ los-naranjos/
 │   ├── js/{comun,reservar,mis-turnos,admin}.js
 │   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
 │                        vive en assets/iconos.svg y va incrustada en cada página)
+├── herramientas/
+│   └── armar-vista-previa.mjs   Empaqueta el sitio en un solo archivo
+├── vista-previa/
+│   └── index.html    Generado por `npm run vista-previa` — no editar a mano
+├── propuesta/
+│   └── index.html    Propuesta comercial para presentarle al club
 └── data/turnos.db    Base de datos (no se versiona)
 ```
 
@@ -261,6 +267,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Pull request | [Pizzeria-la-nieve#1](https://github.com/berchotmateo-spec/Pizzeria-la-nieve/pull/1) — abierto, sin conflictos |
 | Vista previa navegable | [claude.ai/code/artifact/ba140d58](https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d) (privada) |
 | Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
+| Propuesta para el club | `propuesta/index.html`, y publicada en [claude.ai/code/artifact/86d5b927](https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
 
 El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
