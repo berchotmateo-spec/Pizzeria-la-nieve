@@ -196,12 +196,24 @@ WhatsApp y teléfono en lugar de la grilla.
 Los datos se tomaron de fuentes públicas y **hay que verificarlos**. Están todos
 marcados con `⚠️ VERIFICAR` en `server/config.js`.
 
+### Lo que ya sabemos
+
+- **No usan ninguna plataforma de reservas.** Desde Instagram mandan a WhatsApp,
+  y ahí se arregla cada turno a mano. No hay que migrar nada ni convivir con un
+  sistema existente.
+- **No tienen sitio web.** Sólo Instagram y WhatsApp. Aparecen en directorios de
+  terceros, pero no hay una página propia del complejo.
+- **El último turno figura a las 22:00** en Instagram. De ahí sale el horario de
+  cierre, con la salvedad que está explicada en `HORARIOS` dentro de
+  `server/config.js`: el cierre no es la hora del último turno.
+
 ### Datos del club
 
-- [ ] **Número de WhatsApp** real de reservas (hoy hay un provisorio en `CLUB.whatsapp`).
+- [ ] **Número de WhatsApp** real de reservas. Es el dato más urgente: hoy es el
+      único canal por el que reservan. En `CLUB.whatsapp` hay un provisorio.
 - [ ] **Correo** de contacto y reservas.
-- [ ] **Horarios exactos**: las fuentes públicas se contradicen (7:30–22:30 según
-      Instagram; 8:00–24:00 de lunes a sábado y 9:00–22:00 domingos según directorios).
+- [ ] **Horario de cierre**: ¿cierran 23:00 o 23:30? Define si el turno de las
+      22:00 es de una hora o de una hora y media. Ver el comentario de `HORARIOS`.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
 - [ ] **Coordenadas** exactas del predio, para el mapa.
 

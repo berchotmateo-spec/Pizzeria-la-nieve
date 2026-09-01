@@ -26,7 +26,9 @@ export const CLUB = {
   // ── Contacto ───────────────────────────────────────────────────────────────
   telefono: '(0223) 472-9295',
   telefonoLink: '+542234729295',
-  whatsapp: '5492234729295', // ⚠️ VERIFICAR — número real de WhatsApp del club
+  // ⚠️ VERIFICAR — es el dato más importante que falta: hoy TODAS las reservas
+  // del club pasan por WhatsApp, así que el número tiene que ser el correcto.
+  whatsapp: '5492234729295',
   email: 'reservas@losnaranjos.com.ar', // ⚠️ VERIFICAR — mail de reservas
 
   // ── Redes ──────────────────────────────────────────────────────────────────
@@ -44,8 +46,19 @@ export const CLUB = {
  * Horario de atención por día de la semana (0 = domingo … 6 = sábado).
  * `abre` / `cierra` en formato HH:MM, hora local de Mar del Plata.
  * Poné `null` para un día cerrado.
- * ⚠️ VERIFICAR: las fuentes públicas difieren (7:30–22:30 según Instagram,
- * 8:00–24:00 lun-sáb y 9:00–22:00 dom según directorios).
+ * ⚠️ VERIFICAR — y ojo con esto, porque se presta a confusión:
+ *
+ * `cierra` es la hora en que cierra el complejo, NO la hora del último turno.
+ * El sistema ofrece un turno sólo si termina antes del cierre, así que el
+ * último turno de 90 minutos arranca a `cierra` menos hora y media.
+ *
+ * En el Instagram del club el último turno figura a las 22:00. Para que ese
+ * turno de 22:00 exista con 90 minutos de pádel, el cierre tiene que ser a las
+ * 23:30 — que es lo que está puesto acá. Si en realidad cierran a las 23:00,
+ * entonces el turno de las 22:00 es de una hora y el último de 90 minutos
+ * arranca a las 21:30.
+ *
+ * Preguntar en el club cuál de las dos cosas es, y ajustar acá.
  */
 export const HORARIOS = {
   0: { abre: '09:00', cierra: '22:30' }, // domingo
