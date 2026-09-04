@@ -215,6 +215,9 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
   son a las 22:00 y a las 22:30, lo que encaja con un cierre a las 23:30: ver la
   explicación en `HORARIOS` dentro de `server/config.js`. Falta la hora de
   apertura, para la que no hay ningún dato propio del club.
+- **El club sólo ofrece pádel.** Nada de pickleball ni de fútbol: se sacó del
+  sitio, de la configuración y de la propuesta. Son 4 canchas, todas techadas
+  (cantidad a confirmar — ver más abajo).
 
 ### Datos del club
 
@@ -225,14 +228,12 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
 - [ ] **Coordenadas** exactas del predio, para el mapa.
 
-### Canchas y deportes
+### Canchas
 
-- [ ] **Cuántas canchas de pádel** hay realmente y cómo se llaman (hoy están cargadas
-      18: doce numeradas del 1 al 12 y seis más, con una mezcla supuesta de blindex,
-      muro y techadas).
-- [ ] **Cuáles están techadas** y cuáles son de blindex o de muro.
-- [ ] **Cuántas canchas de pickleball** hay.
-- [ ] **Cuántas canchas de fútbol** y de qué tipo (fútbol 5, 7, 11).
+- [ ] **Cuántas canchas de pádel** hay exactamente. Hoy están cargadas 4 —dato
+      aproximado, a confirmar— todas marcadas como techadas.
+- [ ] **Cómo se llaman/numeran** las canchas, si tienen nombre propio.
+- [ ] **Blindex o muro**: no se sabe la mezcla real, hoy no se distingue por cancha.
 
 ### Tarifas y reglas
 

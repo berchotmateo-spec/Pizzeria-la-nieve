@@ -87,11 +87,11 @@ test('una reserva válida se crea y ocupa la cancha', async () => {
 
 test('no se puede reservar dos veces la misma cancha en el mismo horario', async () => {
   const primera = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '19:00', canchaId: 'padel-5', telefono: '2235550001' }),
+    body: reservaBase({ hora: '19:00', canchaId: 'padel-2', telefono: '2235550001' }),
   });
   assert.ok(primera.ok);
   const segunda = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '19:00', canchaId: 'padel-5', telefono: '2235550002' }),
+    body: reservaBase({ hora: '19:00', canchaId: 'padel-2', telefono: '2235550002' }),
   });
   assert.equal(segunda.ok, false);
   assert.equal(segunda.status, 409);
@@ -99,17 +99,17 @@ test('no se puede reservar dos veces la misma cancha en el mismo horario', async
 
 test('se detecta el solapamiento parcial de turnos', async () => {
   await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '10:00', duracionMin: 90, canchaId: 'padel-9', telefono: '2235550003' }),
+    body: reservaBase({ hora: '10:00', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550003' }),
   });
   // 11:00 cae dentro del turno de 10:00–11:30.
   const choque = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '11:00', duracionMin: 60, canchaId: 'padel-9', telefono: '2235550004' }),
+    body: reservaBase({ hora: '11:00', duracionMin: 60, canchaId: 'padel-3', telefono: '2235550004' }),
   });
   assert.equal(choque.ok, false);
   assert.equal(choque.status, 409);
   // 11:30 arranca justo cuando el otro termina: tiene que entrar.
   const pegado = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '11:30', duracionMin: 60, canchaId: 'padel-9', telefono: '2235550005' }),
+    body: reservaBase({ hora: '11:30', duracionMin: 60, canchaId: 'padel-3', telefono: '2235550005' }),
   });
   assert.equal(pegado.ok, true);
 });
@@ -131,17 +131,6 @@ test('se rechazan los datos incompletos o fuera de rango', async () => {
     assert.equal(r.ok, false, `debería rechazar: ${motivo}`);
     assert.equal(r.status, 400, `${motivo} → 400`);
   }
-});
-
-test('el fútbol no admite duraciones de pádel ni canchas de otra disciplina', async () => {
-  const dur = await llamar('POST /api/reservas', {
-    body: reservaBase({ disciplina: 'futbol', duracionMin: 90, telefono: '2235550006' }),
-  });
-  assert.equal(dur.ok, false);
-  const cancha = await llamar('POST /api/reservas', {
-    body: reservaBase({ disciplina: 'futbol', duracionMin: 60, canchaId: 'padel-2', telefono: '2235550007' }),
-  });
-  assert.equal(cancha.ok, false);
 });
 
 test('se limita la cantidad de turnos activos por teléfono', async () => {
@@ -186,10 +175,10 @@ test('consulta y cancelación por parte del socio', async () => {
 
 test('cancelar libera el horario para otra persona', async () => {
   const { datos } = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-12', telefono: '2235556666' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556666' }),
   });
   const ocupado = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-12', telefono: '2235556665' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556665' }),
   });
   assert.equal(ocupado.status, 409);
 
@@ -197,7 +186,7 @@ test('cancelar libera el horario para otra persona', async () => {
     body: { codigo: datos.reserva.codigo, telefono: '2235556666' },
   });
   const libre = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-12', telefono: '2235556665' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556665' }),
   });
   assert.ok(libre.ok, 'el horario quedó liberado');
 });
@@ -218,13 +207,13 @@ test('el panel de administración exige la clave correcta', async () => {
 test('el administrador puede bloquear una cancha y eso saca el turno de la grilla', async () => {
   const bloqueo = await llamar('POST /api/admin/bloqueos', {
     req: admin,
-    body: { canchaId: 'padel-18', fecha: MANANA, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
+    body: { canchaId: 'padel-2', fecha: MANANA, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
   });
   assert.ok(bloqueo.ok);
   assert.equal(bloqueo.datos.reserva.tipo, 'bloqueo');
 
   const choque = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '17:00', duracionMin: 60, canchaId: 'padel-18', telefono: '2235554444' }),
+    body: reservaBase({ hora: '17:00', duracionMin: 60, canchaId: 'padel-2', telefono: '2235554444' }),
   });
   assert.equal(choque.status, 409, 'no se puede reservar sobre un bloqueo');
 });
@@ -241,10 +230,13 @@ test('se frena la avalancha de reservas desde una misma IP', async () => {
   const ip = '203.0.113.77';
   let bloqueada = 0;
   for (let i = 0; i < RESERVAS.maxPorIpHora + 3; i++) {
+    // Un horario distinto por intento: con sólo 4 canchas, reutilizar la
+    // misma hora agotaría la disponibilidad antes de llegar al límite de IP
+    // que este test quiere probar.
     const r = await llamar('POST /api/reservas', {
       ip,
       body: reservaBase({
-        hora: '21:00',
+        hora: T.aHora(7 * 60 + 30 + i * RESERVAS.slotMinutos),
         duracionMin: 60,
         telefono: `22355${String(i).padStart(5, '0')}`,
       }),

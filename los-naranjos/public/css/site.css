@@ -161,6 +161,8 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
 
 /* ── Disciplinas ──────────────────────────────────────────────────────────── */
 .disciplinas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+/* Mientras el club sólo tenga una disciplina, la tarjeta va centrada y no estirada a 3 columnas. */
+.disciplinas--una { grid-template-columns: minmax(0, 460px); justify-content: center; }
 @media (max-width: 980px) { .disciplinas { grid-template-columns: 1fr; } }
 
 .disciplina {
