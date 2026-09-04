@@ -100,12 +100,11 @@ export const DISCIPLINAS = [
 
 
 /**
- * Canchas del complejo.
- * ⚠️ VERIFICAR: las fuentes públicas hablan de 18 canchas de pádel.
- * Ajustá cantidad, nombres y atributos según el complejo real.
+ * Canchas del complejo: 7 canchas de pádel, todas techadas.
+ * Si el club suma o saca una cancha, alcanza con cambiar el número de acá:
+ * el sitio, la grilla de turnos y el panel se acomodan solos.
  */
-// ⚠️ VERIFICAR — cantidad tentativa, a confirmar con el club.
-export const CANCHAS = Array.from({ length: 4 }, (_, i) => ({
+export const CANCHAS = Array.from({ length: 7 }, (_, i) => ({
   id: `padel-${i + 1}`,
   nombre: `Pádel ${i + 1}`,
   disciplina: 'padel',

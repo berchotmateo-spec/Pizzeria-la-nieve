@@ -216,8 +216,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
   explicación en `HORARIOS` dentro de `server/config.js`. Falta la hora de
   apertura, para la que no hay ningún dato propio del club.
 - **El club sólo ofrece pádel.** Nada de pickleball ni de fútbol: se sacó del
-  sitio, de la configuración y de la propuesta. Son 4 canchas, todas techadas
-  (cantidad a confirmar — ver más abajo).
+  sitio, de la configuración y de la propuesta. Son 7 canchas, todas techadas.
 
 ### Datos del club
 
@@ -230,8 +229,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 
 ### Canchas
 
-- [ ] **Cuántas canchas de pádel** hay exactamente. Hoy están cargadas 4 —dato
-      aproximado, a confirmar— todas marcadas como techadas.
+- [x] ~~**Cuántas canchas de pádel** hay~~ → 7, todas techadas, ya cargadas.
 - [ ] **Cómo se llaman/numeran** las canchas, si tienen nombre propio.
 - [ ] **Blindex o muro**: no se sabe la mezcla real, hoy no se distingue por cancha.
 

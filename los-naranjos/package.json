@@ -2,7 +2,7 @@
   "name": "los-naranjos",
   "version": "1.0.0",
   "private": true,
-  "description": "Sitio web y sistema de turnos de Los Naranjos - Padel, Pickleball, Futbol y Gym. Dorrego 333, Mar del Plata.",
+  "description": "Sitio web y sistema de turnos de Los Naranjos - 7 canchas de padel techadas. Dorrego 333, Mar del Plata.",
   "type": "module",
   "engines": {
     "node": ">=22.5.0"

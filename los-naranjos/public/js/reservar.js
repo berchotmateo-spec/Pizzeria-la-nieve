@@ -376,7 +376,10 @@ function mostrarConfirmacion(reserva) {
     `${club.direccion}, ${club.ciudad}\n` +
     `Código: ${reserva.codigo}`;
   $('#compartir-wsp').href = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  $('#descargar-ics').href = crearIcs(reserva, club);
+  // La vista previa saca el botón de agendar (el navegador bloquea la descarga),
+  // así que puede no estar en el documento.
+  const agendar = $('#descargar-ics');
+  if (agendar) agendar.href = crearIcs(reserva, club);
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
   document.title = `Turno ${reserva.codigo} — Los Naranjos`;

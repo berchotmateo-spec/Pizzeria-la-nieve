@@ -230,7 +230,7 @@ test('se frena la avalancha de reservas desde una misma IP', async () => {
   const ip = '203.0.113.77';
   let bloqueada = 0;
   for (let i = 0; i < RESERVAS.maxPorIpHora + 3; i++) {
-    // Un horario distinto por intento: con sólo 4 canchas, reutilizar la
+    // Un horario distinto por intento: con sólo 7 canchas, reutilizar la
     // misma hora agotaría la disponibilidad antes de llegar al límite de IP
     // que este test quiere probar.
     const r = await llamar('POST /api/reservas', {
