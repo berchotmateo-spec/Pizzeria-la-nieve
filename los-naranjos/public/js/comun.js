@@ -126,7 +126,12 @@ export function pintarDatosDelClub(config) {
     if (valor != null) el.textContent = valor;
   });
   document.querySelectorAll('[data-tel]').forEach((el) => { el.href = `tel:${club.telefonoLink}`; });
-  document.querySelectorAll('[data-mail]').forEach((el) => { el.href = `mailto:${club.email}`; });
+  // El club puede no tener correo cargado: en ese caso el enlace se esconde
+  // en vez de apuntar a `mailto:null`.
+  document.querySelectorAll('[data-mail]').forEach((el) => {
+    if (club.email) el.href = `mailto:${club.email}`;
+    else el.closest('li')?.remove() ?? el.removeAttribute('href');
+  });
   document.querySelectorAll('[data-ig]').forEach((el) => { el.href = `https://instagram.com/${club.instagram}`; });
   document.querySelectorAll('[data-fb]').forEach((el) => { el.href = `https://facebook.com/${club.facebook}`; });
   document.querySelectorAll('[data-mapa]').forEach((el) => {

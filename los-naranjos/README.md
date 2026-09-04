@@ -1,9 +1,12 @@
 # Los Naranjos — sitio web y sistema de turnos
 
-Sitio institucional y sistema de reservas online para **Los Naranjos**, multiespacio
-deportivo de Dorrego 333, Mar del Plata: pádel, pickleball, fútbol 5 y gimnasio.
+Sitio institucional y sistema de reservas online para **Los Naranjos**, club de
+pádel de Dorrego 333, Mar del Plata: 7 canchas, todas techadas.
 
-- **Sitio público** — presentación del complejo, disciplinas, escuela, tarifas y ubicación.
+El gimnasio y las canchas de fútbol que aparecen en los directorios están en el
+mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
+
+- **Sitio público** — presentación del club, instalaciones, tarifas y ubicación.
 - **Reservas online** — grilla en tiempo real, confirmación al instante y código de turno.
 - **Panel del socio** — consultá y cancelá tus turnos con el teléfono y el código.
 - **Panel del club** — grilla del día por cancha, cancelaciones y bloqueos.
@@ -221,7 +224,12 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 ### Datos del club
 
 - [x] ~~**Número de WhatsApp** de reservas~~ → 223 547-0343, ya cargado.
-- [ ] **Correo** de contacto y reservas.
+- [ ] **Correo** de contacto y reservas. Hasta que lo den, `CLUB.email` va en
+      `null` y el sitio no muestra ninguno: es preferible un dato de menos que
+      uno inventado.
+- [ ] **Instagram**: hay tres cuentas dando vueltas en las búsquedas
+      (`@losnaranjos_mdq`, `@padel_los_naranjos`, `@losnaranjospadel`). Hoy está
+      cargada la última y hay que confirmar cuál es la del club.
 - [ ] **Hora de apertura**: es el dato que falta. El cierre a las 23:30 se deduce
       de los turnos que ofrecen; la apertura (7:30) sale de directorios de terceros.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
@@ -230,13 +238,16 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 ### Canchas
 
 - [x] ~~**Cuántas canchas de pádel** hay~~ → 7, todas techadas, ya cargadas.
+- [ ] **¿Dan clases y arman torneos?** El sitio tiene una sección de escuela,
+      clases particulares y americanos que nadie confirmó. Si no la tienen, se
+      saca; si la tienen, hay que cargar días, niveles y cupos.
 - [ ] **Cómo se llaman/numeran** las canchas, si tienen nombre propio.
 - [ ] **Blindex o muro**: no se sabe la mezcla real, hoy no se distingue por cancha.
 
 ### Tarifas y reglas
 
 - [ ] **Precios** por disciplina y duración, y si cambian según el horario o el día.
-- [ ] **Abono / cuota** del gimnasio y de la escuela.
+- [ ] **Valor de las clases** y de la escuela, si es que dan.
 - [ ] **Seña**: ¿se cobra al reservar? Si sí, hay que sumar un medio de pago
       (Mercado Pago es lo más directo en Argentina).
 - [ ] **Política de cancelación** real (hoy está puesta en 6 horas antes).
@@ -244,7 +255,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 
 ### Material
 
-- [ ] **Fotos** del complejo: canchas, gimnasio, bar y parrilla, vestuarios.
+- [ ] **Fotos** del club: canchas, vestuarios, bar y la fachada.
       Es lo que más le falta al sitio; hoy la estética se resuelve con tipografía
       y trazados de cancha.
 - [ ] **Logo** oficial en vector, si existe. El isotipo actual —una rodaja de

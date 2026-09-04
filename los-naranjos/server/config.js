@@ -9,10 +9,10 @@
 
 export const CLUB = {
   nombre: 'Los Naranjos',
-  claim: 'Multiespacio deportivo',
+  claim: 'Pádel en Mar del Plata',
   descripcion:
-    'Canchas de pádel techadas en el corazón de Mar del Plata. ' +
-    'Escuela propia y un after con parrilla y bar.',
+    'Siete canchas de pádel techadas en el corazón de Mar del Plata, ' +
+    'con vestuarios y bar. Reservá tu turno online.',
 
   // ── Ubicación ──────────────────────────────────────────────────────────────
   direccion: 'Dorrego 333',
@@ -29,7 +29,9 @@ export const CLUB = {
   // El canal por el que hoy se reservan TODOS los turnos: 223 547-0343.
   // Formato para wa.me: 54 + 9 (móvil) + área sin el 0 + número sin el 15.
   whatsapp: '5492235470343',
-  email: 'reservas@losnaranjos.com.ar', // ⚠️ VERIFICAR — mail de reservas
+  // El club no publica un correo. Mientras no lo dé, el sitio no muestra
+  // ninguno: es preferible un dato de menos que uno inventado.
+  email: null,
 
   // ── Redes ──────────────────────────────────────────────────────────────────
   instagram: 'losnaranjospadel',
@@ -139,14 +141,17 @@ export const RESERVAS = {
  */
 export const PRECIOS_PUBLICADOS = false;
 
-/** Servicios e instalaciones que se muestran en la home. */
+/**
+ * Servicios e instalaciones que se muestran en la home.
+ * Sólo lo que el club confirmó que es suyo. El gimnasio y las canchas de
+ * fútbol están en el mismo predio pero los maneja otra gente, así que se
+ * nombran como lo que son: vecinos, no servicios propios.
+ */
 export const SERVICIOS = [
-  { titulo: 'Gimnasio', texto: 'Sala de musculación con aparatos y espacio de entrenamiento funcional.', icono: 'gym' },
-  { titulo: 'Bar y parrilla', texto: 'Bar con pantallas y parrillas para el tercer tiempo, con reserva previa.', icono: 'parrilla' },
-  { titulo: 'Vestuarios', texto: 'Vestuarios con duchas de agua caliente y lockers para ambos géneros.', icono: 'vestuario' },
-  { titulo: 'Escuela', texto: 'Escuela de pádel para chicos y adultos, todos los niveles.', icono: 'escuela' },
-  { titulo: 'Cumpleaños y eventos', texto: 'Organizamos cumpleaños, torneos internos y eventos de empresa.', icono: 'evento' },
-  { titulo: 'Asistencia médica', texto: 'Servicio de asistencia médica disponible durante la actividad.', icono: 'salud' },
+  { titulo: 'Vestuarios', texto: 'Duchas con agua caliente, para irte cambiado.', icono: 'vestuario' },
+  { titulo: 'Bar', texto: 'Bebidas frías al salir de la cancha.', icono: 'parrilla' },
+  { titulo: 'Techado y luz LED', texto: 'Las siete canchas bajo techo e iluminadas.', icono: 'padel' },
+  { titulo: 'En el mismo predio', texto: 'Gimnasio y canchas de fútbol, con administración propia.', icono: 'gym' },
 ];
 
 /** Programas / clases con cupo (no reservables online, solo informativos). */
