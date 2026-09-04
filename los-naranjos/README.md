@@ -280,10 +280,14 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Vista previa navegable | [claude.ai/code/artifact/ba140d58](https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d) (privada) |
 | Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
 | Propuesta para el club | `propuesta/index.html`, y publicada en [claude.ai/code/artifact/86d5b927](https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89) (privada) |
+| Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
 
 El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
 así que los dos sitios pueden convivir sin pisarse.
+
+> **Ojo con `cartilla/`.** Es la hoja de precios de trabajo: tiene el piso de
+> negociación y el margen. No va en ningún paquete que se le mande al club.
 
 ### Los tres pasos siguientes
 
