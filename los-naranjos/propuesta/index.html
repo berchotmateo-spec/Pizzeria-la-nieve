@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B0C0E">
+<!--
+  PROPUESTA COMERCIAL PARA LOS NARANJOS
+
+  Se abre con doble clic. Para exportarla a PDF: Ctrl/Cmd + P.
+  En papel la portada sale en claro y el botón de la demo desaparece.
+
+  Este archivo describe únicamente el servicio. Las condiciones económicas
+  van en una cartilla aparte, todavía sin escribir.
+
+  Está también publicada como página privada en:
+  https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89
+  Al publicarla ahí se quita el envoltorio de documento (todo lo que está
+  entre <!doctype html> y <body>, más el cierre), porque el visor pone el suyo.
+-->
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<title>Propuesta Los Naranjos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Propuesta comercial — usa la identidad del propio sitio de Los Naranjos:
+   negro cálido, papel tostado y el naranja de marca. Es un documento para
+   leer y para imprimir, así que se compromete con un solo mundo visual y
+   pinta todos sus colores de forma explícita.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --negro:      #0B0C0E;
+  --negro-2:    #16181D;
+  --papel:      #F7F4EF;
+  --papel-2:    #FFFFFF;
+  --papel-3:    #EDE8E0;
+  --naranja:    #FF6B14;
+  --naranja-b:  #C74E06;
+  --cancha:     #0E6B4F;
+  --tinta:      #14161A;
+  --tinta-2:    #4A4F58;
+  --tinta-3:    #7C828C;
+  --claro:      #F7F4EF;
+  --claro-2:    rgba(247,244,239,.70);
+  --claro-3:    rgba(247,244,239,.44);
+  --linea:      rgba(11,12,14,.13);
+  --linea-2:    rgba(11,12,14,.07);
+  --linea-clara:rgba(247,244,239,.16);
+
+  --display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --texto: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ancho: 780px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+body {
+  font-family: var(--texto);
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: var(--tinta);
+  background: var(--papel);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+}
+p { max-width: 62ch; }
+strong { font-weight: 600; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--naranja); outline-offset: 3px; border-radius: 3px; }
+
+.envoltura { width: min(100% - 2.75rem, var(--ancho)); margin-inline: auto; }
+@media (max-width: 560px) { .envoltura { width: min(100% - 2rem, var(--ancho)); } }
+
+.etiqueta {
+  font-family: var(--display);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.etiqueta--naranja { color: var(--naranja-b); }
+.etiqueta--clara { color: var(--claro-3); }
+
+/* ── Portada ───────────────────────────────────────────────────────────── */
+.portada {
+  background: var(--negro);
+  color: var(--claro);
+  padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2.5rem, 6vw, 4rem);
+  position: relative;
+  overflow: hidden;
+}
+.portada::before {
+  content: '';
+  position: absolute;
+  inset: -40% 30% 30% -20%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(255,107,20,.24), transparent 70%);
+  pointer-events: none;
+}
+.portada__cancha {
+  position: absolute;
+  right: -14%; top: 52%;
+  width: min(58%, 460px);
+  transform: translateY(-50%) rotate(-9deg);
+  color: rgba(247,244,239,.10);
+  pointer-events: none;
+}
+.portada__interior { position: relative; display: grid; gap: 1.5rem; }
+.marca { display: flex; align-items: center; gap: .7rem; }
+.marca__nombre {
+  font-family: var(--display);
+  font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .02em;
+}
+.portada h1 { font-size: clamp(2.1rem, 6.2vw, 3.5rem); font-weight: 900; letter-spacing: -.04em; }
+.portada__resumen { color: var(--claro-2); font-size: clamp(1rem, 1.6vw, 1.12rem); max-width: 52ch; }
+
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.25rem 2rem;
+  margin-top: 1.25rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--linea-clara);
+}
+.ficha dt { font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--claro-3); font-weight: 700; font-family: var(--display); }
+.ficha dd { margin-top: .3rem; font-size: .95rem; color: var(--claro); }
+
+/* ── Secciones ─────────────────────────────────────────────────────────── */
+.seccion { padding-block: clamp(2.75rem, 6vw, 4.25rem); border-bottom: 1px solid var(--linea); }
+.seccion:last-of-type { border-bottom: 0; }
+.seccion__cabeza { display: grid; gap: .65rem; margin-bottom: 1.9rem; }
+.seccion__cabeza h2 { font-size: clamp(1.5rem, 3.4vw, 2.05rem); }
+.numero-seccion {
+  font-family: var(--display); font-size: .68rem; font-weight: 800;
+  letter-spacing: .18em; color: var(--naranja);
+}
+.prosa { display: grid; gap: 1.05rem; }
+
+/* ── Bloque destacado ──────────────────────────────────────────────────── */
+.destacado {
+  background: var(--papel-2);
+  border: 1px solid var(--linea);
+  border-left: 3px solid var(--naranja);
+  border-radius: 0 10px 10px 0;
+  padding: 1.3rem 1.5rem;
+}
+.destacado p { max-width: none; }
+
+/* ── Listas ────────────────────────────────────────────────────────────── */
+.lista { list-style: none; padding: 0; display: grid; gap: .95rem; }
+.lista li { display: grid; grid-template-columns: auto 1fr; gap: .85rem; align-items: start; }
+.tilde {
+  width: 21px; height: 21px; margin-top: 2px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%; background: rgba(255,107,20,.13); color: var(--naranja-b);
+}
+.tilde svg { width: 12px; height: 12px; }
+.tilde--verde { background: rgba(14,107,79,.12); color: var(--cancha); }
+.tilde--gris { background: var(--papel-3); color: var(--tinta-3); }
+.lista b { font-weight: 600; }
+.lista span { color: var(--tinta-2); }
+
+/* ── Tarjetas ──────────────────────────────────────────────────────────── */
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; }
+.tarjeta {
+  background: var(--papel-2);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  padding: 1.35rem 1.45rem;
+  display: grid;
+  gap: .5rem;
+  align-content: start;
+}
+.tarjeta h3 { font-size: 1.08rem; }
+.tarjeta p { font-size: .93rem; color: var(--tinta-2); max-width: none; }
+.tarjeta__marca { font-family: var(--display); font-size: .66rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--naranja); }
+
+/* ── Pasos numerados: acá el orden sí es información ───────────────────── */
+.pasos { display: grid; gap: 0; counter-reset: paso; margin-top: .5rem; }
+.paso {
+  counter-increment: paso;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
+  padding-block: 1.35rem;
+  border-top: 1px solid var(--linea-2);
+}
+.paso:first-child { border-top: 0; padding-top: 0; }
+.paso::before {
+  content: counter(paso, decimal-leading-zero);
+  font-family: var(--display); font-size: 1.55rem; font-weight: 900;
+  line-height: 1; letter-spacing: -.05em;
+  color: transparent; -webkit-text-stroke: 1.1px var(--naranja);
+}
+.paso h3 { font-size: 1.06rem; margin-bottom: .25rem; }
+.paso p { font-size: .94rem; color: var(--tinta-2); max-width: none; }
+
+/* ── Cifras ────────────────────────────────────────────────────────────── */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; }
+.cifra { background: var(--papel-2); padding: 1.2rem 1.25rem; display: grid; gap: .2rem; }
+.cifra b { font-family: var(--display); font-size: 1.85rem; font-weight: 900; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.cifra span { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); font-weight: 600; }
+
+/* ── Pedidos al club ───────────────────────────────────────────────────── */
+.grupo-pedido { border-top: 1px solid var(--linea); padding-top: 1.4rem; margin-top: 1.6rem; }
+.grupo-pedido:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+.grupo-pedido h3 { font-size: 1.02rem; margin-bottom: .9rem; }
+.pedidos { list-style: none; padding: 0; display: grid; gap: .7rem; }
+.pedidos li { display: grid; grid-template-columns: auto 1fr; gap: .8rem; align-items: start; font-size: .95rem; }
+.casilla { width: 16px; height: 16px; margin-top: 5px; border: 1.5px solid var(--tinta-3); border-radius: 4px; flex: none; }
+.pedidos small { display: block; color: var(--tinta-3); font-size: .84rem; margin-top: .1rem; }
+
+/* ── Tabla ─────────────────────────────────────────────────────────────── */
+.tabla-envoltorio { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; min-width: 420px; }
+th, td { text-align: left; padding: .8rem .9rem; border-bottom: 1px solid var(--linea); vertical-align: top; }
+thead th { font-family: var(--display); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--tinta-3); font-weight: 700; }
+tbody td:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+
+/* ── Cierre ────────────────────────────────────────────────────────────── */
+.cierre { background: var(--negro); color: var(--claro); padding-block: clamp(2.75rem, 6vw, 4.25rem); }
+.cierre h2 { font-size: clamp(1.5rem, 3.4vw, 2.05rem); }
+.cierre p { color: var(--claro-2); }
+.cierre .destacado { background: rgba(247,244,239,.05); border-color: var(--linea-clara); border-left-color: var(--naranja); }
+.cierre .destacado p { color: var(--claro); }
+
+.boton {
+  display: inline-flex; align-items: center; gap: .55rem;
+  padding: .9rem 1.5rem;
+  background: var(--naranja); color: #fff;
+  font-family: var(--display); font-size: .8rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  border-radius: 999px; text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.boton:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(255,107,20,.34); }
+@media (prefers-reduced-motion: reduce) { .boton { transition: none; } .boton:hover { transform: none; } }
+
+.pie-doc { padding-block: 2rem; font-size: .82rem; color: var(--tinta-3); }
+.pie-doc p { max-width: none; }
+
+/* ── Impresión ─────────────────────────────────────────────────────────── */
+@media print {
+  @page { margin: 15mm; }
+  body { background: #fff; font-size: 10.5pt; }
+  .portada, .cierre { background: #fff !important; color: #14161A !important; }
+  .portada::before, .portada__cancha { display: none; }
+  .portada h1 { color: #14161A; }
+  .portada__resumen, .cierre p, .ficha dd { color: #4A4F58 !important; }
+  .ficha, .ficha dt, .etiqueta--clara { color: #7C828C !important; border-color: rgba(0,0,0,.15) !important; }
+  .cierre .destacado { background: #fff !important; border-color: rgba(0,0,0,.15) !important; }
+  .cierre .destacado p { color: #14161A !important; }
+  .boton, .no-imprimir { display: none !important; }
+  .seccion { break-inside: avoid; page-break-inside: avoid; }
+  .tarjeta, .paso, .grupo-pedido { break-inside: avoid; }
+  a { text-decoration: none; }
+}
+</style>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="tilde" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m4.5 12.5 5 5 10-11"/>
+  </symbol>
+  <symbol id="mas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+    <path d="M12 5v14M5 12h14"/>
+  </symbol>
+  <symbol id="flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12h15M13 6l6 6-6 6"/>
+  </symbol>
+</svg>
+
+<!-- ══ Portada ══════════════════════════════════════════════════════════ -->
+<header class="portada">
+  <svg class="portada__cancha" viewBox="0 0 200 100" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+    <rect x=".5" y=".5" width="199" height="99" stroke-width="1.6"/>
+    <path d="M100 0v100" stroke-width="1.6"/>
+    <path d="M70 0v100M130 0v100"/>
+    <path d="M70 50h60"/>
+  </svg>
+
+  <div class="envoltura portada__interior">
+    <div class="marca">
+      <svg width="32" height="32" viewBox="0 0 48 48" fill="none" style="color:var(--naranja)" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2.2"/>
+        <circle cx="24" cy="24" r="15.5" stroke="currentColor" stroke-width="1" opacity=".45"/>
+        <path d="M3 24h42" stroke="currentColor" stroke-width="2.2"/>
+        <path d="M13 24V10.5M35 24v13.5" stroke="currentColor" stroke-width="1.4" opacity=".75"/>
+      </svg>
+      <span class="marca__nombre">Los Naranjos</span>
+    </div>
+
+    <p class="etiqueta etiqueta--clara">Propuesta · Septiembre 2026</p>
+    <h1>Reservas online<br>para Los Naranjos</h1>
+    <p class="portada__resumen">
+      Un sitio web propio y un sistema de turnos donde el jugador reserva su cancha
+      desde el celular, a cualquier hora, sin llamar por teléfono. Ya está
+      construido y funcionando: esta propuesta es para ponerlo en marcha.
+    </p>
+
+    <dl class="ficha">
+      <div><dt>Para</dt><dd>Dirección de Los Naranjos<br>Dorrego 333, Mar del Plata</dd></div>
+      <div><dt>Preparado por</dt><dd>Mateo Berchot</dd></div>
+      <div><dt>Estado</dt><dd>Desarrollado y probado.<br>Listo para publicar.</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main class="envoltura">
+
+  <!-- ══ 1 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">01 — La idea</p>
+      <h2>Que la cancha se reserve sola, a cualquier hora</h2>
+    </div>
+    <div class="prosa">
+      <p>
+        Hoy las reservas de Los Naranjos pasan por WhatsApp y por teléfono. Eso
+        funciona —y funciona bien, porque del otro lado hay alguien que conoce el
+        complejo—, pero tiene un techo: <strong>cada turno consume una
+        conversación.</strong> Alguien tiene que leer el mensaje, fijarse si hay
+        lugar, proponer un horario, esperar la respuesta y anotarlo. Multiplicado
+        por la cantidad de canchas y por los días de mayor movimiento, es mucho
+        tiempo de una persona puesto en algo que puede resolverse solo.
+      </p>
+      <p>
+        Y hay un costo que no se ve: fuera del horario en que alguien contesta, la
+        consulta queda esperando. Un mensaje a las once de la noche se responde a
+        la mañana siguiente, y para entonces el que quería jugar ya arregló en
+        otro lado.
+      </p>
+      <p>
+        Lo que proponemos es simple: <strong>el jugador entra desde el celular, ve
+        en el momento qué canchas quedan libres y se queda con el turno en menos
+        de un minuto.</strong> Sin escribir, sin esperar respuesta, a las tres de
+        la mañana si quiere. Del otro lado, el club ve todos los turnos del día en
+        una sola pantalla, y WhatsApp queda liberado para lo que de verdad
+        necesita una persona: consultas, torneos, eventos.
+      </p>
+      <p>
+        Va junto con algo que hoy falta: <strong>un sitio propio.</strong> Los
+        Naranjos aparece en directorios de terceros, pero no tiene una página
+        donde se vea el complejo, las disciplinas, los horarios y las tarifas.
+        Quien busca dónde jugar al pádel en Mar del Plata y no conoce el lugar,
+        difícilmente llegue.
+      </p>
+      <div class="destacado">
+        <p>
+          <strong>Nada de esto es una maqueta.</strong> El sistema está
+          desarrollado, probado y funcionando. Lo que falta es cargarle los datos
+          reales del club y publicarlo en una dirección propia.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 2 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">02 — Qué incluye</p>
+      <h2>Tres piezas que trabajan juntas</h2>
+    </div>
+    <div class="tarjetas">
+      <article class="tarjeta">
+        <p class="tarjeta__marca">Para el público</p>
+        <h3>El sitio web</h3>
+        <p>
+          Una web propia del complejo: las disciplinas, las instalaciones, la
+          escuela, las tarifas, los horarios y cómo llegar. Preparada para que
+          Google la encuentre cuando alguien busca “pádel en Mar del Plata”.
+        </p>
+      </article>
+      <article class="tarjeta">
+        <p class="tarjeta__marca">Para el jugador</p>
+        <h3>Las reservas online</h3>
+        <p>
+          Elige día, duración y horario sobre una grilla que muestra la
+          disponibilidad real. Recibe un código de reserva, puede avisarles a los
+          que juegan por WhatsApp y agendar el turno en su calendario.
+        </p>
+      </article>
+      <article class="tarjeta">
+        <p class="tarjeta__marca">Para el club</p>
+        <h3>El panel de control</h3>
+        <p>
+          La grilla del día con todas las canchas y todos los horarios, quién
+          reservó cada uno y con qué teléfono. Permite cancelar turnos y bloquear
+          canchas por mantenimiento, torneos o clases.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ══ 3 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">03 — Del lado del jugador</p>
+      <h2>Reservar lleva menos de un minuto</h2>
+    </div>
+    <div class="pasos">
+      <div class="paso">
+        <div>
+          <h3>Elige qué, cuándo y cuánto</h3>
+          <p>
+            El día, dentro de las próximas dos semanas, y si quiere una hora o
+            una hora y media. La grilla le muestra sólo los horarios que de verdad
+            están libres, con cuántas canchas quedan en cada uno.
+          </p>
+        </div>
+      </div>
+      <div class="paso">
+        <div>
+          <h3>Deja nombre y teléfono</h3>
+          <p>
+            Nada más. Puede dejar que el sistema le asigne la cancha o elegirla él,
+            si prefiere una techada o una de blindex.
+          </p>
+        </div>
+      </div>
+      <div class="paso">
+        <div>
+          <h3>Recibe su código y viene a jugar</h3>
+          <p>
+            Un código corto tipo <strong>LN-7K3QP</strong> que muestra en recepción.
+            Si no puede venir, lo cancela él mismo desde el sitio y la cancha vuelve
+            a quedar disponible para otro, sin que nadie del club tenga que hacer nada.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 4 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">04 — Del lado del club</p>
+      <h2>Todo el día en una sola pantalla</h2>
+    </div>
+    <div class="prosa">
+      <p>
+        El panel es una grilla: las canchas en las filas, los horarios en las
+        columnas. De un vistazo se ve qué está tomado, qué está libre y quién
+        reservó cada turno.
+      </p>
+      <ul class="lista">
+        <li>
+          <span class="tilde"><svg><use href="#tilde"/></svg></span>
+          <span><b>Cancelar un turno</b> cuando alguien avisa por teléfono, y que el horario vuelva a quedar disponible al instante.</span>
+        </li>
+        <li>
+          <span class="tilde"><svg><use href="#tilde"/></svg></span>
+          <span><b>Bloquear una cancha</b> por mantenimiento, un torneo o una clase: deja de ofrecerse online sin tener que avisarle a nadie.</span>
+        </li>
+        <li>
+          <span class="tilde"><svg><use href="#tilde"/></svg></span>
+          <span><b>Ver el resumen del día</b>: cuántos turnos hay, cuántas horas de cancha se vendieron y qué porcentaje de ocupación tuvo el complejo.</span>
+        </li>
+        <li>
+          <span class="tilde"><svg><use href="#tilde"/></svg></span>
+          <span><b>Moverse entre días</b> para ver cómo viene la semana y anticiparse a los fines de semana llenos.</span>
+        </li>
+      </ul>
+      <p>
+        Con el tiempo eso deja algo que hoy no existe: <strong>datos.</strong> Qué
+        franjas se llenan siempre, cuáles quedan flojas, qué días conviene hacer
+        una promoción.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ 5 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">05 — Por qué es confiable</p>
+      <h2>Lo que evita los problemas de siempre</h2>
+    </div>
+    <ul class="lista">
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
+          <b>Dos personas no pueden quedarse con la misma cancha.</b>
+          <span>Cuando alguien confirma, el sistema toma ese horario en el momento.
+          Si dos tocan “confirmar” en el mismo segundo, uno solo se lo lleva y el
+          otro ve el aviso al instante, con la grilla ya actualizada. No es una
+          promesa: está garantizado por cómo se guardan los datos.</span>
+        </span>
+      </li>
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
+          <b>Los datos son del club.</b>
+          <span>Toda la información vive en un único archivo del servidor del club.
+          Se respalda copiándolo. No queda en manos de una plataforma que después
+          cobre por exportarlo.</span>
+        </span>
+      </li>
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
+          <b>No depende de software de terceros.</b>
+          <span>Está construido sin librerías ni servicios externos, así que no hay
+          licencias mensuales de otros proveedores ni el riesgo de que una empresa
+          cierre y se lleve el sistema puesto.</span>
+        </span>
+      </li>
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
+          <b>Está probado.</b>
+          <span>Hay quince pruebas automáticas que verifican las reglas críticas
+          —doble reserva, horarios de apertura, cancelaciones, permisos del panel—
+          y se corren cada vez que se toca algo.</span>
+        </span>
+      </li>
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
+          <b>Anda en el celular.</b>
+          <span>Que es donde va a reservar prácticamente todo el mundo.</span>
+        </span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ══ 6 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">06 — Reglas configurables</p>
+      <h2>El sistema se adapta al club, no al revés</h2>
+    </div>
+    <div class="prosa">
+      <p>
+        Todas estas reglas se cambian en cualquier momento, sin rehacer nada.
+        Los valores de abajo son los que están puestos hoy; se ajustan a lo que
+        ustedes decidan.
+      </p>
+      <div class="tabla-envoltorio">
+        <table>
+          <thead>
+            <tr><th>Regla</th><th>Qué controla</th><th>Hoy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Anticipación máxima</td><td>Con cuántos días se puede reservar</td><td>14 días</td></tr>
+            <tr><td>Antelación mínima</td><td>Cuánto antes hay que reservar un turno de hoy</td><td>60 min</td></tr>
+            <tr><td>Ventana de cancelación</td><td>Hasta cuándo se puede cancelar online</td><td>6 h antes</td></tr>
+            <tr><td>Turnos por teléfono</td><td>Cuántos turnos activos puede tener una persona</td><td>3</td></tr>
+            <tr><td>Duraciones</td><td>Qué duraciones se ofrecen por deporte</td><td>60 y 90 min</td></tr>
+            <tr><td>Horarios</td><td>Apertura y cierre, día por día</td><td>A confirmar</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 7 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">07 — Alcance</p>
+      <h2>Qué no hace todavía</h2>
+    </div>
+    <div class="prosa">
+      <p>
+        Preferimos ser claros con esto desde el principio. Nada de lo que sigue es
+        un impedimento: son cosas que se pueden agregar, y conviene decidirlas con
+        el sistema ya andando y con jugadores reales usándolo.
+      </p>
+      <ul class="lista">
+        <li>
+          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
+          <span><b>Cobro de seña online.</b> <span>Hoy se paga en el club. Si quieren cobrar al reservar, se integra Mercado Pago.</span></span>
+        </li>
+        <li>
+          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
+          <span><b>Avisos automáticos por WhatsApp o mail.</b> <span>El recordatorio del turno y la confirmación automática dependen de un servicio externo de envío.</span></span>
+        </li>
+        <li>
+          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
+          <span><b>Turnos fijos semanales.</b> <span>Para los grupos de siempre, que hoy se cargan a mano desde el panel.</span></span>
+        </li>
+        <li>
+          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
+          <span><b>Inscripción online a torneos y a la escuela.</b> <span>Hoy figuran en el sitio como información, y la inscripción sigue por WhatsApp.</span></span>
+        </li>
+        <li>
+          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
+          <span><b>Fotos reales del complejo.</b> <span>Es lo que más le falta al sitio. Hoy se resuelve con diseño; con fotos propias pega un salto grande.</span></span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 8 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">08 — Qué necesitamos</p>
+      <h2>Lo que hace falta de parte del club</h2>
+    </div>
+    <div class="prosa" style="margin-bottom:1.9rem">
+      <p>
+        Nada de esto lleva trabajo técnico: son datos que el club ya tiene. Con
+        esta información cargada, el sistema queda listo para publicar.
+      </p>
+    </div>
+
+    <div class="grupo-pedido">
+      <h3>Las canchas</h3>
+      <ul class="pedidos">
+        <li><span class="casilla"></span><span>Cuáles son de blindex y cuáles de muro</span></li>
+        <li><span class="casilla"></span><span>Si tienen nombre propio o sólo número</span></li>
+        <li><span class="casilla"></span><span>Cuál de las siete es la central <small>La de las gradas ya está en el sistema, marcada como la número 1: si es otra, se cambia en un minuto.</small></span></li>
+      </ul>
+    </div>
+
+    <div class="grupo-pedido">
+      <h3>Horarios y tarifas</h3>
+      <ul class="pedidos">
+        <li><span class="casilla"></span><span>Horario de apertura, día por día <small>Del cierre tenemos una buena hipótesis —23:30, deducida de los turnos que ofrecen—, pero de la apertura no hay ningún dato publicado.</small></span></li>
+        <li><span class="casilla"></span><span>Precio por deporte y por duración</span></li>
+        <li><span class="casilla"></span><span>Si el precio cambia según el día o la franja horaria</span></li>
+        <li><span class="casilla"></span><span>Valor de las clases, la escuela y la inscripción a torneos</span></li>
+        <li><span class="casilla"></span><span>Días, niveles y cupos de la escuela</span></li>
+        <li><span class="casilla"></span><span>Feriados o fechas en las que el complejo no abre</span></li>
+      </ul>
+    </div>
+
+    <div class="grupo-pedido">
+      <h3>Contacto y presencia</h3>
+      <ul class="pedidos">
+        <li><span class="casilla"></span><span>Confirmar que el WhatsApp de reservas es el 223 547-0343</span></li>
+        <li><span class="casilla"></span><span>Correo de contacto <small>Mientras no haya, el sitio no muestra ninguno.</small></span></li>
+        
+        <li><span class="casilla"></span><span>Si ya tienen un dominio comprado, o hay que registrarlo</span></li>
+        <li><span class="casilla"></span><span>Logo oficial, si existe en archivo vectorial <small>El isotipo actual —una rodaja de naranja que también es el plano de una cancha— es una propuesta.</small></span></li>
+      </ul>
+    </div>
+
+    <div class="grupo-pedido">
+      <h3>Material y decisiones</h3>
+      <ul class="pedidos">
+        <li><span class="casilla"></span><span>Fotos del club: canchas, vestuarios, bar y la fachada <small>Es lo que más le falta al sitio: hoy la estética se resuelve con tipografía y trazados de cancha.</small></span></li>
+        <li><span class="casilla"></span><span>Quiénes van a usar el panel del club</span></li>
+        <li><span class="casilla"></span><span>Si quieren cobrar seña al reservar</span></li>
+        <li><span class="casilla"></span><span>Con cuánta anticipación quieren permitir las reservas</span></li>
+        <li><span class="casilla"></span><span>Hasta cuándo aceptan una cancelación sin cargo</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 9 ═══════════════════════════════════════════════════════════════ -->
+  <section class="seccion">
+    <div class="seccion__cabeza">
+      <p class="numero-seccion">09 — Puesta en marcha</p>
+      <h2>Del sí a la primera reserva</h2>
+    </div>
+    <div class="pasos">
+      <div class="paso">
+        <div>
+          <h3>Carga de datos reales</h3>
+          <p>Canchas, horarios, tarifas y contacto. Es el paso que depende del club: apenas llega la información, se carga.</p>
+        </div>
+      </div>
+      <div class="paso">
+        <div>
+          <h3>Publicación</h3>
+          <p>Registro del dominio, puesta del sitio en línea y prueba completa con el equipo del club antes de abrirlo al público.</p>
+        </div>
+      </div>
+      <div class="paso">
+        <div>
+          <h3>Marcha blanca</h3>
+          <p>Unos días con reservas online y teléfono conviviendo, para acomodar la operación y ajustar reglas antes de anunciarlo por Instagram.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══ Cierre ══════════════════════════════════════════════════════════ -->
+<section class="cierre">
+  <div class="envoltura prosa">
+    <p class="etiqueta etiqueta--clara">Próximo paso</p>
+    <h2>Probarlo antes de decidir</h2>
+    <p>
+      Hay una versión de prueba funcionando: se puede entrar, recorrer el sitio,
+      reservar una cancha y después cancelarla, tal como lo haría un jugador. Los
+      turnos de esa versión no llegan al club, así que se puede tocar todo sin
+      miedo a romper nada.
+    </p>
+    <p>
+      La invitación es simple: <strong>pruébenlo, y después decidimos juntos qué
+      ajustar.</strong> Con las canchas, los horarios y las tarifas reales cargadas,
+      esto puede estar recibiendo reservas en poco tiempo.
+    </p>
+    <p class="no-imprimir" style="margin-top:.6rem">
+      <a class="boton" href="https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d" target="_blank" rel="noopener">
+        Ver la versión de prueba <svg width="15" height="15" aria-hidden="true"><use href="#flecha"/></svg>
+      </a>
+    </p>
+    <div class="destacado" style="margin-top:1.4rem">
+      <p>
+        Cualquier duda sobre lo técnico, la respondemos en criollo. No hace falta
+        entender nada de esto para usarlo: el panel del club se aprende en diez minutos.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="envoltura pie-doc">
+  <p>
+    Propuesta preparada para Los Naranjos — Multiespacio deportivo · Dorrego 333,
+    Mar del Plata. Este documento describe el servicio; las condiciones económicas
+    se detallan por separado. Los datos marcados “a confirmar” se completan con la
+    información que nos pasen.
+  </p>
+</footer>
+</body>
+</html>
