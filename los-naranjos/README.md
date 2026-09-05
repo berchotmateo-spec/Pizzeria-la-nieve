@@ -227,9 +227,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 - [ ] **Correo** de contacto y reservas. Hasta que lo den, `CLUB.email` va en
       `null` y el sitio no muestra ninguno: es preferible un dato de menos que
       uno inventado.
-- [ ] **Instagram**: hay tres cuentas dando vueltas en las búsquedas
-      (`@losnaranjos_mdq`, `@padel_los_naranjos`, `@losnaranjospadel`). Hoy está
-      cargada la última y hay que confirmar cuál es la del club.
+- [x] ~~**Instagram** del club~~ → `@losnaranjos_mdq`, ya cargado.
 - [ ] **Hora de apertura**: es el dato que falta. El cierre a las 23:30 se deduce
       de los turnos que ofrecen; la apertura (7:30) sale de directorios de terceros.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
@@ -238,16 +236,18 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 ### Canchas
 
 - [x] ~~**Cuántas canchas de pádel** hay~~ → 7, todas techadas, ya cargadas.
-- [ ] **¿Dan clases y arman torneos?** El sitio tiene una sección de escuela,
-      clases particulares y americanos que nadie confirmó. Si no la tienen, se
-      saca; si la tienen, hay que cargar días, niveles y cupos.
+- [x] ~~**¿Dan clases y arman torneos?**~~ → sí, las dos cosas. Falta cargar
+      días, niveles y cupos de la escuela.
+- [ ] **Cuál de las siete es la central.** Tienen una cancha principal con
+      gradas; hoy está marcada la número 1 (`CANCHA_CENTRAL` en `config.js`)
+      porque es lo más común, pero hay que confirmarlo.
 - [ ] **Cómo se llaman/numeran** las canchas, si tienen nombre propio.
 - [ ] **Blindex o muro**: no se sabe la mezcla real, hoy no se distingue por cancha.
 
 ### Tarifas y reglas
 
 - [ ] **Precios** por disciplina y duración, y si cambian según el horario o el día.
-- [ ] **Valor de las clases** y de la escuela, si es que dan.
+- [ ] **Valor de las clases**, de la escuela y de la inscripción a torneos.
 - [ ] **Seña**: ¿se cobra al reservar? Si sí, hay que sumar un medio de pago
       (Mercado Pago es lo más directo en Argentina).
 - [ ] **Política de cancelación** real (hoy está puesta en 6 horas antes).

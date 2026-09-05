@@ -1563,7 +1563,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
         <p class="etiqueta">Qué se juega acá</p>
         <h2 class="display-lg">Todo pádel,<br>todo el año.</h2>
         <p class="bajada">
-          Siete canchas techadas, cuidadas todos los días, con iluminación LED.
+          Siete canchas techadas con iluminación LED, cuidadas todos los días. Una es la central, con gradas.
           Reservá online sin llamar por teléfono.
         </p>
       </div>
@@ -1574,12 +1574,14 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
           <h3>Pádel</h3>
           <p class="disciplina__texto">
             Canchas de blindex y muro con piso de césped sintético y luz LED.
-            Las siete techadas, para jugar aunque llueva. Alquiler de paletas en recepción.
+            Las siete techadas, y una central con gradas para los que vienen a
+            mirar. Alquiler de paletas en recepción.
           </p>
           <div class="disciplina__datos">
             <span class="pildora">4 jugadores</span>
             <span class="pildora">60 y 90 min</span>
             <span class="pildora pildora--naranja">Todas techadas</span>
+            <span class="pildora">Central con gradas</span>
           </div>
           <div class="disciplina__pie">
             <span class="disciplina__precio" data-precio="padel">Consultar<small>tarifa vigente</small></span>
@@ -1636,7 +1638,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
         <article class="programa" data-revelar="120">
           <span class="programa__indice">03</span>
           <div><h3>Torneos y americanos</h3><p class="programa__nivel">Todas las categorías</p></div>
-          <p class="programa__texto">Americanos semanales y torneos por categoría durante todo el año. Inscripción por WhatsApp o en recepción.</p>
+          <p class="programa__texto">Americanos semanales y torneos por categoría durante todo el año. Las finales se juegan en la central, con gradas. Inscripción por WhatsApp o en recepción.</p>
         </article>
       </div>
     </div>
@@ -2055,7 +2057,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
    Reemplaza al servidor Node interceptando las llamadas a /api/. La lógica de
    disponibilidad y las validaciones son las mismas que aplica el servidor real.
    ═══════════════════════════════════════════════════════════════════════════ */
-const CONFIG = {"club":{"nombre":"Los Naranjos","claim":"Pádel en Mar del Plata","descripcion":"Siete canchas de pádel techadas en el corazón de Mar del Plata, con vestuarios y bar. Reservá tu turno online.","direccion":"Dorrego 333","barrio":"Mar del Plata","ciudad":"Mar del Plata","provincia":"Buenos Aires","cp":"B7600","pais":"Argentina","coordenadas":{"lat":-38.0055,"lng":-57.5426},"telefono":"(0223) 472-9295","telefonoLink":"+542234729295","whatsapp":"5492235470343","email":null,"instagram":"losnaranjospadel","facebook":"multiespacio.losnaranjos","sitio":"https://losnaranjos.com.ar","zonaHoraria":"America/Argentina/Buenos_Aires","moneda":"ARS"},"horarios":{"0":{"abre":"09:00","cierra":"22:30"},"1":{"abre":"07:30","cierra":"23:30"},"2":{"abre":"07:30","cierra":"23:30"},"3":{"abre":"07:30","cierra":"23:30"},"4":{"abre":"07:30","cierra":"23:30"},"5":{"abre":"07:30","cierra":"23:30"},"6":{"abre":"08:00","cierra":"23:30"}},"feriados":{},"disciplinas":[{"slug":"padel","nombre":"Pádel","icono":"padel","duraciones":[60,90],"duracionPorDefecto":90,"jugadores":"4 jugadores","descripcion":"Canchas de blindex con piso de césped sintético y luz LED, todas techadas. Alquiler de paletas y venta de pelotas en recepción.","precios":null,"destacada":true,"canchas":7}],"canchas":[{"id":"padel-1","nombre":"Pádel 1","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":1},{"id":"padel-2","nombre":"Pádel 2","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":2},{"id":"padel-3","nombre":"Pádel 3","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":3},{"id":"padel-4","nombre":"Pádel 4","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":4},{"id":"padel-5","nombre":"Pádel 5","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":5},{"id":"padel-6","nombre":"Pádel 6","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":6},{"id":"padel-7","nombre":"Pádel 7","disciplina":"padel","superficie":"Césped sintético","techada":true,"orden":7}],"reglas":{"diasAnticipacion":14,"minutosAntelacion":60,"horasCancelacion":6,"maxPorTelefono":3,"slotMinutos":30},"servicios":[{"titulo":"Vestuarios","texto":"Duchas con agua caliente, para irte cambiado.","icono":"vestuario"},{"titulo":"Bar","texto":"Bebidas frías al salir de la cancha.","icono":"parrilla"},{"titulo":"Techado y luz LED","texto":"Las siete canchas bajo techo e iluminadas.","icono":"padel"},{"titulo":"En el mismo predio","texto":"Gimnasio y canchas de fútbol, con administración propia.","icono":"gym"}],"programas":[{"titulo":"Escuela de pádel","nivel":"Iniciación · Intermedio · Competitivo","texto":"Clases grupales de 90 minutos, dos o tres veces por semana, con profesores certificados."},{"titulo":"Clases particulares","nivel":"Individual o en dupla","texto":"Entrenamiento personalizado con análisis de técnica, táctica y video."},{"titulo":"Torneos y americanos","nivel":"Todas las categorías","texto":"Americanos semanales y torneos por categoría durante todo el año."}],"preciosPublicados":false};
+const CONFIG = {"club":{"nombre":"Los Naranjos","claim":"Pádel en Mar del Plata","descripcion":"Siete canchas de pádel techadas en el corazón de Mar del Plata, con vestuarios y bar. Reservá tu turno online.","direccion":"Dorrego 333","barrio":"Mar del Plata","ciudad":"Mar del Plata","provincia":"Buenos Aires","cp":"B7600","pais":"Argentina","coordenadas":{"lat":-38.0055,"lng":-57.5426},"telefono":"(0223) 472-9295","telefonoLink":"+542234729295","whatsapp":"5492235470343","email":null,"instagram":"losnaranjos_mdq","facebook":"multiespacio.losnaranjos","sitio":"https://losnaranjos.com.ar","zonaHoraria":"America/Argentina/Buenos_Aires","moneda":"ARS"},"horarios":{"0":{"abre":"09:00","cierra":"22:30"},"1":{"abre":"07:30","cierra":"23:30"},"2":{"abre":"07:30","cierra":"23:30"},"3":{"abre":"07:30","cierra":"23:30"},"4":{"abre":"07:30","cierra":"23:30"},"5":{"abre":"07:30","cierra":"23:30"},"6":{"abre":"08:00","cierra":"23:30"}},"feriados":{},"disciplinas":[{"slug":"padel","nombre":"Pádel","icono":"padel","duraciones":[60,90],"duracionPorDefecto":90,"jugadores":"4 jugadores","descripcion":"Canchas de blindex con piso de césped sintético y luz LED, todas techadas. Alquiler de paletas y venta de pelotas en recepción.","precios":null,"destacada":true,"canchas":7}],"canchas":[{"id":"padel-1","nombre":"Central","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":true,"orden":1},{"id":"padel-2","nombre":"Pádel 2","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":2},{"id":"padel-3","nombre":"Pádel 3","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":3},{"id":"padel-4","nombre":"Pádel 4","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":4},{"id":"padel-5","nombre":"Pádel 5","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":5},{"id":"padel-6","nombre":"Pádel 6","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":6},{"id":"padel-7","nombre":"Pádel 7","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":7}],"reglas":{"diasAnticipacion":14,"minutosAntelacion":60,"horasCancelacion":6,"maxPorTelefono":3,"slotMinutos":30},"servicios":[{"titulo":"Vestuarios","texto":"Duchas con agua caliente, para irte cambiado.","icono":"vestuario"},{"titulo":"Bar","texto":"Bebidas frías al salir de la cancha.","icono":"parrilla"},{"titulo":"Techado y luz LED","texto":"Las siete canchas bajo techo e iluminadas.","icono":"padel"},{"titulo":"En el mismo predio","texto":"Gimnasio y canchas de fútbol, con administración propia.","icono":"gym"}],"programas":[{"titulo":"Escuela de pádel","nivel":"Iniciación · Intermedio · Competitivo","texto":"Clases grupales de 90 minutos, dos o tres veces por semana, con profesores certificados."},{"titulo":"Clases particulares","nivel":"Individual o en dupla","texto":"Entrenamiento personalizado con análisis de técnica, táctica y video."},{"titulo":"Torneos y americanos","nivel":"Todas las categorías","texto":"Americanos semanales y torneos por categoría durante todo el año."}],"preciosPublicados":false};
 const SLOT = CONFIG.reglas.slotMinutos;
 const GUARDADO = 'naranjos:vista-previa';
 
@@ -2859,7 +2861,7 @@ function pintarCanchas() {
     <span class="cancha-chip">
       <input type="radio" name="cancha" id="cancha-${esc(c.id)}" value="${esc(c.id)}" ${c.id === estado.canchaId ? 'checked' : ''}>
       <label for="cancha-${esc(c.id)}">
-        ${esc(c.nombre)}${c.techada ? ' <small>techada</small>' : ''}${c.muros ? ` <small>${esc(c.muros)}</small>` : ''}
+        ${esc(c.nombre)}${c.gradas ? ' <small>con gradas</small>' : ''}${c.techada ? ' <small>techada</small>' : ''}${c.muros ? ` <small>${esc(c.muros)}</small>` : ''}
       </label>
     </span>`).join('');
 }

@@ -18,13 +18,27 @@ const { rutas } = await import('./api.js');
 const T = await import('./tiempo.js');
 const { RESERVAS } = await import('./config.js');
 
-const MANANA = T.sumarDias(T.hoy(), 1);
+/**
+ * Día contra el que se prueba todo.
+ *
+ * Antes era "mañana", y eso hacía que la suite fallara los sábados: el domingo
+ * el club abre a las 09:00 y varios tests reservan a las 08:00 o a las 07:30.
+ * Un test que depende del día en que lo corrés no prueba nada, así que se elige
+ * el próximo miércoles, que siempre tiene el horario largo (07:30 a 23:30) y
+ * entra holgado en los 14 días de anticipación que permite el sistema.
+ */
+const MIERCOLES = 3;
+const PROXIMO_MIERCOLES = (() => {
+  const hoy = T.hoy();
+  const faltan = ((MIERCOLES - T.diaSemana(hoy) + 7) % 7) || 7;
+  return T.sumarDias(hoy, faltan);
+})();
 const params = (o) => new URLSearchParams(o);
 const admin = { headers: { authorization: 'Bearer clave-de-prueba-1234' } };
 
 const reservaBase = (extra = {}) => ({
   disciplina: 'padel',
-  fecha: MANANA,
+  fecha: PROXIMO_MIERCOLES,
   hora: '20:00',
   duracionMin: 90,
   nombre: 'Mateo Berchot',
@@ -60,7 +74,7 @@ test('la configuración pública no filtra la clave de administrador', async () 
 
 test('la disponibilidad respeta el horario del club', async () => {
   const { datos } = await llamar('GET /api/disponibilidad', {
-    query: params({ fecha: MANANA, disciplina: 'padel', duracion: '90' }),
+    query: params({ fecha: PROXIMO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
   });
   assert.equal(datos.cerrado, false);
   assert.ok(datos.horarios.length > 0);
@@ -78,7 +92,7 @@ test('una reserva válida se crea y ocupa la cancha', async () => {
   assert.equal(datos.reserva.telefono, '2235551234', 'el teléfono se normaliza');
 
   const disp = await llamar('GET /api/disponibilidad', {
-    query: params({ fecha: MANANA, disciplina: 'padel', duracion: '90' }),
+    query: params({ fecha: PROXIMO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
   });
   const slot = disp.datos.horarios.find((h) => h.hora === '20:00');
   assert.equal(slot.cantidad, disp.datos.totalCanchas - 1);
@@ -198,7 +212,7 @@ test('el panel de administración exige la clave correcta', async () => {
   const claveMala = await llamar('GET /api/admin/dia', { req: { headers: { authorization: 'Bearer incorrecta' } } });
   assert.equal(claveMala.status, 401);
 
-  const conClave = await llamar('GET /api/admin/dia', { req: admin, query: params({ fecha: MANANA }) });
+  const conClave = await llamar('GET /api/admin/dia', { req: admin, query: params({ fecha: PROXIMO_MIERCOLES }) });
   assert.ok(conClave.ok);
   assert.ok(conClave.datos.resumen.turnos > 0);
   assert.ok(conClave.datos.resumen.horasVendidas > 0);
@@ -207,7 +221,7 @@ test('el panel de administración exige la clave correcta', async () => {
 test('el administrador puede bloquear una cancha y eso saca el turno de la grilla', async () => {
   const bloqueo = await llamar('POST /api/admin/bloqueos', {
     req: admin,
-    body: { canchaId: 'padel-2', fecha: MANANA, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
+    body: { canchaId: 'padel-2', fecha: PROXIMO_MIERCOLES, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
   });
   assert.ok(bloqueo.ok);
   assert.equal(bloqueo.datos.reserva.tipo, 'bloqueo');

@@ -34,7 +34,7 @@ export const CLUB = {
   email: null,
 
   // ── Redes ──────────────────────────────────────────────────────────────────
-  instagram: 'losnaranjospadel',
+  instagram: 'losnaranjos_mdq',
   facebook: 'multiespacio.losnaranjos',
 
   // ── Dominio (para SEO / datos estructurados) ───────────────────────────────
@@ -105,15 +105,28 @@ export const DISCIPLINAS = [
  * Canchas del complejo: 7 canchas de pádel, todas techadas.
  * Si el club suma o saca una cancha, alcanza con cambiar el número de acá:
  * el sitio, la grilla de turnos y el panel se acomodan solos.
+ *
+ * Una de las siete es la central, con gradas: donde se juegan las finales de
+ * los torneos y la que la gente pide para jugar en serio.
+ * ⚠️ VERIFICAR cuál es. Quedó puesta la primera porque es lo más habitual; si
+ * en el club es otra, se cambia `CANCHA_CENTRAL` y se acomoda todo solo.
  */
-export const CANCHAS = Array.from({ length: 7 }, (_, i) => ({
-  id: `padel-${i + 1}`,
-  nombre: `Pádel ${i + 1}`,
-  disciplina: 'padel',
-  superficie: 'Césped sintético',
-  techada: true,
-  orden: i + 1,
-}));
+const CANCHA_CENTRAL = 1;
+
+export const CANCHAS = Array.from({ length: 7 }, (_, i) => {
+  const numero = i + 1;
+  const central = numero === CANCHA_CENTRAL;
+  return {
+    id: `padel-${numero}`,
+    nombre: central ? 'Central' : `Pádel ${numero}`,
+    disciplina: 'padel',
+    superficie: 'Césped sintético',
+    techada: true,
+    // Con gradas para mirar: el dato que hace que alguien elija esta cancha.
+    gradas: central,
+    orden: numero,
+  };
+});
 
 /** Reglas del sistema de turnos. */
 export const RESERVAS = {

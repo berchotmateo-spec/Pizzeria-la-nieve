@@ -213,7 +213,7 @@ function pintarCanchas() {
     <span class="cancha-chip">
       <input type="radio" name="cancha" id="cancha-${esc(c.id)}" value="${esc(c.id)}" ${c.id === estado.canchaId ? 'checked' : ''}>
       <label for="cancha-${esc(c.id)}">
-        ${esc(c.nombre)}${c.techada ? ' <small>techada</small>' : ''}${c.muros ? ` <small>${esc(c.muros)}</small>` : ''}
+        ${esc(c.nombre)}${c.gradas ? ' <small>con gradas</small>' : ''}${c.techada ? ' <small>techada</small>' : ''}${c.muros ? ` <small>${esc(c.muros)}</small>` : ''}
       </label>
     </span>`).join('');
 }
