@@ -172,17 +172,19 @@ export const PROGRAMAS = [
   {
     titulo: 'Escuela de pádel',
     nivel: 'Iniciación · Intermedio · Competitivo',
-    texto: 'Clases grupales de 90 minutos, dos o tres veces por semana, con profesores certificados.',
+    texto: 'Clases grupales con grupos armados por nivel.',
   },
   {
     titulo: 'Clases particulares',
-    nivel: 'Individual o en dupla',
-    texto: 'Entrenamiento personalizado con análisis de técnica, táctica y video.',
+    // "Particular" acá no quiere decir uno a uno: el club las da de a uno,
+    // en dupla o hasta de a cuatro, que es la cancha entera.
+    nivel: 'De 1 a 4 jugadores',
+    texto: 'Entrenamiento personalizado, solo, en dupla o con tu grupo de hasta cuatro.',
   },
   {
     titulo: 'Torneos y americanos',
     nivel: 'Todas las categorías',
-    texto: 'Americanos semanales y torneos por categoría durante todo el año.',
+    texto: 'Americanos semanales y torneos por categoría durante todo el año, con las finales en la central.',
   },
 ];
 
