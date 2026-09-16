@@ -8,6 +8,7 @@ import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SERVIDOR, CLUB, ADMIN } from './config.js';
 import { rutas } from './api.js';
+import { usuarioDeLaSolicitud } from './cuentas.js';
 
 const RAIZ_PUBLICA = fileURLToPath(new URL('../public/', import.meta.url));
 const LIMITE_CUERPO = 32 * 1024; // 32 kB alcanza y sobra para un formulario
@@ -128,7 +129,10 @@ const servidor = createServer(async (req, res) => {
     if (!handler) return json(res, 404, { error: 'Ese endpoint no existe.' });
     try {
       const body = req.method === 'POST' ? await leerCuerpo(req) : {};
-      const datos = await handler({ req, res, body, query: url.searchParams, ip: ipDe(req) });
+      const usuario = usuarioDeLaSolicitud(req);
+      const datos = await handler({
+        req, res, body, usuario, query: url.searchParams, ip: ipDe(req),
+      });
       return json(res, 200, datos);
     } catch (err) {
       const status = err.status || (err.code === 'OCUPADO' ? 409 : 400);

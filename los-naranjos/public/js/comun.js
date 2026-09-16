@@ -24,6 +24,42 @@ export async function traerConfig() {
   return configCache;
 }
 
+/* ── Sesión del jugador ───────────────────────────────────────────────────── */
+
+/* No tener cuenta no es un error: si el API falla o nadie ingresó, la respuesta
+   es la misma —usuario en null— y el sitio sigue andando igual para todos. */
+let sesionCache = null;
+
+export async function traerSesion({ refrescar = false } = {}) {
+  if (refrescar || !sesionCache) {
+    sesionCache = pedir('/api/cuenta').catch(() => ({ usuario: null }));
+  }
+  return sesionCache;
+}
+
+/** Se llama después de entrar, salir o editar el perfil. */
+export function olvidarSesion() { sesionCache = null; }
+
+/**
+ * Acomoda la cabecera según haya o no alguien adentro.
+ * `[data-con-sesion]` y `[data-sin-sesion]` se muestran u ocultan, y
+ * `[data-nombre-jugador]` recibe el primer nombre, que es lo que entra.
+ */
+export function pintarSesion(sesion) {
+  const usuario = sesion?.usuario || null;
+  document.querySelectorAll('[data-con-sesion]').forEach((el) => { el.hidden = !usuario; });
+  document.querySelectorAll('[data-sin-sesion]').forEach((el) => { el.hidden = !!usuario; });
+  document.querySelectorAll('[data-nombre-jugador]').forEach((el) => {
+    el.textContent = usuario ? usuario.nombre.trim().split(/\s+/)[0] : 'Ingresar';
+  });
+  document.querySelectorAll('[data-nombre-completo]').forEach((el) => {
+    el.textContent = usuario ? usuario.nombre : '';
+  });
+  /* Quien esté mostrando algo que dependa de la sesión —el formulario de
+     reserva, sin ir más lejos— se entera acá y se acomoda. */
+  document.dispatchEvent(new CustomEvent('naranjos:sesion', { detail: sesion || { usuario: null } }));
+}
+
 /* ── Formato ──────────────────────────────────────────────────────────────── */
 export const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 export const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -41,6 +77,41 @@ export const esc = (s) =>
 /** Arma el enlace de WhatsApp del club con un mensaje ya escrito. */
 export function linkWhatsapp(numero, mensaje) {
   return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+}
+
+/**
+ * Tarjeta de un turno. La usan "Mis turnos" y la página de la cuenta, así que
+ * vive acá: si cambia el diseño de un turno, cambia en los dos lados.
+ */
+export function tarjetaTurno(r, horasCancelacion = 6) {
+  const [a, m, d] = r.fecha.split('-').map(Number);
+  const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
+  const cancelada = r.estado !== 'confirmada';
+
+  const acciones = cancelada
+    ? '<span class="pildora pildora--gris">Cancelada</span>'
+    : r.cancelable
+      ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
+      : `<span class="pildora pildora--gris" title="Se cancela hasta ${horasCancelacion} h antes">Fuera de plazo</span>`;
+
+  return `
+    <article class="turno" data-estado="${esc(r.estado)}">
+      <div class="turno__dia">
+        <span>${DIAS_CORTOS[dow]}</span>
+        <b class="numeros">${d}</b>
+        <span>${MESES_CORTOS[m - 1]}</span>
+      </div>
+      <div>
+        <p class="turno__fecha">${esc(r.hora)} – ${esc(r.fin)} · ${esc(r.disciplinaNombre)}</p>
+        <p class="turno__detalle">${esc(r.canchaNombre)} · ${esc(duracionTexto(r.duracionMin))} · a nombre de ${esc(r.nombre)}</p>
+        <div class="turno__meta">
+          <span class="pildora">Código ${esc(r.codigo)}</span>
+          ${!cancelada && r.cancelable ? '<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>' : ''}
+          ${r.notas ? `<span class="pildora">${esc(r.notas)}</span>` : ''}
+        </div>
+      </div>
+      <div class="turno__acciones">${acciones}</div>
+    </article>`;
 }
 
 /* ── Comportamiento común de la página ────────────────────────────────────── */
@@ -154,6 +225,8 @@ export async function iniciarPagina() {
   iniciarCabecera();
   iniciarRevelado();
   iniciarAnio();
+  // La sesión se pide en paralelo: la cabecera no tiene por qué esperar al club.
+  traerSesion().then(pintarSesion);
   try {
     const config = await traerConfig();
     pintarDatosDelClub(config);

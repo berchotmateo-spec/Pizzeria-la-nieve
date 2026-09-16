@@ -15,8 +15,10 @@ process.env.ADMIN_TOKEN = 'clave-de-prueba-1234';
 process.env.PORT = String(3100 + (process.pid % 400));
 
 const { rutas } = await import('./api.js');
+const { cuentas } = await import('./db.js');
 const T = await import('./tiempo.js');
-const { RESERVAS } = await import('./config.js');
+const { RESERVAS, CUENTAS } = await import('./config.js');
+const { usuarioDeLaSolicitud, reiniciarIntentos } = await import('./cuentas.js');
 
 /**
  * Día contra el que se prueba todo.
@@ -58,6 +60,43 @@ async function llamar(clave, ctx = {}) {
     return { ok: false, error: err.message, status: err.status, code: err.code };
   }
 }
+
+/**
+ * Simula un navegador: se guarda la cookie de sesión que devuelve el servidor
+ * y la manda en los pedidos siguientes, que es justo lo que hay que probar.
+ */
+function navegador(ip = ipUnica()) {
+  let cookie = '';
+  return {
+    get cookie() { return cookie; },
+    async llamar(clave, ctx = {}) {
+      const req = { headers: cookie ? { cookie } : {}, socket: {} };
+      const res = {
+        setHeader(nombre, valor) {
+          if (String(nombre).toLowerCase() !== 'set-cookie') return;
+          const par = String(valor).split(';')[0];
+          cookie = par.endsWith('=') ? '' : par; // Max-Age=0 borra la sesión
+        },
+      };
+      try {
+        const usuario = usuarioDeLaSolicitud(req);
+        const datos = await rutas[clave]({
+          req, res, body: {}, query: params({}), ip, usuario, ...ctx,
+        });
+        return { ok: true, datos };
+      } catch (err) {
+        return { ok: false, error: err.message, status: err.status, code: err.code };
+      }
+    },
+  };
+}
+
+const cuentaBase = (extra = {}) => ({
+  nombre: 'Jugadora de Prueba',
+  telefono: '223 555-9000',
+  clave: 'pelota-naranja-7',
+  ...extra,
+});
 
 after(() => {
   for (const sufijo of ['', '-wal', '-shm']) rmSync(RUTA_DB + sufijo, { force: true });
@@ -258,6 +297,170 @@ test('se frena la avalancha de reservas desde una misma IP', async () => {
     if (!r.ok && r.status === 429) bloqueada++;
   }
   assert.ok(bloqueada > 0, 'después del límite por hora la IP queda frenada');
+});
+
+test('crear la cuenta abre la sesión y se queda con los turnos previos', async () => {
+  const tel = '2235557001';
+  // Primero reserva como visitante, sin cuenta.
+  const previa = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '09:00', duracionMin: 60, telefono: tel, nombre: 'Ana Invitada' }),
+  });
+  assert.ok(previa.ok);
+
+  const nav = navegador();
+  const alta = await nav.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Ana Registrada' }),
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.usuario.telefono, tel);
+  assert.equal(alta.datos.reservasAdoptadas, 1, 'el turno que ya tenía queda en su cuenta');
+  assert.ok(nav.cookie.startsWith('ln_sesion='), 'quedó la cookie de sesión');
+
+  // Y ahora ve ese turno sin escribir nada.
+  const mios = await nav.llamar('GET /api/reservas');
+  assert.equal(mios.datos.reservas.length, 1);
+  assert.equal(mios.datos.reservas[0].codigo, previa.datos.reserva.codigo);
+});
+
+test('no se puede abrir dos cuentas con el mismo teléfono', async () => {
+  const tel = '2235557002';
+  const primera = await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+  assert.ok(primera.ok);
+
+  const segunda = await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+  assert.equal(segunda.ok, false);
+  assert.equal(segunda.status, 409);
+  assert.equal(segunda.code, 'TELEFONO_EN_USO');
+});
+
+test('la contraseña no se guarda en limpio ni se devuelve nunca', async () => {
+  const tel = '2235557003';
+  const clave = 'clave-secreta-muy-linda';
+  const nav = navegador();
+  const alta = await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave }) });
+  assert.ok(alta.ok);
+  assert.ok(!JSON.stringify(alta.datos).includes(clave), 'no vuelve en la respuesta');
+
+  const fila = cuentas.porTelefono(tel);
+  assert.ok(fila.clave.startsWith('scrypt$'), 'se guarda hasheada');
+  assert.ok(!fila.clave.includes(clave));
+
+  const perfil = await nav.llamar('GET /api/cuenta');
+  assert.ok(!JSON.stringify(perfil.datos).includes(clave));
+  assert.ok(!JSON.stringify(perfil.datos).includes('scrypt$'), 'el hash tampoco se expone');
+});
+
+test('la contraseña corta no pasa y la equivocada no entra', async () => {
+  const tel = '2235557004';
+  const corta = await navegador().llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, clave: 'corta' }),
+  });
+  assert.equal(corta.ok, false);
+  assert.match(corta.error, new RegExp(String(CUENTAS.minClave)));
+
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave: 'la-correcta-1' }) });
+
+  const errada = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'la-equivocada-1' },
+  });
+  assert.equal(errada.ok, false);
+  assert.equal(errada.status, 401);
+
+  const buena = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'la-correcta-1' },
+  });
+  assert.ok(buena.ok, buena.error);
+  assert.equal(buena.datos.usuario.telefono, tel);
+});
+
+test('se frena el intento de adivinar la contraseña a fuerza bruta', async () => {
+  reiniciarIntentos();
+  const tel = '2235557005';
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  let frenados = 0;
+  for (let i = 0; i < CUENTAS.maxIntentos + 2; i++) {
+    const r = await navegador('198.51.100.7').llamar('POST /api/cuenta/ingreso', {
+      body: { telefono: tel, clave: `intento-numero-${i}` },
+    });
+    if (r.status === 429) frenados++;
+  }
+  assert.ok(frenados > 0, 'después del límite de intentos la puerta se cierra');
+  reiniciarIntentos();
+});
+
+test('con la sesión abierta el turno sale a nombre de la cuenta', async () => {
+  const tel = '2235557006';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Lucía Socia' }),
+  });
+
+  // El cuerpo miente a propósito: la cuenta manda.
+  const r = await nav.llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '10:00', duracionMin: 60, nombre: 'Otro Nombre', telefono: '2239999999' }),
+  });
+  assert.ok(r.ok, r.error);
+  assert.equal(r.datos.reserva.nombre, 'Lucía Socia');
+  assert.equal(r.datos.reserva.telefono, tel);
+
+  // Y lo puede cancelar sin escribir el teléfono.
+  const baja = await nav.llamar('POST /api/reservas/cancelar', { body: { codigo: r.datos.reserva.codigo } });
+  assert.ok(baja.ok, baja.error);
+  assert.equal(baja.datos.reserva.estado, 'cancelada');
+});
+
+test('el teléfono de alguien con cuenta no muestra sus turnos a un desconocido', async () => {
+  const tel = '2235557007';
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const curioso = await llamar('GET /api/reservas', { query: params({ telefono: tel }) });
+  assert.equal(curioso.ok, false);
+  assert.equal(curioso.status, 401);
+  assert.equal(curioso.code, 'NECESITA_SESION');
+
+  // El visitante sin cuenta sigue consultando por teléfono, como siempre.
+  const visitante = await llamar('GET /api/reservas', { query: params({ telefono: '2235558888' }) });
+  assert.ok(visitante.ok);
+});
+
+test('cambiar la contraseña cierra las sesiones abiertas en otro lado', async () => {
+  const tel = '2235557008';
+  const clave = 'la-de-siempre-9';
+  const compu = navegador();
+  await compu.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave }) });
+
+  const celular = navegador();
+  await celular.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok((await celular.llamar('GET /api/cuenta')).datos.usuario, 'el celular está adentro');
+
+  const cambio = await compu.llamar('POST /api/cuenta/clave', {
+    body: { claveActual: clave, claveNueva: 'una-nueva-distinta-3' },
+  });
+  assert.ok(cambio.ok, cambio.error);
+
+  assert.equal((await celular.llamar('GET /api/cuenta')).datos.usuario, null, 'al celular lo echó');
+  assert.ok((await compu.llamar('GET /api/cuenta')).datos.usuario, 'la compu sigue adentro');
+});
+
+test('salir cierra la sesión y editar el perfil la mantiene', async () => {
+  const tel = '2235557009';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const perfil = await nav.llamar('POST /api/cuenta/perfil', {
+    body: { nombre: 'Nombre Corregido', email: 'jugadora@ejemplo.com' },
+  });
+  assert.ok(perfil.ok, perfil.error);
+  assert.equal(perfil.datos.usuario.nombre, 'Nombre Corregido');
+  assert.equal(perfil.datos.usuario.email, 'jugadora@ejemplo.com');
+
+  assert.ok((await nav.llamar('POST /api/cuenta/salir')).ok);
+  assert.equal(nav.cookie, '', 'la cookie se borró');
+  assert.equal((await nav.llamar('GET /api/cuenta')).datos.usuario, null);
+
+  const sinSesion = await nav.llamar('POST /api/cuenta/perfil', { body: { nombre: 'Colado' } });
+  assert.equal(sinSesion.status, 401);
 });
 
 test('el servidor HTTP sirve el sitio y el API', async () => {

@@ -401,6 +401,29 @@ h1, h2, h3, h4 {
 }
 .cabecera__acciones { display: flex; align-items: center; gap: .8rem; }
 
+/* Enlace a la cuenta: discreto al lado del botón de reservar, pero con el
+   nombre del jugador bien visible cuando ya entró. */
+.cuenta-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .7rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--linea-clara);
+  color: var(--claro-2);
+  font-size: .8rem;
+  font-weight: 500;
+  max-width: 11rem;
+  transition: border-color var(--transicion), color var(--transicion), background var(--transicion);
+}
+.cuenta-enlace:hover { color: var(--claro); border-color: var(--claro-3); background: rgba(255,255,255,.05); }
+.cuenta-enlace svg { width: 16px; height: 16px; flex: none; }
+.cuenta-enlace span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) {
+  .cuenta-enlace { padding: .4rem; max-width: none; }
+  .cuenta-enlace span { display: none; }
+}
+
 .menu-boton { display: none; padding: .5rem; color: var(--claro); }
 .menu-boton svg { width: 22px; height: 22px; }
 
@@ -1248,6 +1271,46 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
 .turno__detalle { font-size: .85rem; color: var(--tinta-2); margin-top: .2rem; }
 .turno__meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 
+/* ── Cuenta del jugador ───────────────────────────────────────────────────── */
+.cuenta-grilla { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+@media (max-width: 860px) { .cuenta-grilla { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--papel-2);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-lg);
+  padding: clamp(1.4rem, 3vw, 2rem);
+  display: grid;
+  gap: 1.1rem;
+  align-content: start;
+}
+/* El registro es la acción que queremos: se marca sin gritar. */
+.panel--destacado { border-color: var(--naranja); box-shadow: 0 0 0 3px rgba(255,107,20,.1); }
+.panel h2 { font-size: 1.22rem; }
+.panel form { display: grid; gap: 1rem; }
+.panel__nota { font-size: .85rem; color: var(--tinta-3); line-height: 1.5; }
+.panel__tapa { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.panel .turnos { margin-top: 0; }
+.panel input:disabled { background: var(--papel-3); color: var(--tinta-3); cursor: not-allowed; }
+
+.perfil { display: grid; gap: 1.25rem; }
+
+/* Aviso de "estás reservando como…" arriba del formulario de datos. */
+.reservando-como {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex-wrap: wrap;
+  padding: .75rem 1rem;
+  border: 1px dashed var(--linea-2, var(--linea));
+  border-radius: var(--r-sm);
+  background: var(--papel-2);
+  font-size: .9rem;
+}
+.reservando-como svg { width: 18px; height: 18px; color: var(--naranja); flex: none; }
+.reservando-como b { font-weight: 600; }
+.reservando-como a { margin-left: auto; font-size: .85rem; }
+
 /* ── Panel del club ───────────────────────────────────────────────────────── */
 .acceso {
   max-width: 420px;
@@ -1431,6 +1494,15 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
   <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
     <path d="M3 7h18M3 12h18M3 17h18"/>
   </symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8.2" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>
+  </symbol>
+  <symbol id="i-salir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14"/><path d="M17 8.5 20.5 12 17 15.5M20 12H10"/>
+  </symbol>
+  <symbol id="i-candado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4.5" y="10" width="15" height="10.5" rx="2.2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/><circle cx="12" cy="15.2" r="1.1" fill="currentColor" stroke="none"/>
+  </symbol>
   <symbol id="i-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
     <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/>
   </symbol>
@@ -1467,6 +1539,10 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
     </nav>
 
     <div class="cabecera__acciones">
+      <a class="cuenta-enlace" href="/cuenta" title="Mi cuenta">
+        <svg><use href="#i-usuario"/></svg>
+        <span data-nombre-jugador>Ingresar</span>
+      </a>
       <a class="boton boton--chico" href="/reservar">Reservar<span class="oculto-movil">&nbsp;turno</span></a>
       <button class="menu-boton" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="navegacion">
         <svg><use href="#i-menu"/></svg>
@@ -1840,6 +1916,13 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
             <span class="bloque__numero" data-numero>5</span>
             <h2>Tus datos</h2>
           </div>
+
+          <p class="reservando-como" id="reservando-como" hidden>
+            <svg><use href="#i-usuario"/></svg>
+            <span>Reservás como <b data-nombre-completo></b>.</span>
+            <a class="enlace-linea" href="/cuenta">¿No sos vos?</a>
+          </p>
+
           <div class="datos-grilla">
             <div class="campo">
               <label for="nombre">Nombre y apellido</label>
@@ -1925,6 +2008,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
           <svg width="16" height="16"><use href="#i-whatsapp"/></svg> Avisar a los que juegan
         </a>
         <a class="boton boton--fantasma" href="/mis-turnos">Ver mis turnos</a>
+        <button class="boton boton--fantasma" type="button" id="otro-turno">Reservar otro turno</button>
       </div>
 
       <p class="plomo" style="font-size:.86rem" id="aviso-confirmacion"></p>
@@ -1940,6 +2024,11 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
   </div>
 </section><main id="contenido">
   <div class="envoltura" style="padding-block:clamp(2.5rem,5vw,4rem) clamp(4rem,8vw,6rem)">
+
+    <div class="aviso aviso--exito" id="aviso-sesion" hidden style="margin-bottom:1.5rem">
+      <svg width="20" height="20" style="flex:none"><use href="#i-usuario"/></svg>
+      <span>Estos son los turnos de tu cuenta. Podés editar tus datos en <a class="enlace-linea" href="/cuenta">Mi cuenta</a>.</span>
+    </div>
 
     <form class="buscador" id="buscador">
       <div class="campo">
@@ -1981,6 +2070,175 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
     <div class="modal__acciones">
       <button class="boton boton--fantasma boton--chico" value="no" type="submit">No, dejalo</button>
       <button class="boton boton--chico" value="si" type="button" id="confirmar-cancelacion">Sí, cancelar</button>
+    </div>
+  </form>
+</dialog></div>
+<div class="vista" id="vista-cuenta" hidden><section class="tapa">
+  <div class="envoltura tapa__interior">
+    <p class="migas"><a href="/">Inicio</a> <span>/</span> <span>Mi cuenta</span></p>
+    <h1 class="display-md" data-sin-sesion hidden>Tu cuenta en Los Naranjos</h1>
+    <p data-sin-sesion hidden>
+      Con una cuenta reservás en dos toques: no tenés que escribir tu nombre y tu
+      teléfono cada vez, y tus turnos te esperan acá adentro.
+    </p>
+    <h1 class="display-md" data-con-sesion hidden>Hola, <span data-nombre-completo></span></h1>
+    <p data-con-sesion hidden>Tus datos, tus turnos y tu contraseña, todo en esta página.</p>
+  </div>
+</section><main id="contenido">
+  <div class="envoltura" style="padding-block:clamp(2.5rem,5vw,4rem) clamp(4rem,8vw,6rem)">
+
+    <!-- ── Sin sesión: entrar o crear la cuenta ─────────────────────────── -->
+    <div class="cuenta-grilla" data-sin-sesion hidden>
+      <section class="panel">
+        <h2>Ya tengo cuenta</h2>
+        <form id="form-ingreso" novalidate>
+          <div class="campo">
+            <label for="ingreso-telefono">Teléfono</label>
+            <input id="ingreso-telefono" name="telefono" type="tel" inputmode="tel" autocomplete="username" required placeholder="223 555-1234">
+          </div>
+          <div class="campo">
+            <label for="ingreso-clave">Contraseña</label>
+            <input id="ingreso-clave" name="clave" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="aviso aviso--error" id="error-ingreso" hidden><span></span></div>
+          <button class="boton boton--ancho" type="submit" id="boton-ingresar">
+            <span data-texto-ingresar>Entrar</span>
+          </button>
+        </form>
+        <p class="panel__nota">
+          ¿Te olvidaste la contraseña? Escribinos por WhatsApp y la reponemos a mano.
+        </p>
+      </section>
+
+      <section class="panel panel--destacado">
+        <h2>Quiero crear mi cuenta</h2>
+        <form id="form-registro" novalidate>
+          <div class="campo">
+            <label for="registro-nombre">Nombre y apellido</label>
+            <input id="registro-nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Mateo Berchot">
+          </div>
+          <div class="campo">
+            <label for="registro-telefono">Teléfono</label>
+            <input id="registro-telefono" name="telefono" type="tel" inputmode="tel" autocomplete="username" required placeholder="223 555-1234">
+            <p class="ayuda">Es tu usuario, y el número con el que el club te ubica.</p>
+          </div>
+          <div class="campo">
+            <label for="registro-email">Correo <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
+            <input id="registro-email" name="email" type="email" autocomplete="email" placeholder="mateo@ejemplo.com">
+          </div>
+          <div class="campo">
+            <label for="registro-clave">Contraseña</label>
+            <input id="registro-clave" name="clave" type="password" autocomplete="new-password" required>
+            <p class="ayuda" id="ayuda-clave">Mínimo 8 caracteres.</p>
+          </div>
+          <div class="aviso aviso--error" id="error-registro" hidden><span></span></div>
+          <button class="boton boton--ancho" type="submit" id="boton-registrar">
+            <span data-texto-registrar>Crear mi cuenta</span>
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <p class="vacio" data-sin-sesion hidden style="margin-top:1.5rem">
+      No hace falta tener cuenta para reservar: también podés
+      <a class="enlace-linea" href="/reservar">sacar tu turno como visitante</a>.
+    </p>
+
+    <!-- ── Con sesión: el perfil ────────────────────────────────────────── -->
+    <div class="perfil" data-con-sesion hidden>
+
+      <div class="aviso aviso--exito" id="aviso-bienvenida" hidden>
+        <svg width="20" height="20" style="flex:none"><use href="#i-check"/></svg>
+        <span></span>
+      </div>
+
+      <section class="panel">
+        <div class="panel__tapa">
+          <h2>Tus próximos turnos</h2>
+          <a class="boton boton--chico" href="/reservar">Reservar otro</a>
+        </div>
+        <div class="turnos" id="cta-turnos" aria-live="polite"></div>
+        <p class="vacio" id="sin-turnos" hidden>
+          Todavía no tenés turnos reservados.
+          <a class="enlace-linea" href="/reservar">Elegí día y horario</a>.
+        </p>
+      </section>
+
+      <div class="cuenta-grilla">
+        <section class="panel">
+          <h2>Tus datos</h2>
+          <form id="form-perfil" novalidate>
+            <div class="campo">
+              <label for="perfil-nombre">Nombre y apellido</label>
+              <input id="perfil-nombre" name="nombre" type="text" required maxlength="80">
+            </div>
+            <div class="campo">
+              <label for="perfil-telefono">Teléfono</label>
+              <input id="perfil-telefono" type="tel" disabled>
+              <p class="ayuda">El teléfono es tu usuario. Para cambiarlo, escribinos.</p>
+            </div>
+            <div class="campo">
+              <label for="perfil-email">Correo</label>
+              <input id="perfil-email" name="email" type="email" placeholder="opcional">
+            </div>
+            <div class="aviso aviso--error" id="error-perfil" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-perfil" hidden><span>Listo, guardamos los cambios.</span></div>
+            <button class="boton boton--fantasma boton--ancho" type="submit" id="boton-perfil">
+              <span data-texto-perfil>Guardar cambios</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Contraseña</h2>
+          <form id="form-clave" novalidate>
+            <div class="campo">
+              <label for="clave-actual">Contraseña actual</label>
+              <input id="clave-actual" name="claveActual" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="campo">
+              <label for="clave-nueva">Contraseña nueva</label>
+              <input id="clave-nueva" name="claveNueva" type="password" autocomplete="new-password" required>
+            </div>
+            <div class="aviso aviso--error" id="error-clave" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-clave" hidden>
+              <span>Listo. Si habías entrado en otro dispositivo, ahí se cerró la sesión.</span>
+            </div>
+            <button class="boton boton--fantasma boton--ancho" type="submit" id="boton-clave">
+              <span data-texto-clave>Cambiar contraseña</span>
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <section class="panel" id="panel-historial" hidden>
+        <h2>Turnos anteriores</h2>
+        <div class="tabla-envoltorio">
+          <table class="tabla-reservas">
+            <thead>
+              <tr><th>Día</th><th>Horario</th><th>Cancha</th><th>Código</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="historial"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div>
+        <button class="boton boton--fantasma boton--chico" type="button" id="boton-salir">
+          <svg width="15" height="15"><use href="#i-salir"/></svg> Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</main><dialog class="modal" id="cta-modal">
+  <form method="dialog" class="modal__cuerpo">
+    <h2 class="display-sm">¿Cancelamos este turno?</h2>
+    <p class="plomo" id="cta-detalle" style="font-size:.93rem"></p>
+    <p class="plomo" style="font-size:.86rem">La cancha vuelve a quedar disponible para otras personas. No se puede deshacer.</p>
+    <div class="aviso aviso--error" id="cta-error-cancelacion" hidden><span></span></div>
+    <div class="modal__acciones">
+      <button class="boton boton--fantasma boton--chico" value="no" type="submit">No, dejalo</button>
+      <button class="boton boton--chico" value="si" type="button" id="cta-confirmar">Sí, cancelar</button>
     </div>
   </form>
 </dialog></div>
@@ -2026,6 +2284,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
         <ul>
           <li><a href="/reservar">Reservar cancha</a></li>
           <li><a href="/mis-turnos">Mis turnos</a></li>
+          <li><a href="/cuenta">Mi cuenta</a></li>
           <li><a href="/#tarifas">Tarifas</a></li>
           <li><a href="/#escuela">Escuela</a></li>
         </ul>
@@ -2057,7 +2316,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
    Reemplaza al servidor Node interceptando las llamadas a /api/. La lógica de
    disponibilidad y las validaciones son las mismas que aplica el servidor real.
    ═══════════════════════════════════════════════════════════════════════════ */
-const CONFIG = {"club":{"nombre":"Los Naranjos","claim":"Pádel en Mar del Plata","descripcion":"Siete canchas de pádel techadas en el corazón de Mar del Plata, con vestuarios y bar. Reservá tu turno online.","direccion":"Dorrego 333","barrio":"Mar del Plata","ciudad":"Mar del Plata","provincia":"Buenos Aires","cp":"B7600","pais":"Argentina","coordenadas":{"lat":-38.0055,"lng":-57.5426},"telefono":"(0223) 472-9295","telefonoLink":"+542234729295","whatsapp":"5492235470343","email":null,"instagram":"losnaranjos_mdq","facebook":"multiespacio.losnaranjos","sitio":"https://losnaranjos.com.ar","zonaHoraria":"America/Argentina/Buenos_Aires","moneda":"ARS"},"horarios":{"0":{"abre":"09:00","cierra":"22:30"},"1":{"abre":"07:30","cierra":"23:30"},"2":{"abre":"07:30","cierra":"23:30"},"3":{"abre":"07:30","cierra":"23:30"},"4":{"abre":"07:30","cierra":"23:30"},"5":{"abre":"07:30","cierra":"23:30"},"6":{"abre":"08:00","cierra":"23:30"}},"feriados":{},"disciplinas":[{"slug":"padel","nombre":"Pádel","icono":"padel","duraciones":[60,90],"duracionPorDefecto":90,"jugadores":"4 jugadores","descripcion":"Canchas de blindex con piso de césped sintético y luz LED, todas techadas. Alquiler de paletas y venta de pelotas en recepción.","precios":null,"destacada":true,"canchas":7}],"canchas":[{"id":"padel-1","nombre":"Central","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":true,"orden":1},{"id":"padel-2","nombre":"Pádel 2","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":2},{"id":"padel-3","nombre":"Pádel 3","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":3},{"id":"padel-4","nombre":"Pádel 4","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":4},{"id":"padel-5","nombre":"Pádel 5","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":5},{"id":"padel-6","nombre":"Pádel 6","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":6},{"id":"padel-7","nombre":"Pádel 7","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":7}],"reglas":{"diasAnticipacion":14,"minutosAntelacion":60,"horasCancelacion":6,"maxPorTelefono":3,"slotMinutos":30},"servicios":[{"titulo":"Vestuarios","texto":"Duchas con agua caliente, para irte cambiado.","icono":"vestuario"},{"titulo":"Bar","texto":"Bebidas frías al salir de la cancha.","icono":"parrilla"},{"titulo":"Techado y luz LED","texto":"Las siete canchas bajo techo e iluminadas.","icono":"padel"},{"titulo":"En el mismo predio","texto":"Gimnasio y canchas de fútbol, con administración propia.","icono":"gym"}],"programas":[{"titulo":"Escuela de pádel","nivel":"Iniciación · Intermedio · Competitivo","texto":"Clases grupales con grupos armados por nivel."},{"titulo":"Clases particulares","nivel":"De 1 a 4 jugadores","texto":"Entrenamiento personalizado, solo, en dupla o con tu grupo de hasta cuatro."},{"titulo":"Torneos y americanos","nivel":"Todas las categorías","texto":"Americanos semanales y torneos por categoría durante todo el año, con las finales en la central."}],"preciosPublicados":false};
+const CONFIG = {"club":{"nombre":"Los Naranjos","claim":"Pádel en Mar del Plata","descripcion":"Siete canchas de pádel techadas en el corazón de Mar del Plata, con vestuarios y bar. Reservá tu turno online.","direccion":"Dorrego 333","barrio":"Mar del Plata","ciudad":"Mar del Plata","provincia":"Buenos Aires","cp":"B7600","pais":"Argentina","coordenadas":{"lat":-38.0055,"lng":-57.5426},"telefono":"(0223) 472-9295","telefonoLink":"+542234729295","whatsapp":"5492235470343","email":null,"instagram":"losnaranjos_mdq","facebook":"multiespacio.losnaranjos","sitio":"https://losnaranjos.com.ar","zonaHoraria":"America/Argentina/Buenos_Aires","moneda":"ARS"},"horarios":{"0":{"abre":"09:00","cierra":"22:30"},"1":{"abre":"07:30","cierra":"23:30"},"2":{"abre":"07:30","cierra":"23:30"},"3":{"abre":"07:30","cierra":"23:30"},"4":{"abre":"07:30","cierra":"23:30"},"5":{"abre":"07:30","cierra":"23:30"},"6":{"abre":"08:00","cierra":"23:30"}},"feriados":{},"disciplinas":[{"slug":"padel","nombre":"Pádel","icono":"padel","duraciones":[60,90],"duracionPorDefecto":90,"jugadores":"4 jugadores","descripcion":"Canchas de blindex con piso de césped sintético y luz LED, todas techadas. Alquiler de paletas y venta de pelotas en recepción.","precios":null,"destacada":true,"canchas":7}],"canchas":[{"id":"padel-1","nombre":"Central","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":true,"orden":1},{"id":"padel-2","nombre":"Pádel 2","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":2},{"id":"padel-3","nombre":"Pádel 3","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":3},{"id":"padel-4","nombre":"Pádel 4","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":4},{"id":"padel-5","nombre":"Pádel 5","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":5},{"id":"padel-6","nombre":"Pádel 6","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":6},{"id":"padel-7","nombre":"Pádel 7","disciplina":"padel","superficie":"Césped sintético","techada":true,"gradas":false,"orden":7}],"reglas":{"diasAnticipacion":14,"minutosAntelacion":60,"horasCancelacion":6,"maxPorTelefono":3,"slotMinutos":30,"minClave":8},"servicios":[{"titulo":"Vestuarios","texto":"Duchas con agua caliente, para irte cambiado.","icono":"vestuario"},{"titulo":"Bar","texto":"Bebidas frías al salir de la cancha.","icono":"parrilla"},{"titulo":"Techado y luz LED","texto":"Las siete canchas bajo techo e iluminadas.","icono":"padel"},{"titulo":"En el mismo predio","texto":"Gimnasio y canchas de fútbol, con administración propia.","icono":"gym"}],"programas":[{"titulo":"Escuela de pádel","nivel":"Iniciación · Intermedio · Competitivo","texto":"Clases grupales con grupos armados por nivel."},{"titulo":"Clases particulares","nivel":"De 1 a 4 jugadores","texto":"Entrenamiento personalizado, solo, en dupla o con tu grupo de hasta cuatro."},{"titulo":"Torneos y americanos","nivel":"Todas las categorías","texto":"Americanos semanales y torneos por categoría durante todo el año, con las finales en la central."}],"preciosPublicados":false};
 const SLOT = CONFIG.reglas.slotMinutos;
 const GUARDADO = 'naranjos:vista-previa';
 
@@ -2260,7 +2519,10 @@ function manejar(url, metodo, cuerpo) {
     return { status: 200, datos: disponibilidad(fecha, slug, dur) };
   }
 
-  if (ruta === '/api/reservas' && metodo === 'POST') return crearReserva(cuerpo);
+  if (ruta === '/api/reservas' && metodo === 'POST') {
+    const dueño = usuarioActual();
+    return crearReserva(dueño ? { ...cuerpo, nombre: dueño.nombre, telefono: dueño.telefono } : cuerpo);
+  }
 
   if (ruta === '/api/reservas') {
     const codigo = String(q.get('codigo') || '').trim().toUpperCase();
@@ -2272,7 +2534,12 @@ function manejar(url, metodo, cuerpo) {
       if (telefono && r.telefono !== telefono) return fallo('El teléfono no coincide.', 403);
       return { status: 200, datos: { reservas: [serializar(r)] } };
     }
-    const mias = todas.filter((r) => r.telefono === telefono && r.fecha >= hoy());
+    const dueño = usuarioActual();
+    const tel = dueño ? dueño.telefono : telefono;
+    if (!dueño && leerCuentas().some((u) => u.telefono === tel)) {
+      return fallo('Ese teléfono tiene cuenta. Ingresá para ver tus turnos.', 401, 'NECESITA_SESION');
+    }
+    const mias = todas.filter((r) => r.telefono === tel && r.fecha >= hoy());
     return { status: 200, datos: { reservas: mias.map(serializar) } };
   }
 
@@ -2281,11 +2548,125 @@ function manejar(url, metodo, cuerpo) {
     const r = todas.find((x) => x.codigo === String(cuerpo.codigo || '').trim().toUpperCase());
     if (!r) return fallo('No encontramos ese código de reserva.', 404, 'NO_ENCONTRADO');
     if (r.estado === 'cancelada') return fallo('Esa reserva ya estaba cancelada.');
-    if (normalizarTel(cuerpo.telefono) !== r.telefono) return fallo('El teléfono no coincide con el de la reserva.', 403, 'NO_AUTORIZADO');
+    const dueño = usuarioActual();
+    const esSuyo = dueño && dueño.telefono === r.telefono;
+    if (!esSuyo && normalizarTel(cuerpo.telefono) !== r.telefono) {
+      return fallo('El teléfono no coincide con el de la reserva.', 403, 'NO_AUTORIZADO');
+    }
     if (!cancelable(r)) return fallo(`Las cancelaciones online se aceptan hasta ${CONFIG.reglas.horasCancelacion} horas antes. Llamanos al ${CONFIG.club.telefono}.`);
     r.estado = 'cancelada';
     guardarReservas(todas);
     return { status: 200, datos: { ok: true, reserva: serializar(r) } };
+  }
+
+  if (ruta.startsWith('/api/cuenta')) return manejarCuenta(ruta, metodo, cuerpo);
+
+  return fallo('Ese endpoint no existe.', 404);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Cuentas, versión vista previa.
+   El servidor real guarda la clave con scrypt y la sesión en una cookie que el
+   navegador no puede leer. Acá no hay servidor: la cuenta queda en este
+   dispositivo y la clave se guarda revuelta con un hash simple, sólo para no
+   dejarla escrita en limpio. Alcanza para mostrar cómo se usa, no para
+   proteger nada.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const LLAVE_CUENTAS = 'naranjos:vista-previa-cuentas';
+const LLAVE_SESION = 'naranjos:vista-previa-sesion';
+
+const revolver = (texto) => {
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return 'demo$' + (h >>> 0).toString(36);
+};
+
+const leerCuentas = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CUENTAS) || '[]'); } catch { return []; } };
+const guardarCuentas = (c) => { try { localStorage.setItem(LLAVE_CUENTAS, JSON.stringify(c)); } catch { /* sin almacenamiento */ } };
+const telefonoEnSesion = () => { try { return localStorage.getItem(LLAVE_SESION) || ''; } catch { return ''; } };
+const abrirSesion = (tel) => { try { localStorage.setItem(LLAVE_SESION, tel); } catch { /* sin almacenamiento */ } };
+const cerrarSesion = () => { try { localStorage.removeItem(LLAVE_SESION); } catch { /* sin almacenamiento */ } };
+
+const usuarioActual = () => leerCuentas().find((u) => u.telefono === telefonoEnSesion()) || null;
+const perfilPublico = (u) => ({ nombre: u.nombre, telefono: u.telefono, email: u.email || null });
+
+function manejarCuenta(ruta, metodo, cuerpo) {
+  const usuario = usuarioActual();
+
+  if (ruta === '/api/cuenta' && metodo === 'GET') {
+    if (!usuario) return { status: 200, datos: { usuario: null } };
+    const suyas = leerReservas().filter((r) => r.telefono === usuario.telefono);
+    return {
+      status: 200,
+      datos: {
+        usuario: perfilPublico(usuario),
+        turnos: suyas.filter((r) => r.fecha >= hoy()).map(serializar),
+        historial: suyas.slice(-10).reverse().map(serializar),
+      },
+    };
+  }
+
+  if (ruta === '/api/cuenta/registro') {
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    const telefono = normalizarTel(cuerpo.telefono);
+    if (telefono.length < 8) return fallo('Escribí un teléfono válido.');
+    const clave = String(cuerpo.clave || '');
+    if (clave.length < CONFIG.reglas.minClave) {
+      return fallo(`La contraseña tiene que tener al menos ${CONFIG.reglas.minClave} caracteres.`);
+    }
+    const cuentas = leerCuentas();
+    if (cuentas.some((u) => u.telefono === telefono)) {
+      return fallo('Ya hay una cuenta con ese teléfono. Probá ingresando.', 409, 'TELEFONO_EN_USO');
+    }
+    cuentas.push({ nombre, telefono, email: String(cuerpo.email || '').trim() || null, clave: revolver(clave) });
+    guardarCuentas(cuentas);
+    abrirSesion(telefono);
+    const adoptadas = leerReservas().filter((r) => r.telefono === telefono && r.estado === 'confirmada').length;
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(cuentas.at(-1)), reservasAdoptadas: adoptadas } };
+  }
+
+  if (ruta === '/api/cuenta/ingreso') {
+    const telefono = normalizarTel(cuerpo.telefono);
+    const u = leerCuentas().find((x) => x.telefono === telefono);
+    if (!u || u.clave !== revolver(String(cuerpo.clave || ''))) {
+      return fallo('El teléfono o la contraseña no coinciden.', 401, 'NO_AUTORIZADO');
+    }
+    abrirSesion(telefono);
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(u) } };
+  }
+
+  if (ruta === '/api/cuenta/salir') {
+    cerrarSesion();
+    return { status: 200, datos: { ok: true } };
+  }
+
+  if (!usuario) return fallo('Necesitás ingresar a tu cuenta.', 401, 'NECESITA_SESION');
+
+  if (ruta === '/api/cuenta/perfil') {
+    const cuentas = leerCuentas();
+    const u = cuentas.find((x) => x.telefono === usuario.telefono);
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    u.nombre = nombre;
+    u.email = String(cuerpo.email || '').trim() || null;
+    guardarCuentas(cuentas);
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(u) } };
+  }
+
+  if (ruta === '/api/cuenta/clave') {
+    const cuentas = leerCuentas();
+    const u = cuentas.find((x) => x.telefono === usuario.telefono);
+    if (u.clave !== revolver(String(cuerpo.claveActual || ''))) {
+      return fallo('La contraseña actual no coincide.', 401, 'NO_AUTORIZADO');
+    }
+    const nueva = String(cuerpo.claveNueva || '');
+    if (nueva.length < CONFIG.reglas.minClave) {
+      return fallo(`La contraseña tiene que tener al menos ${CONFIG.reglas.minClave} caracteres.`);
+    }
+    u.clave = revolver(nueva);
+    guardarCuentas(cuentas);
+    return { status: 200, datos: { ok: true } };
   }
 
   return fallo('Ese endpoint no existe.', 404);
@@ -2330,6 +2711,42 @@ async function traerConfig() {
   return configCache;
 }
 
+/* ── Sesión del jugador ───────────────────────────────────────────────────── */
+
+/* No tener cuenta no es un error: si el API falla o nadie ingresó, la respuesta
+   es la misma —usuario en null— y el sitio sigue andando igual para todos. */
+let sesionCache = null;
+
+async function traerSesion({ refrescar = false } = {}) {
+  if (refrescar || !sesionCache) {
+    sesionCache = pedir('/api/cuenta').catch(() => ({ usuario: null }));
+  }
+  return sesionCache;
+}
+
+/** Se llama después de entrar, salir o editar el perfil. */
+function olvidarSesion() { sesionCache = null; }
+
+/**
+ * Acomoda la cabecera según haya o no alguien adentro.
+ * `[data-con-sesion]` y `[data-sin-sesion]` se muestran u ocultan, y
+ * `[data-nombre-jugador]` recibe el primer nombre, que es lo que entra.
+ */
+function pintarSesion(sesion) {
+  const usuario = sesion?.usuario || null;
+  document.querySelectorAll('[data-con-sesion]').forEach((el) => { el.hidden = !usuario; });
+  document.querySelectorAll('[data-sin-sesion]').forEach((el) => { el.hidden = !!usuario; });
+  document.querySelectorAll('[data-nombre-jugador]').forEach((el) => {
+    el.textContent = usuario ? usuario.nombre.trim().split(/\s+/)[0] : 'Ingresar';
+  });
+  document.querySelectorAll('[data-nombre-completo]').forEach((el) => {
+    el.textContent = usuario ? usuario.nombre : '';
+  });
+  /* Quien esté mostrando algo que dependa de la sesión —el formulario de
+     reserva, sin ir más lejos— se entera acá y se acomoda. */
+  document.dispatchEvent(new CustomEvent('naranjos:sesion', { detail: sesion || { usuario: null } }));
+}
+
 /* ── Formato ──────────────────────────────────────────────────────────────── */
 const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -2347,6 +2764,41 @@ const esc = (s) =>
 /** Arma el enlace de WhatsApp del club con un mensaje ya escrito. */
 function linkWhatsapp(numero, mensaje) {
   return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+}
+
+/**
+ * Tarjeta de un turno. La usan "Mis turnos" y la página de la cuenta, así que
+ * vive acá: si cambia el diseño de un turno, cambia en los dos lados.
+ */
+function tarjetaTurno(r, horasCancelacion = 6) {
+  const [a, m, d] = r.fecha.split('-').map(Number);
+  const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
+  const cancelada = r.estado !== 'confirmada';
+
+  const acciones = cancelada
+    ? '<span class="pildora pildora--gris">Cancelada</span>'
+    : r.cancelable
+      ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
+      : `<span class="pildora pildora--gris" title="Se cancela hasta ${horasCancelacion} h antes">Fuera de plazo</span>`;
+
+  return `
+    <article class="turno" data-estado="${esc(r.estado)}">
+      <div class="turno__dia">
+        <span>${DIAS_CORTOS[dow]}</span>
+        <b class="numeros">${d}</b>
+        <span>${MESES_CORTOS[m - 1]}</span>
+      </div>
+      <div>
+        <p class="turno__fecha">${esc(r.hora)} – ${esc(r.fin)} · ${esc(r.disciplinaNombre)}</p>
+        <p class="turno__detalle">${esc(r.canchaNombre)} · ${esc(duracionTexto(r.duracionMin))} · a nombre de ${esc(r.nombre)}</p>
+        <div class="turno__meta">
+          <span class="pildora">Código ${esc(r.codigo)}</span>
+          ${!cancelada && r.cancelable ? '<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>' : ''}
+          ${r.notas ? `<span class="pildora">${esc(r.notas)}</span>` : ''}
+        </div>
+      </div>
+      <div class="turno__acciones">${acciones}</div>
+    </article>`;
 }
 
 /* ── Comportamiento común de la página ────────────────────────────────────── */
@@ -2460,6 +2912,8 @@ async function iniciarPagina() {
   iniciarCabecera();
   iniciarRevelado();
   iniciarAnio();
+  // La sesión se pide en paralelo: la cabecera no tiene por qué esperar al club.
+  traerSesion().then(pintarSesion);
   try {
     const config = await traerConfig();
     pintarDatosDelClub(config);
@@ -2482,7 +2936,12 @@ iniciarCabecera = function () {
 /* ═══════════════════════════════════════════════════════════════════════════
    Navegación entre pantallas sin recargar
    ═══════════════════════════════════════════════════════════════════════════ */
-const VISTAS = { '/': 'vista-inicio', '/reservar': 'vista-reservar', '/mis-turnos': 'vista-turnos' };
+const VISTAS = {
+  '/': 'vista-inicio',
+  '/reservar': 'vista-reservar',
+  '/mis-turnos': 'vista-turnos',
+  '/cuenta': 'vista-cuenta',
+};
 
 function mostrarVista(ruta) {
   const id = VISTAS[ruta] || 'vista-inicio';
@@ -2518,6 +2977,8 @@ async function irA(href) {
   }
 
   if (url.pathname !== '/reservar') return;
+  // Si venimos de confirmar un turno, la pantalla arranca limpia.
+  document.dispatchEvent(new CustomEvent('naranjos:reiniciar-reserva'));
   const p = url.searchParams;
   if (p.get('disciplina')) await marcar(`#opciones-disciplina input[value="${CSS.escape(p.get('disciplina'))}"]`);
   if (p.get('duracion')) await marcar(`#segmentado-duracion input[value="${CSS.escape(p.get('duracion'))}"]`);
@@ -2695,6 +3156,7 @@ async function arrancar() {
   pintarDisciplinas();
   pintarDias();
   recordarDatos();
+  usarDatosDeLaCuenta();
   aplicarParametrosDeUrl();
   actualizar();
 
@@ -2727,6 +3189,17 @@ function pintarDisciplinas() {
     pintarDuraciones();
     actualizar();
   });
+
+  /* Si el club ofrece un solo deporte —hoy, sólo pádel— elegirlo no es una
+     decisión: es un clic de peaje. Queda marcado de entrada. */
+  if (estado.config.disciplinas.length === 1) {
+    const unica = $('#opciones-disciplina input');
+    unica.checked = true;
+    estado.disciplina = unica.value;
+    const d = disciplinaActual();
+    estado.duracionMin = d.duracionPorDefecto ?? d.duraciones[0];
+    pintarDuraciones();
+  }
 }
 
 const disciplinaActual = () => estado.config.disciplinas.find((d) => d.slug === estado.disciplina);
@@ -2999,6 +3472,31 @@ async function enviar(e) {
   }
 }
 
+/**
+ * Vuelve al formulario en blanco después de confirmar un turno.
+ * Lo usan el botón "Reservar otro turno" y, en la vista previa, la vuelta a
+ * esta pantalla: nadie quiere encontrarse el ticket viejo en vez del formulario.
+ */
+function reiniciarReserva() {
+  estado.hora = null;
+  estado.canchaId = null;
+  ultimaConsulta = '';
+  $('#confirmacion').hidden = true;
+  $('#panel-reserva').hidden = false;
+  $('#error-envio').hidden = true;
+  $('#notas').value = '';
+  $$('#grilla-horarios input:checked, #lista-canchas input:checked').forEach((i) => { i.checked = false; });
+  $('#detalle-canchas').hidden = true;
+  document.title = 'Reservar turno — Los Naranjos';
+  actualizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('#otro-turno').addEventListener('click', reiniciarReserva);
+document.addEventListener('naranjos:reiniciar-reserva', () => {
+  if (!$('#confirmacion').hidden) reiniciarReserva();
+});
+
 function mostrarConfirmacion(reserva) {
   $('#panel-reserva').hidden = true;
   const panel = $('#confirmacion');
@@ -3070,6 +3568,38 @@ function recordarDatos() {
   } catch { /* almacenamiento no disponible */ }
 }
 
+/**
+ * Con la cuenta abierta, el nombre y el teléfono los pone la cuenta y quedan
+ * bloqueados: el servidor los toma de la sesión igual, así que dejarlos
+ * editables sólo serviría para que alguien crea que reservó a otro nombre.
+ */
+async function usarDatosDeLaCuenta() {
+  const sesion = await traerSesion();
+  pintarSesion(sesion);            // la cabecera también muestra quién entró
+  aplicarSesionAlFormulario(sesion);
+}
+
+/** Acomoda el paso "Tus datos" según haya o no alguien con la sesión abierta. */
+function aplicarSesionAlFormulario({ usuario } = {}) {
+  if (usuario) {
+    $('#nombre').value = usuario.nombre;
+    $('#telefono').value = usuario.telefono;
+    if (usuario.email && !$('#email').value) $('#email').value = usuario.email;
+  }
+  for (const id of ['#nombre', '#telefono']) {
+    $(id).readOnly = !!usuario;
+    $(id).closest('.campo').hidden = !!usuario;
+  }
+  $('#reservando-como').hidden = !usuario;
+  actualizarBoton();
+}
+
+/* Si alguien entra o sale mientras esta pantalla está abierta, el formulario se
+   entera: pasa en la vista previa, donde las pantallas conviven en una página. */
+document.addEventListener('naranjos:sesion', (e) => {
+  if (estado.config) aplicarSesionAlFormulario(e.detail);
+});
+
 function guardarDatos({ nombre, telefono, email }) {
   try {
     localStorage.setItem(RECUERDO, JSON.stringify({ nombre, telefono, email }));
@@ -3132,6 +3662,21 @@ if ($('#mt-telefono').value && ($('#mt-codigo').value || params.get('buscar'))) 
 
 $('#buscador').addEventListener('submit', (e) => { e.preventDefault(); buscar(); });
 
+/* Con la cuenta abierta no hay nada que buscar: los turnos son los suyos. */
+traerSesion().then(async ({ usuario }) => {
+  if (!usuario) return;
+  $('#buscador').hidden = true;
+  $('#aviso-sesion').hidden = false;
+  await config$;
+  $('#turnos').innerHTML = '<div class="esqueleto" style="height:86px"></div>';
+  try {
+    const { reservas } = await pedir('/api/reservas');
+    pintar(reservas);
+  } catch (err) {
+    mostrarError(err.message);
+  }
+});
+
 async function buscar() {
   const telefono = $('#mt-telefono').value.trim();
   const codigo = $('#mt-codigo').value.trim().toUpperCase();
@@ -3183,37 +3728,7 @@ function pintar(reservas) {
   }
 
   const horas = config?.reglas?.horasCancelacion ?? 6;
-
-  cont.innerHTML = ordenadas.map((r) => {
-    const [a, m, d] = r.fecha.split('-').map(Number);
-    const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
-    const cancelada = r.estado !== 'confirmada';
-
-    const acciones = cancelada
-      ? '<span class="pildora pildora--gris">Cancelada</span>'
-      : r.cancelable
-        ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
-        : `<span class="pildora pildora--gris" title="Se cancela hasta ${horas} h antes">Fuera de plazo</span>`;
-
-    return `
-      <article class="turno" data-estado="${esc(r.estado)}">
-        <div class="turno__dia">
-          <span>${DIAS_CORTOS[dow]}</span>
-          <b class="numeros">${d}</b>
-          <span>${MESES_CORTOS[m - 1]}</span>
-        </div>
-        <div>
-          <p class="turno__fecha">${esc(r.hora)} – ${esc(r.fin)} · ${esc(r.disciplinaNombre)}</p>
-          <p class="turno__detalle">${esc(r.canchaNombre)} · ${esc(duracionTexto(r.duracionMin))} · a nombre de ${esc(r.nombre)}</p>
-          <div class="turno__meta">
-            <span class="pildora">Código ${esc(r.codigo)}</span>
-            ${!cancelada && r.cancelable ? `<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>` : ''}
-            ${r.notas ? `<span class="pildora">${esc(r.notas)}</span>` : ''}
-          </div>
-        </div>
-        <div class="turno__acciones">${acciones}</div>
-      </article>`;
-  }).join('');
+  cont.innerHTML = ordenadas.map((r) => tarjetaTurno(r, horas)).join('');
 }
 
 /* ── Cancelación ──────────────────────────────────────────────────────────── */
@@ -3234,10 +3749,10 @@ $('#confirmar-cancelacion').addEventListener('click', async () => {
   try {
     await pedir('/api/reservas/cancelar', {
       method: 'POST',
-      body: { codigo: turnoAcancelar, telefono: $('#mt-telefono').value.trim() },
+      body: { codigo: turnoAcancelar, telefono: $('#mt-telefono').value.trim() || undefined },
     });
     $('#modal-cancelar').close();
-    buscar();
+    if ($('#buscador').hidden) location.reload(); else buscar();
   } catch (err) {
     const caja = $('#error-cancelacion');
     caja.hidden = false;
@@ -3247,6 +3762,239 @@ $('#confirmar-cancelacion').addEventListener('click', async () => {
     boton.textContent = 'Sí, cancelar';
   }
 });
+
+}
+{
+/** Cuenta del jugador: entrar, registrarse, ver sus turnos y editar sus datos. */
+const $ = (sel) => document.querySelector(sel);
+const RECUERDO = 'naranjos:datos-jugador';
+
+let config = null;
+let turnoAcancelar = null;
+
+const config$ = iniciarPagina().then((c) => { config = c; return c; });
+
+arrancar();
+
+async function arrancar() {
+  const sesion = await traerSesion();
+  pintarSesion(sesion);
+  if (sesion.usuario) pintarPerfil(sesion);
+  else precargarDatosConocidos();
+
+  config$.then((c) => {
+    const min = c?.reglas?.minClave;
+    if (min) $('#ayuda-clave').textContent = `Mínimo ${min} caracteres.`;
+  });
+}
+
+/* Si ya reservó desde este dispositivo, el teléfono va puesto: una cosa menos
+   que escribir, tanto para entrar como para registrarse. */
+function precargarDatosConocidos() {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(RECUERDO) || '{}');
+    if (guardado.telefono) {
+      $('#ingreso-telefono').value = guardado.telefono;
+      $('#registro-telefono').value = guardado.telefono;
+    }
+    if (guardado.nombre) $('#registro-nombre').value = guardado.nombre;
+    if (guardado.email) $('#registro-email').value = guardado.email;
+  } catch { /* almacenamiento no disponible */ }
+}
+
+/* ── Entrar ───────────────────────────────────────────────────────────────── */
+$('#form-ingreso').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-ingresar');
+  ocultar('#error-ingreso');
+  cargando(boton, '[data-texto-ingresar]', 'Entrando…');
+  try {
+    await pedir('/api/cuenta/ingreso', {
+      method: 'POST',
+      body: {
+        telefono: $('#ingreso-telefono').value.trim(),
+        clave: $('#ingreso-clave').value,
+      },
+    });
+    volverAEmpezar();
+  } catch (err) {
+    mostrar('#error-ingreso', err.message);
+    listo(boton, '[data-texto-ingresar]', 'Entrar');
+  }
+});
+
+/* ── Crear la cuenta ──────────────────────────────────────────────────────── */
+$('#form-registro').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-registrar');
+  ocultar('#error-registro');
+  cargando(boton, '[data-texto-registrar]', 'Creando…');
+  try {
+    const { reservasAdoptadas } = await pedir('/api/cuenta/registro', {
+      method: 'POST',
+      body: {
+        nombre: $('#registro-nombre').value.trim(),
+        telefono: $('#registro-telefono').value.trim(),
+        email: $('#registro-email').value.trim(),
+        clave: $('#registro-clave').value,
+      },
+    });
+    volverAEmpezar(
+      reservasAdoptadas > 0
+        ? `Listo. Encontramos ${reservasAdoptadas} ${reservasAdoptadas === 1 ? 'turno tuyo' : 'turnos tuyos'} y ${reservasAdoptadas === 1 ? 'quedó' : 'quedaron'} en tu cuenta.`
+        : '¡Bienvenido! Desde ahora reservás sin escribir tus datos.'
+    );
+  } catch (err) {
+    mostrar('#error-registro', err.message);
+    listo(boton, '[data-texto-registrar]', 'Crear mi cuenta');
+  }
+});
+
+/** Después de entrar o registrarse recargamos la sesión y pintamos el perfil. */
+async function volverAEmpezar(bienvenida) {
+  olvidarSesion();
+  const sesion = await traerSesion({ refrescar: true });
+  pintarSesion(sesion);
+  pintarPerfil(sesion);
+  if (bienvenida) {
+    const caja = $('#aviso-bienvenida');
+    caja.querySelector('span').textContent = bienvenida;
+    caja.hidden = false;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── El perfil ────────────────────────────────────────────────────────────── */
+function pintarPerfil({ usuario, turnos = [], historial = [] }) {
+  if (!usuario) return;
+  $('#perfil-nombre').value = usuario.nombre;
+  $('#perfil-telefono').value = usuario.telefono;
+  $('#perfil-email').value = usuario.email || '';
+
+  const horas = config?.reglas?.horasCancelacion ?? 6;
+  const proximos = turnos.filter((t) => t.estado === 'confirmada');
+  $('#cta-turnos').innerHTML = proximos.map((t) => tarjetaTurno(t, horas)).join('');
+  $('#sin-turnos').hidden = proximos.length > 0;
+
+  // En el historial sólo tiene sentido lo que ya pasó o se canceló.
+  const codigosProximos = new Set(proximos.map((t) => t.codigo));
+  const pasados = historial.filter((t) => !codigosProximos.has(t.codigo));
+  $('#panel-historial').hidden = pasados.length === 0;
+  $('#historial').innerHTML = pasados.map((t) => {
+    const [a, m, d] = t.fecha.split('-').map(Number);
+    const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
+    return `
+      <tr>
+        <td>${DIAS_CORTOS[dow]} ${d} ${MESES_CORTOS[m - 1]}</td>
+        <td class="numeros">${esc(t.hora)} – ${esc(t.fin)}</td>
+        <td>${esc(t.canchaNombre)}</td>
+        <td><code>${esc(t.codigo)}</code></td>
+        <td>${t.estado === 'confirmada' ? 'Jugado' : 'Cancelado'}</td>
+      </tr>`;
+  }).join('');
+}
+
+$('#form-perfil').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-perfil');
+  ocultar('#error-perfil');
+  ocultar('#ok-perfil');
+  cargando(boton, '[data-texto-perfil]', 'Guardando…');
+  try {
+    await pedir('/api/cuenta/perfil', {
+      method: 'POST',
+      body: {
+        nombre: $('#perfil-nombre').value.trim(),
+        email: $('#perfil-email').value.trim(),
+      },
+    });
+    olvidarSesion();
+    pintarSesion(await traerSesion({ refrescar: true }));
+    $('#ok-perfil').hidden = false;
+  } catch (err) {
+    mostrar('#error-perfil', err.message);
+  } finally {
+    listo(boton, '[data-texto-perfil]', 'Guardar cambios');
+  }
+});
+
+$('#form-clave').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-clave');
+  ocultar('#error-clave');
+  ocultar('#ok-clave');
+  cargando(boton, '[data-texto-clave]', 'Cambiando…');
+  try {
+    await pedir('/api/cuenta/clave', {
+      method: 'POST',
+      body: {
+        claveActual: $('#clave-actual').value,
+        claveNueva: $('#clave-nueva').value,
+      },
+    });
+    $('#form-clave').reset();
+    $('#ok-clave').hidden = false;
+  } catch (err) {
+    mostrar('#error-clave', err.message);
+  } finally {
+    listo(boton, '[data-texto-clave]', 'Cambiar contraseña');
+  }
+});
+
+$('#boton-salir').addEventListener('click', async () => {
+  await pedir('/api/cuenta/salir', { method: 'POST' }).catch(() => {});
+  olvidarSesion();
+  location.href = '/';
+});
+
+/* ── Cancelar un turno desde el perfil ────────────────────────────────────── */
+$('#cta-turnos').addEventListener('click', (e) => {
+  const boton = e.target.closest('[data-cancelar]');
+  if (!boton) return;
+  turnoAcancelar = boton.dataset.cancelar;
+  $('#cta-detalle').textContent =
+    boton.closest('.turno').querySelector('.turno__fecha').textContent;
+  $('#cta-error-cancelacion').hidden = true;
+  $('#cta-modal').showModal();
+});
+
+$('#cta-confirmar').addEventListener('click', async () => {
+  const boton = $('#cta-confirmar');
+  boton.disabled = true;
+  boton.textContent = 'Cancelando…';
+  try {
+    await pedir('/api/reservas/cancelar', { method: 'POST', body: { codigo: turnoAcancelar } });
+    $('#cta-modal').close();
+    olvidarSesion();
+    pintarPerfil(await traerSesion({ refrescar: true }));
+  } catch (err) {
+    const caja = $('#cta-error-cancelacion');
+    caja.hidden = false;
+    caja.querySelector('span').textContent = err.message;
+  } finally {
+    boton.disabled = false;
+    boton.textContent = 'Sí, cancelar';
+  }
+});
+
+/* ── Ayudantes de formulario ──────────────────────────────────────────────── */
+function mostrar(selector, mensaje) {
+  const caja = $(selector);
+  caja.hidden = false;
+  caja.querySelector('span').textContent = mensaje;
+}
+
+const ocultar = (selector) => { $(selector).hidden = true; };
+
+function cargando(boton, selectorTexto, texto) {
+  boton.disabled = true;
+  $(selectorTexto).innerHTML = `<span class="cargando"></span> ${esc(texto)}`;
+}
+
+function listo(boton, selectorTexto, texto) {
+  boton.disabled = false;
+  $(selectorTexto).textContent = texto;
+}
 
 }
 </script>

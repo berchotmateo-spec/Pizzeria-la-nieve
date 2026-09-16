@@ -188,6 +188,23 @@ export const PROGRAMAS = [
   },
 ];
 
+/**
+ * Cuentas de los jugadores.
+ * Tener cuenta no es obligatorio: quien no quiera registrarse sigue reservando
+ * con nombre y teléfono, como siempre. La cuenta le ahorra tener que escribir
+ * los datos cada vez y le muestra sus turnos sin buscar nada.
+ */
+export const CUENTAS = {
+  /** Largo mínimo de la contraseña. */
+  minClave: 8,
+  /** Cuántos días dura la sesión antes de tener que ingresar de nuevo. */
+  diasSesion: 30,
+  /** Intentos fallidos de ingreso antes de frenar, por teléfono y por IP. */
+  maxIntentos: 8,
+  /** Ventana, en minutos, en la que se cuentan esos intentos. */
+  ventanaIntentosMinutos: 15,
+};
+
 /** Panel de administración. Definí ADMIN_TOKEN como variable de entorno. */
 export const ADMIN = {
   token: process.env.ADMIN_TOKEN || 'naranjos-dev',

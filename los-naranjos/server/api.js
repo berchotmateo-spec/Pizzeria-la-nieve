@@ -1,10 +1,12 @@
 /** Endpoints JSON del sistema de turnos. */
 import {
   CLUB, DISCIPLINAS, CANCHAS, HORARIOS, RESERVAS, SERVICIOS, PROGRAMAS,
-  PRECIOS_PUBLICADOS, ADMIN, FERIADOS,
+  PRECIOS_PUBLICADOS, ADMIN, FERIADOS, CUENTAS,
 } from './config.js';
 import * as N from './turnos.js';
 import * as T from './tiempo.js';
+import * as C from './cuentas.js';
+import { cuentas } from './db.js';
 
 /** Payload público: todo lo que el navegador necesita, nada más. */
 export function configPublica() {
@@ -27,6 +29,7 @@ export function configPublica() {
       horasCancelacion: RESERVAS.horasCancelacion,
       maxPorTelefono: RESERVAS.maxPorTelefono,
       slotMinutos: RESERVAS.slotMinutos,
+      minClave: CUENTAS.minClave,
     },
     servicios: SERVICIOS,
     programas: PROGRAMAS,
@@ -35,6 +38,13 @@ export function configPublica() {
     hoy: T.hoy(),
   };
 }
+
+const sinSesion = () => {
+  const e = new Error('Necesitás ingresar a tu cuenta.');
+  e.status = 401;
+  e.code = 'NECESITA_SESION';
+  return e;
+};
 
 const noAutorizado = () => {
   const e = new Error('Necesitás iniciar sesión como administrador.');
@@ -66,28 +76,78 @@ export const rutas = {
     return N.disponibilidad(fecha, disciplina, duracion);
   },
 
-  'POST /api/reservas': ({ body, ip }) => {
-    const r = N.reservar(body, ip);
+  'POST /api/reservas': ({ body, ip, usuario }) => {
+    const r = N.reservar(body, ip, usuario);
     return { ok: true, reserva: N.serializar(r) };
   },
 
-  'GET /api/reservas': ({ query }) => {
+  'GET /api/reservas': ({ query, usuario }) => {
     const codigo = String(query.get('codigo') || '').trim().toUpperCase();
-    const telefono = N.normalizarTelefono(query.get('telefono'));
-    if (!codigo && !telefono) { const e = new Error('Indicá tu código o tu teléfono.'); e.status = 400; throw e; }
 
     if (codigo) {
       const r = N.consultas.porCodigo(codigo);
       if (!r || r.tipo !== 'reserva') { const e = new Error('No encontramos esa reserva.'); e.status = 404; throw e; }
-      if (telefono && r.telefono !== telefono) { const e = new Error('El teléfono no coincide.'); e.status = 403; throw e; }
+      const telefono = N.normalizarTelefono(query.get('telefono'));
+      const esSuyo = usuario && (r.usuario_id === usuario.id || r.telefono === usuario.telefono);
+      if (!esSuyo && telefono && r.telefono !== telefono) {
+        const e = new Error('El teléfono no coincide.'); e.status = 403; throw e;
+      }
       return { reservas: [N.serializar(r)] };
+    }
+
+    // Con la sesión abierta no hace falta escribir nada: son sus turnos.
+    if (usuario) {
+      return { reservas: N.consultas.deUsuario(usuario.id, T.hoy()).map(N.serializar) };
+    }
+
+    const telefono = N.normalizarTelefono(query.get('telefono'));
+    if (!telefono) { const e = new Error('Indicá tu código o tu teléfono.'); e.status = 400; throw e; }
+
+    /* Si ese teléfono tiene cuenta, sus turnos se ven entrando, no escribiendo
+       el número: si no, cualquiera que lo conozca vería a qué hora jugás. */
+    if (cuentas.porTelefono(telefono)) {
+      const e = new Error('Ese teléfono tiene cuenta. Ingresá para ver tus turnos.');
+      e.status = 401;
+      e.code = 'NECESITA_SESION';
+      throw e;
     }
     return { reservas: N.consultas.porTelefono(telefono, T.hoy()).map(N.serializar) };
   },
 
-  'POST /api/reservas/cancelar': ({ body }) => {
-    const r = N.cancelar(body.codigo, body.telefono);
+  'POST /api/reservas/cancelar': ({ body, usuario }) => {
+    const r = N.cancelar(body.codigo, body.telefono, usuario);
     return { ok: true, reserva: N.serializar(r) };
+  },
+
+  // ── Cuentas de los jugadores ──────────────────────────────────────────────
+  'POST /api/cuenta/registro': ({ body, req, res }) => C.registrar(body, req, res),
+
+  'POST /api/cuenta/ingreso': ({ body, req, res }) => C.ingresar(body, req, res),
+
+  'POST /api/cuenta/salir': ({ req, res }) => {
+    C.cerrarSesion(req, res);
+    return { ok: true };
+  },
+
+  /* Devuelve 200 con usuario en null cuando no hay sesión: para el navegador
+     "todavía no ingresaste" no es un error, es el estado normal de la home. */
+  'GET /api/cuenta': ({ usuario }) => {
+    if (!usuario) return { usuario: null };
+    return {
+      usuario: C.perfilPublico(usuario),
+      turnos: cuentas.reservasActivas(usuario.id, T.hoy()).map(N.serializar),
+      historial: cuentas.historial(usuario.id, 10).map(N.serializar),
+    };
+  },
+
+  'POST /api/cuenta/perfil': ({ body, usuario }) => {
+    if (!usuario) throw sinSesion();
+    return C.actualizarPerfil(usuario, body);
+  },
+
+  'POST /api/cuenta/clave': ({ body, usuario, req, res }) => {
+    if (!usuario) throw sinSesion();
+    return C.cambiarClave(usuario, body, req, res);
   },
 
   // ── Administración ────────────────────────────────────────────────────────

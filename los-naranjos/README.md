@@ -8,6 +8,9 @@ mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
 
 - **Sitio público** — presentación del club, instalaciones, tarifas y ubicación.
 - **Reservas online** — grilla en tiempo real, confirmación al instante y código de turno.
+- **Cuentas de jugador** — se registran con el teléfono y reservan sin volver a
+  escribir sus datos. Tener cuenta es opcional: quien no quiera sigue reservando
+  como visitante.
 - **Panel del socio** — consultá y cancelá tus turnos con el teléfono y el código.
 - **Panel del club** — grilla del día por cancha, cancelaciones y bloqueos.
 
@@ -120,6 +123,7 @@ los-naranjos/
 │   ├── tiempo.js     Fechas y horas en zona horaria de Mar del Plata
 │   ├── db.js         SQLite: esquema, transacciones y consultas
 │   ├── turnos.js     Disponibilidad, validaciones y alta de reservas
+│   ├── cuentas.js    Registro, ingreso, sesiones y claves
 │   ├── api.js        Endpoints JSON
 │   ├── index.js      Servidor HTTP y archivos estáticos
 │   ├── seed.js       Turnos de ejemplo
@@ -128,10 +132,11 @@ los-naranjos/
 │   ├── index.html        Home
 │   ├── reservar.html     Flujo de reserva
 │   ├── mis-turnos.html   Panel del socio
+│   ├── cuenta.html       Ingreso, registro y perfil del jugador
 │   ├── admin.html        Panel del club
 │   ├── 404.html
 │   ├── css/{base,site,app}.css
-│   ├── js/{comun,reservar,mis-turnos,admin}.js
+│   ├── js/{comun,reservar,mis-turnos,cuenta,admin}.js
 │   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
 │                        vive en assets/iconos.svg y va incrustada en cada página)
 ├── herramientas/
@@ -140,8 +145,34 @@ los-naranjos/
 │   └── index.html    Generado por `npm run vista-previa` — no editar a mano
 ├── propuesta/
 │   └── index.html    Propuesta comercial para presentarle al club
+├── cartilla/
+│   └── index.html    Cartilla económica — documento interno, no va al club
 └── data/turnos.db    Base de datos (no se versiona)
 ```
+
+### Cómo funcionan las cuentas
+
+El teléfono es el nombre de usuario: es el dato que el jugador ya usa para
+reservar y el que el club le pide por WhatsApp. De ahí para abajo:
+
+- La contraseña se guarda con **scrypt**, que viene en `node:crypto`. Nunca se
+  guarda ni se registra en limpio, y el perfil que viaja al navegador no la
+  incluye en ninguna forma.
+- La sesión es un token al azar en una **cookie HttpOnly**: ningún script la
+  puede leer. En la base queda sólo el hash del token, así que llevarse el
+  archivo de la base no alcanza para entrar en las cuentas.
+- Ocho intentos fallidos de ingreso, por teléfono y por IP, frenan la puerta
+  quince minutos. El conteo vive en memoria: si el servidor se reinicia, se
+  perdona.
+- Cambiar la contraseña cierra las sesiones abiertas en otros dispositivos, que
+  es de lo que se trata si alguien se metió en la cuenta.
+- Al registrarse, los turnos que ya había sacado con ese teléfono **pasan a su
+  cuenta**. Nadie quiere estrenar la cuenta vacía.
+- Con la sesión abierta, el nombre y el teléfono del turno los pone la cuenta,
+  no el formulario: no se puede reservar a nombre de otro sin querer.
+- Si un teléfono **tiene cuenta**, sus turnos se ven entrando, no escribiendo el
+  número. Para los visitantes sin cuenta, la consulta por teléfono sigue igual
+  que siempre.
 
 ### Cómo se evita la doble reserva
 

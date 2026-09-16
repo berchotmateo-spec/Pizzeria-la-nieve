@@ -118,8 +118,12 @@ export function normalizarTelefono(tel) {
   return d.replace(/^0+/, '').replace(/^54/, '');
 }
 
-/** Valida el pedido y crea la reserva. Devuelve la fila creada. */
-export function reservar(datos, ip) {
+/**
+ * Valida el pedido y crea la reserva. Devuelve la fila creada.
+ * Si `usuario` viene, la reserva queda a su nombre y con su teléfono: el que
+ * está con la sesión abierta no puede reservar a nombre de otro sin querer.
+ */
+export function reservar(datos, ip, usuario = null) {
   const disciplina = disciplinaPorSlug(datos.disciplina);
   if (!disciplina) throw errorCliente('Elegí una disciplina válida.');
 
@@ -150,14 +154,14 @@ export function reservar(datos, ip) {
     throw errorCliente(`Los turnos de hoy se reservan con ${RESERVAS.minutosAntelacion} minutos de anticipación.`);
   }
 
-  const nombre = String(datos.nombre || '').trim();
+  const nombre = String((usuario ? usuario.nombre : datos.nombre) || '').trim();
   if (nombre.length < 2) throw errorCliente('Escribí tu nombre y apellido.');
   if (nombre.length > 80) throw errorCliente('El nombre es demasiado largo.');
 
-  const telefono = normalizarTelefono(datos.telefono);
+  const telefono = normalizarTelefono(usuario ? usuario.telefono : datos.telefono);
   if (telefono.length < 8) throw errorCliente('Escribí un teléfono de contacto válido.');
 
-  const email = String(datos.email || '').trim();
+  const email = String(datos.email || (usuario ? usuario.email : '') || '').trim();
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
     throw errorCliente('El correo no parece válido.');
   }
@@ -212,6 +216,7 @@ export function reservar(datos, ip) {
       email: email || null,
       notas: notas || null,
       ip,
+      usuarioId: usuario ? usuario.id : null,
     },
     slots
   );
@@ -283,11 +288,16 @@ export function esCancelable(r) {
   return minutosFaltantes >= RESERVAS.horasCancelacion * 60;
 }
 
-export function cancelar(codigo, telefono) {
+/**
+ * Cancela un turno. Lo puede hacer quien tenga el código y el teléfono, o el
+ * jugador con la sesión abierta si el turno es suyo.
+ */
+export function cancelar(codigo, telefono, usuario = null) {
   const r = consultas.porCodigo(String(codigo || '').trim().toUpperCase());
   if (!r) throw errorCliente('No encontramos ese código de reserva.', 'NO_ENCONTRADO');
   if (r.estado === 'cancelada') throw errorCliente('Esa reserva ya estaba cancelada.');
-  if (normalizarTelefono(telefono) !== r.telefono) {
+  const esSuyo = usuario && (r.usuario_id === usuario.id || r.telefono === usuario.telefono);
+  if (!esSuyo && normalizarTelefono(telefono) !== r.telefono) {
     throw errorCliente('El teléfono no coincide con el de la reserva.', 'NO_AUTORIZADO');
   }
   if (!esCancelable(r)) {

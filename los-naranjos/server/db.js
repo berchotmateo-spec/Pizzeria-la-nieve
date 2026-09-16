@@ -43,10 +43,42 @@ db.exec(`
     PRIMARY KEY (cancha_id, fecha, slot)
   ) WITHOUT ROWID;
 
+  /* Cuentas de los jugadores. El teléfono es el nombre de usuario: es el dato
+     que ya usan para reservar y el que el club les pide por WhatsApp. */
+  CREATE TABLE IF NOT EXISTS usuarios (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    telefono      TEXT    NOT NULL UNIQUE,
+    nombre        TEXT    NOT NULL,
+    email         TEXT,
+    clave         TEXT    NOT NULL,
+    creado_en     TEXT    NOT NULL,
+    ultimo_acceso TEXT
+  );
+
+  /* Guardamos el hash del token, no el token: si alguien se lleva la base,
+     no se lleva las sesiones abiertas. */
+  CREATE TABLE IF NOT EXISTS sesiones (
+    token_hash TEXT    NOT NULL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    creada_en  TEXT    NOT NULL,
+    expira_en  TEXT    NOT NULL,
+    ip         TEXT
+  ) WITHOUT ROWID;
+
   CREATE INDEX IF NOT EXISTS idx_reservas_fecha    ON reservas (fecha, estado);
   CREATE INDEX IF NOT EXISTS idx_reservas_telefono ON reservas (telefono, estado);
   CREATE INDEX IF NOT EXISTS idx_ocupacion_fecha   ON ocupacion (fecha);
+  CREATE INDEX IF NOT EXISTS idx_sesiones_usuario  ON sesiones (usuario_id);
 `);
+
+/* Las bases creadas antes de que existieran las cuentas no tienen la columna
+   que ata una reserva a su dueño. Se agrega al vuelo: SQLite no tiene
+   "ADD COLUMN IF NOT EXISTS", así que preguntamos antes. */
+const columnasReservas = db.prepare('SELECT name FROM pragma_table_info(?)').all('reservas');
+if (!columnasReservas.some((c) => c.name === 'usuario_id')) {
+  db.exec('ALTER TABLE reservas ADD COLUMN usuario_id INTEGER REFERENCES usuarios(id)');
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_reservas_usuario ON reservas (usuario_id, fecha)');
 
 const ALFABETO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // sin 0/O ni 1/I
 const existeCodigo = db.prepare('SELECT 1 FROM reservas WHERE codigo = ?');
@@ -73,8 +105,8 @@ const q = {
   insertarReserva: db.prepare(
     `INSERT INTO reservas
        (codigo, tipo, disciplina, cancha_id, fecha, inicio_min, duracion_min,
-        nombre, telefono, email, notas, estado, creada_en, ip)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmada', ?, ?)`
+        nombre, telefono, email, notas, estado, creada_en, ip, usuario_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmada', ?, ?, ?)`
   ),
   insertarOcupacion: db.prepare(
     'INSERT INTO ocupacion (cancha_id, fecha, slot, reserva_id) VALUES (?, ?, ?, ?)'
@@ -106,6 +138,45 @@ const q = {
   desdeIpDesde: db.prepare(
     "SELECT COUNT(*) AS n FROM reservas WHERE ip = ? AND creada_en > ?"
   ),
+
+  // ── Cuentas ──────────────────────────────────────────────────────────────
+  crearUsuario: db.prepare(
+    'INSERT INTO usuarios (telefono, nombre, email, clave, creado_en) VALUES (?, ?, ?, ?, ?)'
+  ),
+  usuarioPorId: db.prepare('SELECT * FROM usuarios WHERE id = ?'),
+  usuarioPorTelefono: db.prepare('SELECT * FROM usuarios WHERE telefono = ?'),
+  actualizarPerfil: db.prepare('UPDATE usuarios SET nombre = ?, email = ? WHERE id = ?'),
+  actualizarClave: db.prepare('UPDATE usuarios SET clave = ? WHERE id = ?'),
+  marcarAcceso: db.prepare('UPDATE usuarios SET ultimo_acceso = ? WHERE id = ?'),
+  /* Al crear la cuenta, los turnos que ya había sacado con ese teléfono
+     pasan a ser suyos: nadie quiere empezar de cero. */
+  adoptarReservas: db.prepare(
+    'UPDATE reservas SET usuario_id = ? WHERE telefono = ? AND usuario_id IS NULL'
+  ),
+  reservasDeUsuario: db.prepare(
+    `SELECT * FROM reservas
+      WHERE usuario_id = ? AND tipo = 'reserva' AND fecha >= ?
+      ORDER BY fecha, inicio_min`
+  ),
+  historialDeUsuario: db.prepare(
+    `SELECT * FROM reservas
+      WHERE usuario_id = ? AND tipo = 'reserva'
+      ORDER BY fecha DESC, inicio_min DESC
+      LIMIT ?`
+  ),
+
+  // ── Sesiones ─────────────────────────────────────────────────────────────
+  crearSesion: db.prepare(
+    'INSERT INTO sesiones (token_hash, usuario_id, creada_en, expira_en, ip) VALUES (?, ?, ?, ?, ?)'
+  ),
+  sesionPorHash: db.prepare(
+    `SELECT s.token_hash, s.expira_en, u.*
+       FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id
+      WHERE s.token_hash = ?`
+  ),
+  borrarSesion: db.prepare('DELETE FROM sesiones WHERE token_hash = ?'),
+  borrarSesionesDe: db.prepare('DELETE FROM sesiones WHERE usuario_id = ?'),
+  limpiarSesiones: db.prepare('DELETE FROM sesiones WHERE expira_en < ?'),
 };
 
 /** Mapa 'canchaId:slot' → 'reserva' | 'bloqueo' para una fecha. */
@@ -138,7 +209,8 @@ export function crearReserva(datos, slots) {
       datos.email ?? null,
       datos.notas ?? null,
       ahoraISO(),
-      datos.ip ?? null
+      datos.ip ?? null,
+      datos.usuarioId ?? null
     );
     for (const slot of slots) {
       q.insertarOcupacion.run(datos.canchaId, datos.fecha, slot, lastInsertRowid);
@@ -170,11 +242,52 @@ export function cancelarReserva(id) {
   return q.porId.get(id);
 }
 
+/** Registra al jugador y se queda con los turnos que ya tenía ese teléfono. */
+export function crearUsuario({ telefono, nombre, email, clave }) {
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const { lastInsertRowid } = q.crearUsuario.run(
+      telefono, nombre, email ?? null, clave, ahoraISO()
+    );
+    const { changes } = q.adoptarReservas.run(lastInsertRowid, telefono);
+    db.exec('COMMIT');
+    return { usuario: q.usuarioPorId.get(lastInsertRowid), reservasAdoptadas: Number(changes) };
+  } catch (err) {
+    db.exec('ROLLBACK');
+    if (String(err.message).includes('UNIQUE')) {
+      const e = new Error('Ya hay una cuenta con ese teléfono.');
+      e.code = 'TELEFONO_EN_USO';
+      throw e;
+    }
+    throw err;
+  }
+}
+
+export const cuentas = {
+  porId: (id) => q.usuarioPorId.get(id),
+  porTelefono: (tel) => q.usuarioPorTelefono.get(tel),
+  actualizarPerfil: (id, nombre, email) => q.actualizarPerfil.run(nombre, email ?? null, id),
+  actualizarClave: (id, clave) => q.actualizarClave.run(clave, id),
+  marcarAcceso: (id) => q.marcarAcceso.run(ahoraISO(), id),
+  reservasActivas: (id, desde) => q.reservasDeUsuario.all(id, desde),
+  historial: (id, limite = 20) => q.historialDeUsuario.all(id, limite),
+};
+
+export const sesiones = {
+  crear: (tokenHash, usuarioId, expiraEn, ip) =>
+    q.crearSesion.run(tokenHash, usuarioId, ahoraISO(), expiraEn, ip ?? null),
+  porHash: (tokenHash) => q.sesionPorHash.get(tokenHash),
+  borrar: (tokenHash) => q.borrarSesion.run(tokenHash),
+  borrarTodasDe: (usuarioId) => q.borrarSesionesDe.run(usuarioId),
+  limpiarVencidas: () => q.limpiarSesiones.run(ahoraISO()),
+};
+
 export const consultas = {
   porCodigo: (codigo) => q.porCodigo.get(codigo),
   porId: (id) => q.porId.get(id),
   activasPorTelefono: (tel, desde) => q.activasPorTelefono.get(tel, desde).n,
   porTelefono: (tel, desde) => q.porTelefono.all(tel, desde),
+  deUsuario: (id, desde) => q.reservasDeUsuario.all(id, desde),
   delDia: (fecha) => q.delDia.all(fecha),
   rango: (desde, hasta) => q.rangoAdmin.all(desde, hasta),
   desdeIpDesde: (ip, desdeISO) => q.desdeIpDesde.get(ip, desdeISO).n,

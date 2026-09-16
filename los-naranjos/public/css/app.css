@@ -340,6 +340,46 @@
 .turno__detalle { font-size: .85rem; color: var(--tinta-2); margin-top: .2rem; }
 .turno__meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
 
+/* ── Cuenta del jugador ───────────────────────────────────────────────────── */
+.cuenta-grilla { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+@media (max-width: 860px) { .cuenta-grilla { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--papel-2);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-lg);
+  padding: clamp(1.4rem, 3vw, 2rem);
+  display: grid;
+  gap: 1.1rem;
+  align-content: start;
+}
+/* El registro es la acción que queremos: se marca sin gritar. */
+.panel--destacado { border-color: var(--naranja); box-shadow: 0 0 0 3px rgba(255,107,20,.1); }
+.panel h2 { font-size: 1.22rem; }
+.panel form { display: grid; gap: 1rem; }
+.panel__nota { font-size: .85rem; color: var(--tinta-3); line-height: 1.5; }
+.panel__tapa { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.panel .turnos { margin-top: 0; }
+.panel input:disabled { background: var(--papel-3); color: var(--tinta-3); cursor: not-allowed; }
+
+.perfil { display: grid; gap: 1.25rem; }
+
+/* Aviso de "estás reservando como…" arriba del formulario de datos. */
+.reservando-como {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex-wrap: wrap;
+  padding: .75rem 1rem;
+  border: 1px dashed var(--linea-2, var(--linea));
+  border-radius: var(--r-sm);
+  background: var(--papel-2);
+  font-size: .9rem;
+}
+.reservando-como svg { width: 18px; height: 18px; color: var(--naranja); flex: none; }
+.reservando-como b { font-weight: 600; }
+.reservando-como a { margin-left: auto; font-size: .85rem; }
+
 /* ── Panel del club ───────────────────────────────────────────────────────── */
 .acceso {
   max-width: 420px;

@@ -1,5 +1,6 @@
 /** Flujo de reserva de turnos. */
 import { pedir, traerConfig, iniciarCabecera, iniciarAnio, pintarDatosDelClub,
+         traerSesion, pintarSesion,
          esc, duracionTexto, linkWhatsapp, DIAS_CORTOS, MESES_CORTOS } from './comun.js';
 
 const $  = (sel, raiz = document) => raiz.querySelector(sel);
@@ -47,6 +48,7 @@ async function arrancar() {
   pintarDisciplinas();
   pintarDias();
   recordarDatos();
+  usarDatosDeLaCuenta();
   aplicarParametrosDeUrl();
   actualizar();
 
@@ -79,6 +81,17 @@ function pintarDisciplinas() {
     pintarDuraciones();
     actualizar();
   });
+
+  /* Si el club ofrece un solo deporte —hoy, sólo pádel— elegirlo no es una
+     decisión: es un clic de peaje. Queda marcado de entrada. */
+  if (estado.config.disciplinas.length === 1) {
+    const unica = $('#opciones-disciplina input');
+    unica.checked = true;
+    estado.disciplina = unica.value;
+    const d = disciplinaActual();
+    estado.duracionMin = d.duracionPorDefecto ?? d.duraciones[0];
+    pintarDuraciones();
+  }
 }
 
 const disciplinaActual = () => estado.config.disciplinas.find((d) => d.slug === estado.disciplina);
@@ -351,6 +364,31 @@ async function enviar(e) {
   }
 }
 
+/**
+ * Vuelve al formulario en blanco después de confirmar un turno.
+ * Lo usan el botón "Reservar otro turno" y, en la vista previa, la vuelta a
+ * esta pantalla: nadie quiere encontrarse el ticket viejo en vez del formulario.
+ */
+function reiniciarReserva() {
+  estado.hora = null;
+  estado.canchaId = null;
+  ultimaConsulta = '';
+  $('#confirmacion').hidden = true;
+  $('#panel-reserva').hidden = false;
+  $('#error-envio').hidden = true;
+  $('#notas').value = '';
+  $$('#grilla-horarios input:checked, #lista-canchas input:checked').forEach((i) => { i.checked = false; });
+  $('#detalle-canchas').hidden = true;
+  document.title = 'Reservar turno — Los Naranjos';
+  actualizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('#otro-turno').addEventListener('click', reiniciarReserva);
+document.addEventListener('naranjos:reiniciar-reserva', () => {
+  if (!$('#confirmacion').hidden) reiniciarReserva();
+});
+
 function mostrarConfirmacion(reserva) {
   $('#panel-reserva').hidden = true;
   const panel = $('#confirmacion');
@@ -421,6 +459,38 @@ function recordarDatos() {
     if (guardado.email) $('#email').value = guardado.email;
   } catch { /* almacenamiento no disponible */ }
 }
+
+/**
+ * Con la cuenta abierta, el nombre y el teléfono los pone la cuenta y quedan
+ * bloqueados: el servidor los toma de la sesión igual, así que dejarlos
+ * editables sólo serviría para que alguien crea que reservó a otro nombre.
+ */
+async function usarDatosDeLaCuenta() {
+  const sesion = await traerSesion();
+  pintarSesion(sesion);            // la cabecera también muestra quién entró
+  aplicarSesionAlFormulario(sesion);
+}
+
+/** Acomoda el paso "Tus datos" según haya o no alguien con la sesión abierta. */
+function aplicarSesionAlFormulario({ usuario } = {}) {
+  if (usuario) {
+    $('#nombre').value = usuario.nombre;
+    $('#telefono').value = usuario.telefono;
+    if (usuario.email && !$('#email').value) $('#email').value = usuario.email;
+  }
+  for (const id of ['#nombre', '#telefono']) {
+    $(id).readOnly = !!usuario;
+    $(id).closest('.campo').hidden = !!usuario;
+  }
+  $('#reservando-como').hidden = !usuario;
+  actualizarBoton();
+}
+
+/* Si alguien entra o sale mientras esta pantalla está abierta, el formulario se
+   entera: pasa en la vista previa, donde las pantallas conviven en una página. */
+document.addEventListener('naranjos:sesion', (e) => {
+  if (estado.config) aplicarSesionAlFormulario(e.detail);
+});
 
 function guardarDatos({ nombre, telefono, email }) {
   try {

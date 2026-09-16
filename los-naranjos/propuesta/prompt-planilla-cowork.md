@@ -51,7 +51,7 @@ Qué tienen:
 
 === LO QUE LE CONSTRUÍ ===
 
-Un sitio web propio con sistema de turnos. Cuatro partes:
+Un sitio web propio con sistema de turnos. Cinco partes:
 
 1. Sitio público: presentación del club, las canchas, la escuela, ubicación,
    horarios, y disponibilidad en vivo en la portada.
@@ -60,9 +60,14 @@ Un sitio web propio con sistema de turnos. Cuatro partes:
    central, que aparece marcada "con gradas") o dejar que el sistema le asigne
    una. Deja nombre y teléfono y recibe un código de reserva (formato LN-XXXXX).
    Funciona las 24 horas, también de madrugada.
-3. Panel del socio ("Mis turnos"): con el teléfono consulta sus turnos y cancela
+3. Cuenta del jugador: quien quiera se registra con su teléfono y una
+   contraseña, y desde entonces reserva sin escribir sus datos y ve sus turnos
+   sin buscar nada. Registrarse es optativo: el que prefiere reservar como
+   visitante lo sigue haciendo igual. Al crear la cuenta, los turnos que ya
+   había sacado con ese teléfono pasan a su cuenta.
+4. Panel del socio ("Mis turnos"): con el teléfono consulta sus turnos y cancela
    solo, sin llamar. Hoy configurado hasta 6 horas antes del turno.
-4. Panel del club: la grilla del día completa, canchas en las filas y horarios
+5. Panel del club: la grilla del día completa, canchas en las filas y horarios
    en las columnas. Muestra quién reservó cada turno, permite cancelar y
    bloquear una cancha por torneo o mantenimiento, y resume turnos y horas
    vendidas del día.
@@ -72,7 +77,8 @@ Características que importan y conviene que la planilla destaque:
   no es una validación que se puede escapar, lo garantiza la base de datos.
 - No hay comisión por reserva. Ni al club ni al jugador.
 - Las reservas y los datos de los jugadores quedan en poder del club.
-- El jugador no necesita bajarse ninguna aplicación ni crearse una cuenta.
+- El jugador no necesita bajarse ninguna aplicación. Puede crearse una cuenta
+  para reservar más rápido, pero no está obligado.
 - Anda en celular.
 - Los turnos se reservan hasta 14 días para adelante (ajustable).
 - Máximo 3 turnos activos por teléfono, para que nadie acapare la grilla.
@@ -95,10 +101,10 @@ por una persona contestando WhatsApp, y lo que no se contesta a tiempo se pierde
 
 --- Hoja 2: "Qué incluye" ---
 Tabla de tres columnas: Módulo | Qué hace | Estado.
-Filas agrupadas por las cuatro partes del sistema (sitio público, reserva
-online, panel del socio, panel del club), con las funciones de cada una en
-filas propias. La columna Estado dice "Listo" en todas, porque está construido.
-Usá subtítulos de grupo con fondo de color para separar las cuatro partes.
+Filas agrupadas por las cinco partes del sistema (sitio público, reserva
+online, cuenta del jugador, panel del socio, panel del club), con las funciones
+de cada una en filas propias. La columna Estado dice "Listo" en todas, porque
+está construido. Usá subtítulos de grupo con fondo de color para separarlas.
 
 --- Hoja 3: "Las canchas" ---
 Tabla con las 7 canchas: N° | Nombre | Superficie | Techada | Gradas | Blindex o muro.

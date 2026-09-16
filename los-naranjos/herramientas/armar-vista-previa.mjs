@@ -32,6 +32,7 @@ const entre = (texto, inicio, fin, etiqueta) => {
 const indice = leer('public/index.html');
 const reservar = leer('public/reservar.html');
 const turnos = leer('public/mis-turnos.html');
+const cuenta = leer('public/cuenta.html');
 
 const sprite = entre(indice, '<svg xmlns="http://www.w3.org/2000/svg" style="display:none"', '</svg>', 'sprite');
 const cabecera = entre(indice, '<header class="cabecera">', '</header>', 'cabecera');
@@ -46,6 +47,10 @@ let vistaTurnos =
   entre(turnos, '<section class="tapa">', '</section>', 'tapa de turnos') +
   entre(turnos, '<main id="contenido">', '</main>', 'main de turnos') +
   entre(turnos, '<dialog class="modal" id="modal-cancelar">', '</dialog>', 'modal de cancelación');
+let vistaCuenta =
+  entre(cuenta, '<section class="tapa">', '</section>', 'tapa de cuenta') +
+  entre(cuenta, '<main id="contenido">', '</main>', 'main de cuenta') +
+  entre(cuenta, '<dialog class="modal" id="modal-cancelar">', '</dialog>', 'modal de cuenta');
 
 // El navegador bloquea las descargas dentro de la vista previa: sacamos el .ics.
 vistaReservar = vistaReservar.replace(
@@ -57,6 +62,22 @@ vistaTurnos = vistaTurnos
   .replace('id="telefono" name="telefono"', 'id="mt-telefono" name="telefono"')
   .replace('for="codigo"', 'for="mt-codigo"')
   .replace('id="codigo" name="codigo"', 'id="mt-codigo" name="codigo"');
+
+/* La cuenta también lista turnos y también tiene su modal de cancelación, así
+   que en la página única sus identificadores llevan prefijo. */
+const ID_CUENTA = [
+  ['turnos', 'cta-turnos'],
+  ['modal-cancelar', 'cta-modal'],
+  ['detalle-cancelacion', 'cta-detalle'],
+  ['error-cancelacion', 'cta-error-cancelacion'],
+  ['confirmar-cancelacion', 'cta-confirmar'],
+];
+const renombrarEnCuenta = (texto) => ID_CUENTA.reduce(
+  (acc, [viejo, nuevo]) =>
+    acc.replaceAll(`id="${viejo}"`, `id="${nuevo}"`).replaceAll(`$('#${viejo}')`, `$('#${nuevo}')`),
+  texto
+);
+vistaCuenta = renombrarEnCuenta(vistaCuenta);
 
 // ── CSS ────────────────────────────────────────────────────────────────────
 const css = ['public/css/base.css', 'public/css/site.css', 'public/css/app.css']
@@ -73,6 +94,7 @@ const jsInicio = sinImport(
     .replace('</script>', '')
 );
 const jsReservar = sinImport(leer('public/js/reservar.js'));
+const jsCuenta = renombrarEnCuenta(sinImport(leer('public/js/cuenta.js')));
 const jsTurnos = sinImport(leer('public/js/mis-turnos.js'))
   .replace(/\$\('#telefono'\)/g, "$('#mt-telefono')")
   .replace(/\$\('#codigo'\)/g, "$('#mt-codigo')");
@@ -128,6 +150,7 @@ ${cabecera}
 <div class="vista" id="vista-inicio">${inicio}</div>
 <div class="vista" id="vista-reservar" hidden>${vistaReservar}</div>
 <div class="vista" id="vista-turnos" hidden>${vistaTurnos}</div>
+<div class="vista" id="vista-cuenta" hidden>${vistaCuenta}</div>
 
 ${pie}
 ${flotante}
@@ -341,7 +364,10 @@ function manejar(url, metodo, cuerpo) {
     return { status: 200, datos: disponibilidad(fecha, slug, dur) };
   }
 
-  if (ruta === '/api/reservas' && metodo === 'POST') return crearReserva(cuerpo);
+  if (ruta === '/api/reservas' && metodo === 'POST') {
+    const dueño = usuarioActual();
+    return crearReserva(dueño ? { ...cuerpo, nombre: dueño.nombre, telefono: dueño.telefono } : cuerpo);
+  }
 
   if (ruta === '/api/reservas') {
     const codigo = String(q.get('codigo') || '').trim().toUpperCase();
@@ -353,7 +379,12 @@ function manejar(url, metodo, cuerpo) {
       if (telefono && r.telefono !== telefono) return fallo('El teléfono no coincide.', 403);
       return { status: 200, datos: { reservas: [serializar(r)] } };
     }
-    const mias = todas.filter((r) => r.telefono === telefono && r.fecha >= hoy());
+    const dueño = usuarioActual();
+    const tel = dueño ? dueño.telefono : telefono;
+    if (!dueño && leerCuentas().some((u) => u.telefono === tel)) {
+      return fallo('Ese teléfono tiene cuenta. Ingresá para ver tus turnos.', 401, 'NECESITA_SESION');
+    }
+    const mias = todas.filter((r) => r.telefono === tel && r.fecha >= hoy());
     return { status: 200, datos: { reservas: mias.map(serializar) } };
   }
 
@@ -362,11 +393,125 @@ function manejar(url, metodo, cuerpo) {
     const r = todas.find((x) => x.codigo === String(cuerpo.codigo || '').trim().toUpperCase());
     if (!r) return fallo('No encontramos ese código de reserva.', 404, 'NO_ENCONTRADO');
     if (r.estado === 'cancelada') return fallo('Esa reserva ya estaba cancelada.');
-    if (normalizarTel(cuerpo.telefono) !== r.telefono) return fallo('El teléfono no coincide con el de la reserva.', 403, 'NO_AUTORIZADO');
+    const dueño = usuarioActual();
+    const esSuyo = dueño && dueño.telefono === r.telefono;
+    if (!esSuyo && normalizarTel(cuerpo.telefono) !== r.telefono) {
+      return fallo('El teléfono no coincide con el de la reserva.', 403, 'NO_AUTORIZADO');
+    }
     if (!cancelable(r)) return fallo(\`Las cancelaciones online se aceptan hasta \${CONFIG.reglas.horasCancelacion} horas antes. Llamanos al \${CONFIG.club.telefono}.\`);
     r.estado = 'cancelada';
     guardarReservas(todas);
     return { status: 200, datos: { ok: true, reserva: serializar(r) } };
+  }
+
+  if (ruta.startsWith('/api/cuenta')) return manejarCuenta(ruta, metodo, cuerpo);
+
+  return fallo('Ese endpoint no existe.', 404);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Cuentas, versión vista previa.
+   El servidor real guarda la clave con scrypt y la sesión en una cookie que el
+   navegador no puede leer. Acá no hay servidor: la cuenta queda en este
+   dispositivo y la clave se guarda revuelta con un hash simple, sólo para no
+   dejarla escrita en limpio. Alcanza para mostrar cómo se usa, no para
+   proteger nada.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const LLAVE_CUENTAS = 'naranjos:vista-previa-cuentas';
+const LLAVE_SESION = 'naranjos:vista-previa-sesion';
+
+const revolver = (texto) => {
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return 'demo$' + (h >>> 0).toString(36);
+};
+
+const leerCuentas = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CUENTAS) || '[]'); } catch { return []; } };
+const guardarCuentas = (c) => { try { localStorage.setItem(LLAVE_CUENTAS, JSON.stringify(c)); } catch { /* sin almacenamiento */ } };
+const telefonoEnSesion = () => { try { return localStorage.getItem(LLAVE_SESION) || ''; } catch { return ''; } };
+const abrirSesion = (tel) => { try { localStorage.setItem(LLAVE_SESION, tel); } catch { /* sin almacenamiento */ } };
+const cerrarSesion = () => { try { localStorage.removeItem(LLAVE_SESION); } catch { /* sin almacenamiento */ } };
+
+const usuarioActual = () => leerCuentas().find((u) => u.telefono === telefonoEnSesion()) || null;
+const perfilPublico = (u) => ({ nombre: u.nombre, telefono: u.telefono, email: u.email || null });
+
+function manejarCuenta(ruta, metodo, cuerpo) {
+  const usuario = usuarioActual();
+
+  if (ruta === '/api/cuenta' && metodo === 'GET') {
+    if (!usuario) return { status: 200, datos: { usuario: null } };
+    const suyas = leerReservas().filter((r) => r.telefono === usuario.telefono);
+    return {
+      status: 200,
+      datos: {
+        usuario: perfilPublico(usuario),
+        turnos: suyas.filter((r) => r.fecha >= hoy()).map(serializar),
+        historial: suyas.slice(-10).reverse().map(serializar),
+      },
+    };
+  }
+
+  if (ruta === '/api/cuenta/registro') {
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    const telefono = normalizarTel(cuerpo.telefono);
+    if (telefono.length < 8) return fallo('Escribí un teléfono válido.');
+    const clave = String(cuerpo.clave || '');
+    if (clave.length < CONFIG.reglas.minClave) {
+      return fallo(\`La contraseña tiene que tener al menos \${CONFIG.reglas.minClave} caracteres.\`);
+    }
+    const cuentas = leerCuentas();
+    if (cuentas.some((u) => u.telefono === telefono)) {
+      return fallo('Ya hay una cuenta con ese teléfono. Probá ingresando.', 409, 'TELEFONO_EN_USO');
+    }
+    cuentas.push({ nombre, telefono, email: String(cuerpo.email || '').trim() || null, clave: revolver(clave) });
+    guardarCuentas(cuentas);
+    abrirSesion(telefono);
+    const adoptadas = leerReservas().filter((r) => r.telefono === telefono && r.estado === 'confirmada').length;
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(cuentas.at(-1)), reservasAdoptadas: adoptadas } };
+  }
+
+  if (ruta === '/api/cuenta/ingreso') {
+    const telefono = normalizarTel(cuerpo.telefono);
+    const u = leerCuentas().find((x) => x.telefono === telefono);
+    if (!u || u.clave !== revolver(String(cuerpo.clave || ''))) {
+      return fallo('El teléfono o la contraseña no coinciden.', 401, 'NO_AUTORIZADO');
+    }
+    abrirSesion(telefono);
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(u) } };
+  }
+
+  if (ruta === '/api/cuenta/salir') {
+    cerrarSesion();
+    return { status: 200, datos: { ok: true } };
+  }
+
+  if (!usuario) return fallo('Necesitás ingresar a tu cuenta.', 401, 'NECESITA_SESION');
+
+  if (ruta === '/api/cuenta/perfil') {
+    const cuentas = leerCuentas();
+    const u = cuentas.find((x) => x.telefono === usuario.telefono);
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    u.nombre = nombre;
+    u.email = String(cuerpo.email || '').trim() || null;
+    guardarCuentas(cuentas);
+    return { status: 200, datos: { ok: true, usuario: perfilPublico(u) } };
+  }
+
+  if (ruta === '/api/cuenta/clave') {
+    const cuentas = leerCuentas();
+    const u = cuentas.find((x) => x.telefono === usuario.telefono);
+    if (u.clave !== revolver(String(cuerpo.claveActual || ''))) {
+      return fallo('La contraseña actual no coincide.', 401, 'NO_AUTORIZADO');
+    }
+    const nueva = String(cuerpo.claveNueva || '');
+    if (nueva.length < CONFIG.reglas.minClave) {
+      return fallo(\`La contraseña tiene que tener al menos \${CONFIG.reglas.minClave} caracteres.\`);
+    }
+    u.clave = revolver(nueva);
+    guardarCuentas(cuentas);
+    return { status: 200, datos: { ok: true } };
   }
 
   return fallo('Ese endpoint no existe.', 404);
@@ -399,7 +544,12 @@ iniciarCabecera = function () {
 /* ═══════════════════════════════════════════════════════════════════════════
    Navegación entre pantallas sin recargar
    ═══════════════════════════════════════════════════════════════════════════ */
-const VISTAS = { '/': 'vista-inicio', '/reservar': 'vista-reservar', '/mis-turnos': 'vista-turnos' };
+const VISTAS = {
+  '/': 'vista-inicio',
+  '/reservar': 'vista-reservar',
+  '/mis-turnos': 'vista-turnos',
+  '/cuenta': 'vista-cuenta',
+};
 
 function mostrarVista(ruta) {
   const id = VISTAS[ruta] || 'vista-inicio';
@@ -435,6 +585,8 @@ async function irA(href) {
   }
 
   if (url.pathname !== '/reservar') return;
+  // Si venimos de confirmar un turno, la pantalla arranca limpia.
+  document.dispatchEvent(new CustomEvent('naranjos:reiniciar-reserva'));
   const p = url.searchParams;
   if (p.get('disciplina')) await marcar(\`#opciones-disciplina input[value="\${CSS.escape(p.get('disciplina'))}"]\`);
   if (p.get('duracion')) await marcar(\`#segmentado-duracion input[value="\${CSS.escape(p.get('duracion'))}"]\`);
@@ -469,6 +621,9 @@ ${jsReservar}
 }
 {
 ${jsTurnos}
+}
+{
+${jsCuenta}
 }
 </script>
 `;

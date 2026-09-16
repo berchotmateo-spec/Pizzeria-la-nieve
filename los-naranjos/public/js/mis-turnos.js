@@ -1,5 +1,5 @@
 /** Consulta y cancelación de turnos por parte del socio. */
-import { pedir, iniciarPagina, esc, duracionTexto, DIAS_CORTOS, MESES_CORTOS } from './comun.js';
+import { pedir, iniciarPagina, traerSesion, tarjetaTurno } from './comun.js';
 
 const $ = (sel) => document.querySelector(sel);
 const RECUERDO = 'naranjos:datos-jugador';
@@ -21,6 +21,21 @@ if (params.get('codigo')) $('#codigo').value = params.get('codigo').toUpperCase(
 if ($('#telefono').value && ($('#codigo').value || params.get('buscar'))) buscar();
 
 $('#buscador').addEventListener('submit', (e) => { e.preventDefault(); buscar(); });
+
+/* Con la cuenta abierta no hay nada que buscar: los turnos son los suyos. */
+traerSesion().then(async ({ usuario }) => {
+  if (!usuario) return;
+  $('#buscador').hidden = true;
+  $('#aviso-sesion').hidden = false;
+  await config$;
+  $('#turnos').innerHTML = '<div class="esqueleto" style="height:86px"></div>';
+  try {
+    const { reservas } = await pedir('/api/reservas');
+    pintar(reservas);
+  } catch (err) {
+    mostrarError(err.message);
+  }
+});
 
 async function buscar() {
   const telefono = $('#telefono').value.trim();
@@ -73,37 +88,7 @@ function pintar(reservas) {
   }
 
   const horas = config?.reglas?.horasCancelacion ?? 6;
-
-  cont.innerHTML = ordenadas.map((r) => {
-    const [a, m, d] = r.fecha.split('-').map(Number);
-    const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
-    const cancelada = r.estado !== 'confirmada';
-
-    const acciones = cancelada
-      ? '<span class="pildora pildora--gris">Cancelada</span>'
-      : r.cancelable
-        ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
-        : `<span class="pildora pildora--gris" title="Se cancela hasta ${horas} h antes">Fuera de plazo</span>`;
-
-    return `
-      <article class="turno" data-estado="${esc(r.estado)}">
-        <div class="turno__dia">
-          <span>${DIAS_CORTOS[dow]}</span>
-          <b class="numeros">${d}</b>
-          <span>${MESES_CORTOS[m - 1]}</span>
-        </div>
-        <div>
-          <p class="turno__fecha">${esc(r.hora)} – ${esc(r.fin)} · ${esc(r.disciplinaNombre)}</p>
-          <p class="turno__detalle">${esc(r.canchaNombre)} · ${esc(duracionTexto(r.duracionMin))} · a nombre de ${esc(r.nombre)}</p>
-          <div class="turno__meta">
-            <span class="pildora">Código ${esc(r.codigo)}</span>
-            ${!cancelada && r.cancelable ? `<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>` : ''}
-            ${r.notas ? `<span class="pildora">${esc(r.notas)}</span>` : ''}
-          </div>
-        </div>
-        <div class="turno__acciones">${acciones}</div>
-      </article>`;
-  }).join('');
+  cont.innerHTML = ordenadas.map((r) => tarjetaTurno(r, horas)).join('');
 }
 
 /* ── Cancelación ──────────────────────────────────────────────────────────── */
@@ -124,10 +109,10 @@ $('#confirmar-cancelacion').addEventListener('click', async () => {
   try {
     await pedir('/api/reservas/cancelar', {
       method: 'POST',
-      body: { codigo: turnoAcancelar, telefono: $('#telefono').value.trim() },
+      body: { codigo: turnoAcancelar, telefono: $('#telefono').value.trim() || undefined },
     });
     $('#modal-cancelar').close();
-    buscar();
+    if ($('#buscador').hidden) location.reload(); else buscar();
   } catch (err) {
     const caja = $('#error-cancelacion');
     caja.hidden = false;

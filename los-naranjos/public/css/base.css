@@ -375,6 +375,29 @@ h1, h2, h3, h4 {
 }
 .cabecera__acciones { display: flex; align-items: center; gap: .8rem; }
 
+/* Enlace a la cuenta: discreto al lado del botón de reservar, pero con el
+   nombre del jugador bien visible cuando ya entró. */
+.cuenta-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .7rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--linea-clara);
+  color: var(--claro-2);
+  font-size: .8rem;
+  font-weight: 500;
+  max-width: 11rem;
+  transition: border-color var(--transicion), color var(--transicion), background var(--transicion);
+}
+.cuenta-enlace:hover { color: var(--claro); border-color: var(--claro-3); background: rgba(255,255,255,.05); }
+.cuenta-enlace svg { width: 16px; height: 16px; flex: none; }
+.cuenta-enlace span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) {
+  .cuenta-enlace { padding: .4rem; max-width: none; }
+  .cuenta-enlace span { display: none; }
+}
+
 .menu-boton { display: none; padding: .5rem; color: var(--claro); }
 .menu-boton svg { width: 22px; height: 22px; }
 

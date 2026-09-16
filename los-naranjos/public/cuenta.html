@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reservar turno — Los Naranjos</title>
-<meta name="description" content="Reservá tu cancha de pádel en Los Naranjos, Dorrego 333, Mar del Plata. Disponibilidad en tiempo real y confirmación al instante.">
+<title>Mi cuenta — Los Naranjos</title>
+<meta name="description" content="Entrá a tu cuenta de Los Naranjos para reservar más rápido y ver tus turnos.">
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#0B0C0E">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
@@ -116,17 +116,16 @@
       <a href="/#disciplinas">Disciplinas</a>
       <a href="/#instalaciones">Instalaciones</a>
       <a href="/#tarifas">Tarifas</a>
-      <a href="/reservar" aria-current="page">Reservar</a>
+      <a href="/reservar">Reservar</a>
       <a href="/mis-turnos">Mis turnos</a>
+      <a href="/cuenta" aria-current="page">Mi cuenta</a>
     </nav>
     <div class="cabecera__acciones">
       <a class="cuenta-enlace" href="/cuenta" title="Mi cuenta">
         <svg><use href="#i-usuario"/></svg>
         <span data-nombre-jugador>Ingresar</span>
       </a>
-      <a class="boton boton--chico boton--contorno-claro boton--desktop" data-wsp="¡Hola! Necesito ayuda para reservar una cancha." target="_blank" rel="noopener">
-        <svg width="15" height="15"><use href="#i-whatsapp"/></svg> Ayuda
-      </a>
+      <a class="boton boton--chico" href="/reservar">Reservar<span class="oculto-movil">&nbsp;turno</span></a>
       <button class="menu-boton" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="navegacion">
         <svg><use href="#i-menu"/></svg>
       </button>
@@ -136,187 +135,177 @@
 
 <section class="tapa">
   <div class="envoltura tapa__interior">
-    <p class="migas"><a href="/">Inicio</a> <span>/</span> <span>Reservar</span></p>
-    <h1 class="display-md">Reservá tu cancha</h1>
-    <p>Elegí el deporte, el día y el horario. La grilla se actualiza en tiempo real y la reserva queda confirmada al instante.</p>
+    <p class="migas"><a href="/">Inicio</a> <span>/</span> <span>Mi cuenta</span></p>
+    <h1 class="display-md" data-sin-sesion hidden>Tu cuenta en Los Naranjos</h1>
+    <p data-sin-sesion hidden>
+      Con una cuenta reservás en dos toques: no tenés que escribir tu nombre y tu
+      teléfono cada vez, y tus turnos te esperan acá adentro.
+    </p>
+    <h1 class="display-md" data-con-sesion hidden>Hola, <span data-nombre-completo></span></h1>
+    <p data-con-sesion hidden>Tus datos, tus turnos y tu contraseña, todo en esta página.</p>
   </div>
 </section>
 
 <main id="contenido">
-  <div class="envoltura">
+  <div class="envoltura" style="padding-block:clamp(2.5rem,5vw,4rem) clamp(4rem,8vw,6rem)">
 
-    <!-- Aviso si el sistema de turnos no responde -->
-    <div class="aviso aviso--alerta" id="sin-sistema" hidden style="margin-top:1.5rem">
-      <svg width="20" height="20" style="flex:none"><use href="#i-reloj"/></svg>
-      <div>
-        <b>El sistema de turnos no está respondiendo.</b><br>
-        Podés reservar igual escribiéndonos por WhatsApp o llamando al
-        <a class="enlace-linea" data-tel data-club="telefono">(0223) 472-9295</a>.
-        <p style="margin-top:.7rem">
-          <a class="boton boton--chico" data-wsp="¡Hola! Quiero reservar una cancha en Los Naranjos." target="_blank" rel="noopener">
-            <svg width="15" height="15"><use href="#i-whatsapp"/></svg> Reservar por WhatsApp
-          </a>
+    <!-- ── Sin sesión: entrar o crear la cuenta ─────────────────────────── -->
+    <div class="cuenta-grilla" data-sin-sesion hidden>
+      <section class="panel">
+        <h2>Ya tengo cuenta</h2>
+        <form id="form-ingreso" novalidate>
+          <div class="campo">
+            <label for="ingreso-telefono">Teléfono</label>
+            <input id="ingreso-telefono" name="telefono" type="tel" inputmode="tel" autocomplete="username" required placeholder="223 555-1234">
+          </div>
+          <div class="campo">
+            <label for="ingreso-clave">Contraseña</label>
+            <input id="ingreso-clave" name="clave" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="aviso aviso--error" id="error-ingreso" hidden><span></span></div>
+          <button class="boton boton--ancho" type="submit" id="boton-ingresar">
+            <span data-texto-ingresar>Entrar</span>
+          </button>
+        </form>
+        <p class="panel__nota">
+          ¿Te olvidaste la contraseña? Escribinos por WhatsApp y la reponemos a mano.
         </p>
-      </div>
+      </section>
+
+      <section class="panel panel--destacado">
+        <h2>Quiero crear mi cuenta</h2>
+        <form id="form-registro" novalidate>
+          <div class="campo">
+            <label for="registro-nombre">Nombre y apellido</label>
+            <input id="registro-nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Mateo Berchot">
+          </div>
+          <div class="campo">
+            <label for="registro-telefono">Teléfono</label>
+            <input id="registro-telefono" name="telefono" type="tel" inputmode="tel" autocomplete="username" required placeholder="223 555-1234">
+            <p class="ayuda">Es tu usuario, y el número con el que el club te ubica.</p>
+          </div>
+          <div class="campo">
+            <label for="registro-email">Correo <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
+            <input id="registro-email" name="email" type="email" autocomplete="email" placeholder="mateo@ejemplo.com">
+          </div>
+          <div class="campo">
+            <label for="registro-clave">Contraseña</label>
+            <input id="registro-clave" name="clave" type="password" autocomplete="new-password" required>
+            <p class="ayuda" id="ayuda-clave">Mínimo 8 caracteres.</p>
+          </div>
+          <div class="aviso aviso--error" id="error-registro" hidden><span></span></div>
+          <button class="boton boton--ancho" type="submit" id="boton-registrar">
+            <span data-texto-registrar>Crear mi cuenta</span>
+          </button>
+        </form>
+      </section>
     </div>
 
-    <div class="reserva" id="panel-reserva">
-      <form class="pasos-reserva" id="formulario" novalidate>
+    <p class="vacio" data-sin-sesion hidden style="margin-top:1.5rem">
+      No hace falta tener cuenta para reservar: también podés
+      <a class="enlace-linea" href="/reservar">sacar tu turno como visitante</a>.
+    </p>
 
-        <!-- 1 · Disciplina -->
-        <section class="bloque" data-bloque="disciplina">
-          <div class="bloque__titulo">
-            <span class="bloque__numero" data-numero>1</span>
-            <h2>¿Qué vas a jugar?</h2>
-          </div>
-          <div class="opciones" id="opciones-disciplina">
-            <div class="esqueleto" style="height:104px"></div>
-            <div class="esqueleto" style="height:104px"></div>
-            <div class="esqueleto" style="height:104px"></div>
-          </div>
-        </section>
+    <!-- ── Con sesión: el perfil ────────────────────────────────────────── -->
+    <div class="perfil" data-con-sesion hidden>
 
-        <!-- 2 · Día -->
-        <section class="bloque" data-bloque="fecha" data-inactivo="true">
-          <div class="bloque__titulo">
-            <span class="bloque__numero" data-numero>2</span>
-            <h2>¿Qué día?</h2>
-            <span class="bloque__nota" id="nota-anticipacion"></span>
-          </div>
-          <div class="tira-dias" id="tira-dias" role="radiogroup" aria-label="Elegí el día"></div>
-        </section>
+      <div class="aviso aviso--exito" id="aviso-bienvenida" hidden>
+        <svg width="20" height="20" style="flex:none"><use href="#i-check"/></svg>
+        <span></span>
+      </div>
 
-        <!-- 3 · Duración -->
-        <section class="bloque" data-bloque="duracion" data-inactivo="true">
-          <div class="bloque__titulo">
-            <span class="bloque__numero" data-numero>3</span>
-            <h2>¿Cuánto tiempo?</h2>
-          </div>
-          <div class="segmentado" id="segmentado-duracion" role="radiogroup" aria-label="Duración del turno"></div>
-        </section>
+      <section class="panel">
+        <div class="panel__tapa">
+          <h2>Tus próximos turnos</h2>
+          <a class="boton boton--chico" href="/reservar">Reservar otro</a>
+        </div>
+        <div class="turnos" id="turnos" aria-live="polite"></div>
+        <p class="vacio" id="sin-turnos" hidden>
+          Todavía no tenés turnos reservados.
+          <a class="enlace-linea" href="/reservar">Elegí día y horario</a>.
+        </p>
+      </section>
 
-        <!-- 4 · Horario -->
-        <section class="bloque" data-bloque="hora" data-inactivo="true">
-          <div class="bloque__titulo">
-            <span class="bloque__numero" data-numero>4</span>
-            <h2>Elegí el horario</h2>
-            <span class="bloque__nota" id="nota-canchas"></span>
-          </div>
-          <div id="grilla-horarios" aria-live="polite"></div>
-          <details class="canchas-detalle" id="detalle-canchas" hidden>
-            <summary>Prefiero elegir la cancha</summary>
-            <div class="canchas-lista" id="lista-canchas" role="radiogroup" aria-label="Elegí la cancha"></div>
-          </details>
-        </section>
-
-        <!-- 5 · Datos -->
-        <section class="bloque" data-bloque="datos" data-inactivo="true">
-          <div class="bloque__titulo">
-            <span class="bloque__numero" data-numero>5</span>
-            <h2>Tus datos</h2>
-          </div>
-
-          <p class="reservando-como" id="reservando-como" hidden>
-            <svg><use href="#i-usuario"/></svg>
-            <span>Reservás como <b data-nombre-completo></b>.</span>
-            <a class="enlace-linea" href="/cuenta">¿No sos vos?</a>
-          </p>
-
-          <div class="datos-grilla">
+      <div class="cuenta-grilla">
+        <section class="panel">
+          <h2>Tus datos</h2>
+          <form id="form-perfil" novalidate>
             <div class="campo">
-              <label for="nombre">Nombre y apellido</label>
-              <input id="nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Mateo Berchot">
-              <p class="mensaje-error" data-error="nombre" hidden></p>
+              <label for="perfil-nombre">Nombre y apellido</label>
+              <input id="perfil-nombre" name="nombre" type="text" required maxlength="80">
             </div>
             <div class="campo">
-              <label for="telefono">Teléfono</label>
-              <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required placeholder="223 555-1234">
-              <p class="ayuda">Lo usamos para avisarte si pasa algo con tu turno.</p>
-              <p class="mensaje-error" data-error="telefono" hidden></p>
+              <label for="perfil-telefono">Teléfono</label>
+              <input id="perfil-telefono" type="tel" disabled>
+              <p class="ayuda">El teléfono es tu usuario. Para cambiarlo, escribinos.</p>
             </div>
-            <div class="campo ancho-total">
-              <label for="email">Correo <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
-              <input id="email" name="email" type="email" autocomplete="email" placeholder="mateo@ejemplo.com">
-              <p class="mensaje-error" data-error="email" hidden></p>
+            <div class="campo">
+              <label for="perfil-email">Correo</label>
+              <input id="perfil-email" name="email" type="email" placeholder="opcional">
             </div>
-            <div class="campo ancho-total">
-              <label for="notas">Comentario <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
-              <textarea id="notas" name="notas" maxlength="300" placeholder="¿Necesitás alquilar paletas? ¿Venís con chicos? Contanos."></textarea>
-            </div>
-          </div>
+            <div class="aviso aviso--error" id="error-perfil" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-perfil" hidden><span>Listo, guardamos los cambios.</span></div>
+            <button class="boton boton--fantasma boton--ancho" type="submit" id="boton-perfil">
+              <span data-texto-perfil>Guardar cambios</span>
+            </button>
+          </form>
         </section>
 
-        <div class="aviso aviso--error" id="error-envio" hidden>
-          <svg width="20" height="20" style="flex:none"><use href="#i-reloj"/></svg>
-          <span data-texto-error></span>
-        </div>
-      </form>
+        <section class="panel">
+          <h2>Contraseña</h2>
+          <form id="form-clave" novalidate>
+            <div class="campo">
+              <label for="clave-actual">Contraseña actual</label>
+              <input id="clave-actual" name="claveActual" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="campo">
+              <label for="clave-nueva">Contraseña nueva</label>
+              <input id="clave-nueva" name="claveNueva" type="password" autocomplete="new-password" required>
+            </div>
+            <div class="aviso aviso--error" id="error-clave" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-clave" hidden>
+              <span>Listo. Si habías entrado en otro dispositivo, ahí se cerró la sesión.</span>
+            </div>
+            <button class="boton boton--fantasma boton--ancho" type="submit" id="boton-clave">
+              <span data-texto-clave>Cambiar contraseña</span>
+            </button>
+          </form>
+        </section>
+      </div>
 
-      <!-- Resumen -->
-      <aside class="resumen" aria-label="Resumen de tu reserva">
-        <h2>Tu turno</h2>
-        <div class="resumen__filas">
-          <div class="resumen__fila"><span class="resumen__clave">Deporte</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="disciplina">A elegir</span></div>
-          <div class="resumen__fila"><span class="resumen__clave">Día</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="fecha">A elegir</span></div>
-          <div class="resumen__fila"><span class="resumen__clave">Horario</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="hora">A elegir</span></div>
-          <div class="resumen__fila"><span class="resumen__clave">Duración</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="duracion">A elegir</span></div>
-          <div class="resumen__fila"><span class="resumen__clave">Cancha</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="cancha">La asignamos</span></div>
+      <section class="panel" id="panel-historial" hidden>
+        <h2>Turnos anteriores</h2>
+        <div class="tabla-envoltorio">
+          <table class="tabla-reservas">
+            <thead>
+              <tr><th>Día</th><th>Horario</th><th>Cancha</th><th>Código</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="historial"></tbody>
+          </table>
         </div>
-        <button class="boton boton--ancho" type="submit" form="formulario" id="boton-confirmar" disabled>
-          <span data-texto-boton>Confirmar reserva</span>
+      </section>
+
+      <div>
+        <button class="boton boton--fantasma boton--chico" type="button" id="boton-salir">
+          <svg width="15" height="15"><use href="#i-salir"/></svg> Cerrar sesión
         </button>
-        <p class="resumen__aviso" id="aviso-cancelacion"></p>
-      </aside>
+      </div>
     </div>
-
-    <!-- Confirmación -->
-    <section class="confirmacion" id="confirmacion" hidden>
-      <span class="confirmacion__tilde"><svg><use href="#i-check"/></svg></span>
-      <div>
-        <h2 class="display-md">¡Listo, la cancha es tuya!</h2>
-        <p class="bajada" style="margin-top:.7rem;text-align:center;margin-inline:auto">
-          Te esperamos en Dorrego 333. Mostrá este código en recepción.
-        </p>
-      </div>
-
-      <div class="ticket">
-        <div class="ticket__cabecera">
-          <div>
-            <p class="etiqueta etiqueta--claro">Código de reserva</p>
-            <p class="ticket__codigo" data-ticket="codigo">LN-00000</p>
-          </div>
-          <svg width="30" height="30" viewBox="0 0 48 48" fill="none" style="color:var(--naranja)" aria-hidden="true">
-            <circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2.2"/>
-            <path d="M3 24h42" stroke="currentColor" stroke-width="2.2"/>
-            <path d="M13 24V10.5M35 24v13.5" stroke="currentColor" stroke-width="1.4" opacity=".75"/>
-          </svg>
-        </div>
-        <div class="ticket__perforado"></div>
-        <div class="ticket__cuerpo">
-          <div class="ticket__fila"><span>Deporte</span><span data-ticket="disciplina"></span></div>
-          <div class="ticket__fila"><span>Día</span><span data-ticket="fecha"></span></div>
-          <div class="ticket__fila"><span>Horario</span><span data-ticket="hora"></span></div>
-          <div class="ticket__fila"><span>Cancha</span><span data-ticket="cancha"></span></div>
-          <div class="ticket__fila"><span>A nombre de</span><span data-ticket="nombre"></span></div>
-        </div>
-      </div>
-
-      <div class="acciones-confirmacion">
-        <a class="boton" id="descargar-ics" download="turno-los-naranjos.ics">
-          <svg width="16" height="16"><use href="#i-calendario"/></svg> Agendar
-        </a>
-        <a class="boton boton--fantasma" id="compartir-wsp" target="_blank" rel="noopener">
-          <svg width="16" height="16"><use href="#i-whatsapp"/></svg> Avisar a los que juegan
-        </a>
-        <a class="boton boton--fantasma" href="/mis-turnos">Ver mis turnos</a>
-        <button class="boton boton--fantasma" type="button" id="otro-turno">Reservar otro turno</button>
-      </div>
-
-      <p class="plomo" style="font-size:.86rem" id="aviso-confirmacion"></p>
-    </section>
-
   </div>
 </main>
+
+<dialog class="modal" id="modal-cancelar">
+  <form method="dialog" class="modal__cuerpo">
+    <h2 class="display-sm">¿Cancelamos este turno?</h2>
+    <p class="plomo" id="detalle-cancelacion" style="font-size:.93rem"></p>
+    <p class="plomo" style="font-size:.86rem">La cancha vuelve a quedar disponible para otras personas. No se puede deshacer.</p>
+    <div class="aviso aviso--error" id="error-cancelacion" hidden><span></span></div>
+    <div class="modal__acciones">
+      <button class="boton boton--fantasma boton--chico" value="no" type="submit">No, dejalo</button>
+      <button class="boton boton--chico" value="si" type="button" id="confirmar-cancelacion">Sí, cancelar</button>
+    </div>
+  </form>
+</dialog>
 
 <footer class="pie">
   <div class="envoltura">
@@ -386,6 +375,6 @@
   <svg><use href="#i-whatsapp"/></svg><span>WhatsApp</span>
 </a>
 
-<script type="module" src="/js/reservar.js"></script>
+<script type="module" src="/js/cuenta.js"></script>
 </body>
 </html>
