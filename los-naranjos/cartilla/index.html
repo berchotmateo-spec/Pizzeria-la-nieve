@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!--
+  CARTILLA ECONÓMICA — LOS NARANJOS
+  Documento INTERNO de Mateo. No es la propuesta que ve el club: acá están
+  el piso de negociación, el margen y las respuestas a las objeciones.
+  Lo único pensado para mostrar es la última hoja, que imprime aparte.
+
+  Se abre con doble clic. Para PDF: Ctrl/Cmd + P.
+  Publicada también como página privada en:
+  https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1
+-->
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<title>Cartilla Los Naranjos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARTILLA — hoja de precios de trabajo.
+   La referencia visual es un papel de contaduría: fondo verde pálido,
+   renglones finos, números en monoespaciada y alineados a la derecha.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --papel:      #F3F5F1;
+  --papel-2:    #FFFFFF;
+  --papel-3:    #E7EBE5;
+  --linea:      #D2DBD2;
+  --linea-2:    #BCC7BC;
+  --tinta:      #141A16;
+  --tinta-2:    #4B564E;
+  --tinta-3:    #78847B;
+  --verde:      #0E6B4F;
+  --verde-piso: #E3EFE9;
+  --naranja:    #B44E0C;
+  --naranja-piso:#F7EAE0;
+  --ocre:       #7A5300;
+  --ocre-piso:  #F5EEDD;
+  --rojo:       #9C2B20;
+
+  --display: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --texto:   'Newsreader', Georgia, 'Times New Roman', serif;
+  --dato:    'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --ancho: 860px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel:      #10140F;
+    --papel-2:    #171C15;
+    --papel-3:    #1E241C;
+    --linea:      #2B332A;
+    --linea-2:    #3C463A;
+    --tinta:      #E9EDE6;
+    --tinta-2:    #AAB5A8;
+    --tinta-3:    #7C877A;
+    --verde:      #46C295;
+    --verde-piso: #14251E;
+    --naranja:    #F0904A;
+    --naranja-piso:#2A1B10;
+    --ocre:       #D9AE55;
+    --ocre-piso:  #241D0E;
+    --rojo:       #E4796C;
+  }
+}
+:root[data-theme="dark"] {
+  --papel:      #10140F;
+  --papel-2:    #171C15;
+  --papel-3:    #1E241C;
+  --linea:      #2B332A;
+  --linea-2:    #3C463A;
+  --tinta:      #E9EDE6;
+  --tinta-2:    #AAB5A8;
+  --tinta-3:    #7C877A;
+  --verde:      #46C295;
+  --verde-piso: #14251E;
+  --naranja:    #F0904A;
+  --naranja-piso:#2A1B10;
+  --ocre:       #D9AE55;
+  --ocre-piso:  #241D0E;
+  --rojo:       #E4796C;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: 17px;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hoja {
+  width: min(100% - 2.5rem, var(--ancho));
+  margin-inline: auto;
+  padding-block: clamp(2rem, 5vw, 3.5rem) 4rem;
+}
+
+h1, h2, h3 {
+  font-family: var(--display);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: clamp(1.35rem, 3vw, 1.85rem); }
+h3 { font-size: 1.08rem; font-weight: 600; letter-spacing: -.01em; }
+
+p { margin: 0; max-width: 68ch; }
+strong { font-weight: 600; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--linea-2); }
+
+.eyebrow {
+  font-family: var(--dato);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+/* ── Aviso de documento interno ───────────────────────────────────────────── */
+.aviso-interno {
+  display: flex;
+  gap: .9rem;
+  align-items: baseline;
+  padding: .85rem 1.1rem;
+  margin-bottom: 2.5rem;
+  background: var(--ocre-piso);
+  border-left: 3px solid var(--ocre);
+  font-size: .93rem;
+  color: var(--tinta);
+}
+.aviso-interno b { font-family: var(--display); font-weight: 800; color: var(--ocre); white-space: nowrap; }
+
+/* ── Encabezado ───────────────────────────────────────────────────────────── */
+.tapa { display: grid; gap: 1.1rem; padding-bottom: 2rem; border-bottom: 2px solid var(--tinta); }
+.tapa__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  font-family: var(--dato);
+  font-size: .78rem;
+  color: var(--tinta-3);
+}
+.tapa p.entrada { font-size: 1.12rem; color: var(--tinta-2); }
+
+/* ── Secciones ────────────────────────────────────────────────────────────── */
+section { padding-top: 3rem; }
+.encabezado { display: grid; gap: .5rem; margin-bottom: 1.4rem; }
+
+/* ── Renglones de precio (el papel de contaduría) ─────────────────────────── */
+.renglones { border-top: 1px solid var(--linea-2); margin-top: 1.2rem; }
+.renglon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .4rem 1.5rem;
+  align-items: baseline;
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--linea);
+}
+.renglon__que { font-size: .98rem; }
+.renglon__que small { display: block; color: var(--tinta-3); font-size: .84rem; line-height: 1.45; }
+.renglon__cuanto {
+  font-family: var(--dato);
+  font-size: 1.02rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.renglon--total { border-bottom: 2px solid var(--tinta); background: var(--papel-3); padding-inline: .7rem; }
+.renglon--total .renglon__que { font-family: var(--display); font-weight: 600; }
+.renglon--total .renglon__cuanto { font-weight: 600; }
+
+/* ── Las opciones ─────────────────────────────────────────────────────────── */
+.opciones { display: grid; gap: 1.1rem; }
+.opcion {
+  background: var(--papel-2);
+  border: 1px solid var(--linea);
+  padding: 1.4rem 1.5rem;
+  display: grid;
+  gap: .9rem;
+}
+.opcion--recomendada { border-color: var(--verde); border-width: 2px; background: var(--verde-piso); }
+.opcion__tapa { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: baseline; justify-content: space-between; }
+.opcion__nombre { display: flex; align-items: baseline; gap: .7rem; }
+.opcion__letra {
+  font-family: var(--dato);
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--tinta-3);
+}
+.sello {
+  font-family: var(--dato);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--verde);
+  border: 1px solid currentColor;
+  padding: .18rem .5rem;
+}
+.opcion__cifras { display: flex; flex-wrap: wrap; gap: 1.6rem; }
+.cifra { display: grid; gap: .1rem; }
+.cifra__valor {
+  font-family: var(--dato);
+  font-size: 1.45rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.cifra__pie { font-family: var(--dato); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); }
+.opcion p { font-size: .95rem; color: var(--tinta-2); }
+
+/* ── Listas ───────────────────────────────────────────────────────────────── */
+ul.lista { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; }
+ul.lista li { display: grid; grid-template-columns: 1.1rem 1fr; gap: .7rem; font-size: .97rem; }
+ul.lista li::before { content: '—'; color: var(--tinta-3); font-family: var(--dato); }
+ul.lista.si li::before { content: '✓'; color: var(--verde); font-weight: 600; }
+ul.lista.no li::before { content: '×'; color: var(--rojo); font-weight: 600; }
+
+.dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+@media (max-width: 680px) { .dos-columnas { grid-template-columns: 1fr; gap: 1.6rem; } }
+.dos-columnas h3 { margin-bottom: .8rem; }
+
+/* ── Objeciones ───────────────────────────────────────────────────────────── */
+.objecion { padding: 1.1rem 0; border-bottom: 1px solid var(--linea); display: grid; gap: .5rem; }
+.objecion:last-child { border-bottom: 0; }
+.objecion__dicen {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--tinta);
+}
+.objecion__dicen::before { content: '«'; color: var(--tinta-3); }
+.objecion__dicen::after { content: '»'; color: var(--tinta-3); }
+.objecion p { font-size: .95rem; color: var(--tinta-2); }
+
+/* ── Guion numerado (acá el número sí es una secuencia) ────────────────────── */
+.guion { display: grid; gap: 0; counter-reset: paso; border-top: 1px solid var(--linea-2); }
+.guion li {
+  list-style: none;
+  counter-increment: paso;
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 1rem;
+  padding: .9rem 0;
+  border-bottom: 1px solid var(--linea);
+  font-size: .97rem;
+}
+.guion li::before {
+  content: counter(paso, decimal-leading-zero);
+  font-family: var(--dato);
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--naranja);
+  padding-top: .18rem;
+}
+.guion ul { padding: 0; margin: 0; }
+
+/* ── Nota al pie de sección ───────────────────────────────────────────────── */
+.nota {
+  font-size: .88rem;
+  color: var(--tinta-2);
+  background: var(--papel-3);
+  border-left: 2px solid var(--linea-2);
+  padding: .8rem 1rem;
+  margin-top: 1.2rem;
+}
+.nota b { color: var(--tinta); }
+
+/* ── Hoja para el cliente ─────────────────────────────────────────────────── */
+.para-cliente {
+  margin-top: 3.5rem;
+  background: var(--papel-2);
+  border: 1px solid var(--linea-2);
+  border-top: 4px solid var(--naranja);
+  padding: clamp(1.6rem, 4vw, 2.6rem);
+}
+.para-cliente .eyebrow { color: var(--naranja); }
+.para-cliente h2 { margin-bottom: .3rem; }
+.para-cliente .renglon--total { background: var(--naranja-piso); }
+.firma {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--linea);
+  font-size: .86rem;
+  color: var(--tinta-3);
+  font-family: var(--dato);
+}
+
+/* ── Cierre ───────────────────────────────────────────────────────────────── */
+.fuentes { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--linea); font-size: .84rem; color: var(--tinta-3); }
+.fuentes ul { padding-left: 1.1rem; margin: .6rem 0 0; display: grid; gap: .3rem; }
+
+/* ── Impresión ────────────────────────────────────────────────────────────── */
+@media print {
+  :root { --papel: #fff; --papel-2: #fff; --papel-3: #F2F2F2; }
+  body { font-size: 11pt; background: #fff; }
+  .hoja { width: 100%; padding: 0; }
+  section { page-break-inside: avoid; padding-top: 1.6rem; }
+  .para-cliente { page-break-before: always; border-top-width: 3px; }
+  .aviso-interno { page-break-after: avoid; }
+}
+</style>
+
+<div class="hoja">
+
+  <p class="aviso-interno">
+    <b>Uso interno.</b>
+    <span>Esta hoja es tuya: tiene el piso de negociación, tu margen y las respuestas
+    a lo que te van a discutir. Al club se le muestra sólo la última página, que
+    imprime aparte.</span>
+  </p>
+
+  <header class="tapa">
+    <p class="eyebrow">Cartilla económica</p>
+    <h1>Cuánto cobrar por el sistema de Los Naranjos</h1>
+    <p class="entrada">
+      Un pago de armado y un abono mensual. Los números están calculados para un
+      club de siete canchas en Mar del Plata, con precios de mercado de septiembre
+      de 2026 y con el descuento que tiene sentido cuando es tu segundo cliente.
+    </p>
+    <div class="tapa__meta">
+      <span>4 de septiembre de 2026</span>
+      <span>Valores en pesos, con IVA no discriminado</span>
+      <span>Referencia: US$1 = $1.545</span>
+    </div>
+  </header>
+
+  <!-- ── 1 · La recomendación ─────────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">Lo que te recomiendo pedir</p>
+      <h2>$550.000 de armado y $55.000 por mes</h2>
+    </div>
+    <p>
+      El armado se cobra mitad al arrancar y mitad el día que el sistema queda
+      publicado. El abono se cobra desde el mes en que sale al aire, y se actualiza
+      cada tres meses: en Argentina un precio congelado a doce meses es un precio
+      que se te derrite en la mano.
+    </p>
+
+    <div class="renglones">
+      <div class="renglon">
+        <span class="renglon__que">Armado, una sola vez
+          <small>Sitio completo, sistema de turnos, panel del club, carga de datos, dominio configurado y publicación.</small>
+        </span>
+        <span class="renglon__cuanto">$550.000</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Abono mensual
+          <small>Hosting, dominio, copias de seguridad, correcciones y cambios chicos. Se ajusta cada 3 meses.</small>
+        </span>
+        <span class="renglon__cuanto">$55.000</span>
+      </div>
+      <div class="renglon renglon--total">
+        <span class="renglon__que">Primer año, todo incluido</span>
+        <span class="renglon__cuanto">$1.210.000</span>
+      </div>
+    </div>
+
+    <div class="nota">
+      <b>Por qué ese número y no otro.</b> En 2026 una web institucional en Argentina
+      arranca en $250.000 y una con sistema de reservas integrado se cotiza entre
+      $600.000 y $1.300.000. Vos entregás lo segundo. Pedir $550.000 te deja apenas
+      por debajo de la banda: es el descuento explícito por ser tu segundo cliente,
+      y conviene <b>decirlo en voz alta</b> —"este precio es así porque quiero el caso
+      para mostrar"— para que no lo lean como que tu trabajo vale poco. En abonos de
+      mantenimiento el mercado va de $25.000 (básico) a $150.000 (profesional);
+      $55.000 es un abono real, no simbólico, y encima incluye el servidor.
+    </div>
+  </section>
+
+  <!-- ── 2 · Las tres opciones ────────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">Para llevar a la reunión</p>
+      <h2>Tres formas de comprarlo</h2>
+    </div>
+    <p style="margin-bottom:1.4rem">
+      Nunca lleves un solo precio: un precio solo se acepta o se rechaza, tres se
+      comparan. La B existe para el club que no quiere firmar un desembolso grande,
+      y la C para que "no" no signifique irte con las manos vacías.
+    </p>
+
+    <div class="opciones">
+
+      <article class="opcion opcion--recomendada">
+        <div class="opcion__tapa">
+          <span class="opcion__nombre">
+            <span class="opcion__letra">A</span>
+            <h3>Armado más abono</h3>
+          </span>
+          <span class="sello">La que querés vender</span>
+        </div>
+        <div class="opcion__cifras">
+          <span class="cifra"><span class="cifra__valor">$550.000</span><span class="cifra__pie">armado</span></span>
+          <span class="cifra"><span class="cifra__valor">$55.000</span><span class="cifra__pie">por mes</span></span>
+          <span class="cifra"><span class="cifra__valor">$1.210.000</span><span class="cifra__pie">primer año</span></span>
+        </div>
+        <p>
+          Todo lo que ya está hecho, publicado y andando, más el servicio corriendo.
+          Sin permanencia: si un mes no quieren seguir, el sitio queda y el sistema
+          de turnos se apaga.
+        </p>
+      </article>
+
+      <article class="opcion">
+        <div class="opcion__tapa">
+          <span class="opcion__nombre">
+            <span class="opcion__letra">B</span>
+            <h3>Sin desembolso grande</h3>
+          </span>
+        </div>
+        <div class="opcion__cifras">
+          <span class="cifra"><span class="cifra__valor">$250.000</span><span class="cifra__pie">armado</span></span>
+          <span class="cifra"><span class="cifra__valor">$95.000</span><span class="cifra__pie">por mes</span></span>
+          <span class="cifra"><span class="cifra__valor">$1.390.000</span><span class="cifra__pie">primer año</span></span>
+        </div>
+        <p>
+          Para el club que mira la caja del mes. Pide permanencia mínima de doce
+          meses: sin eso estás financiando el armado y te pueden cortar en el mes
+          tres. Es la opción más cara para ellos y hay que decirlo sin vueltas.
+        </p>
+      </article>
+
+      <article class="opcion">
+        <div class="opcion__tapa">
+          <span class="opcion__nombre">
+            <span class="opcion__letra">C</span>
+            <h3>Sólo el sitio, sin turnos</h3>
+          </span>
+        </div>
+        <div class="opcion__cifras">
+          <span class="cifra"><span class="cifra__valor">$300.000</span><span class="cifra__pie">armado</span></span>
+          <span class="cifra"><span class="cifra__valor">$25.000</span><span class="cifra__pie">por mes</span></span>
+          <span class="cifra"><span class="cifra__valor">$600.000</span><span class="cifra__pie">primer año</span></span>
+        </div>
+        <p>
+          La misma página, con el botón de reservar apuntando a WhatsApp. Es más
+          barata de sostener porque no necesita servidor. Guardala para el final:
+          si te dicen que el sistema de turnos les da miedo, esta es la puerta de
+          entrada, y el sistema queda vendido para más adelante.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── 3 · Qué entra y qué no ───────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">El abono</p>
+      <h2>Qué cubre y qué se cotiza aparte</h2>
+    </div>
+    <div class="dos-columnas">
+      <div>
+        <h3>Incluido en los $55.000</h3>
+        <ul class="lista si">
+          <li>Servidor y dominio pagos y a tu cargo</li>
+          <li>Copia de seguridad diaria de las reservas</li>
+          <li>Que esté prendido: si se cae, lo levantás vos</li>
+          <li>Cambios de horarios, precios y feriados</li>
+          <li>Hasta una hora de cambios chicos por mes</li>
+          <li>Consultas por WhatsApp en días hábiles</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Se cotiza aparte</h3>
+        <ul class="lista no">
+          <li>Funciones nuevas que hoy no existen</li>
+          <li>Cobro de seña online</li>
+          <li>Fotos profesionales del club</li>
+          <li>Campañas de publicidad</li>
+          <li>Atender el WhatsApp del club por ellos</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="renglones" style="margin-top:2rem">
+      <div class="renglon">
+        <span class="renglon__que">Seña online con Mercado Pago
+          <small>El turno se confirma recién cuando entró la seña. Es lo primero que te van a pedir si tienen problema con los que no aparecen.</small>
+        </span>
+        <span class="renglon__cuanto">$180.000</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Inscripción online a escuela y torneos
+          <small>Sólo si efectivamente dan clases: todavía no está confirmado.</small>
+        </span>
+        <span class="renglon__cuanto">$120.000</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Logo vectorial y manual de marca chico
+          <small>Hoy el isotipo del sitio es una propuesta tuya, no el logo del club.</small>
+        </span>
+        <span class="renglon__cuanto">$90.000</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Media hora de capacitación extra
+          <small>La primera va incluida en el armado.</small>
+        </span>
+        <span class="renglon__cuanto">$25.000</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4 · Tus números ──────────────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">Tu lado del mostrador</p>
+      <h2>Qué te cuesta sostenerlo</h2>
+    </div>
+    <p>
+      Esto no lo ve el cliente, pero necesitás tenerlo claro antes de sentarte:
+      es lo que te dice hasta dónde podés bajar sin trabajar gratis.
+    </p>
+    <div class="renglones">
+      <div class="renglon">
+        <span class="renglon__que">Servidor con Node
+          <small>Railway, Render, Fly.io o un VPS chico. El sistema no corre en un hosting compartido común.</small>
+        </span>
+        <span class="renglon__cuanto">$12.000 / mes</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Dominio .com.ar
+          <small>Arancel de NIC Argentina, $8.500 al año.</small>
+        </span>
+        <span class="renglon__cuanto">$710 / mes</span>
+      </div>
+      <div class="renglon renglon--total">
+        <span class="renglon__que">Te queda por mes</span>
+        <span class="renglon__cuanto">$42.290</span>
+      </div>
+    </div>
+    <div class="nota">
+      <b>Piso de negociación: $400.000 de armado y $45.000 de abono.</b>
+      Abajo de eso el abono deja de pagar tu tiempo y pasás a subsidiarles el
+      servidor. Si te aprietan más, no bajes el precio: sacá cosas. Menos horas de
+      cambios incluidas, capacitación aparte, la carga de fotos por cuenta de ellos.
+      Un precio que baja sin que baje el alcance le enseña al cliente que el primero
+      era inventado.
+    </div>
+  </section>
+
+  <!-- ── 5 · Objeciones ───────────────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">Lo que te van a decir</p>
+      <h2>Cuatro objeciones y qué contestar</h2>
+    </div>
+
+    <div class="objecion">
+      <p class="objecion__dicen">Hay apps de reservas que son gratis para el club</p>
+      <p>
+        No son gratis: cobran por reserva. Playtomic, la más grande, se lleva el 4%
+        de cada turno con un tope de casi dos dólares, más una cuota de software que
+        en España promedia menos de cien euros al mes. Hacé la cuenta con ellos en la
+        mesa: <strong>cantidad de turnos por mes × 4% del precio del turno</strong>.
+        Con el precio real de Los Naranjos ese número casi siempre supera un abono
+        fijo, y crece justo cuando al club le va bien.
+      </p>
+      <p>
+        Lo honesto —y decilo vos antes de que lo digan ellos— es que esas plataformas
+        traen jugadores de afuera; la tuya no. La tuya hace que los que ya los buscan
+        en Instagram no tengan que esperar que alguien conteste el WhatsApp.
+      </p>
+    </div>
+
+    <div class="objecion">
+      <p class="objecion__dicen">Ya tenemos el WhatsApp, funciona bien</p>
+      <p>
+        Funciona mientras haya alguien mirando el teléfono. El sistema no reemplaza
+        el WhatsApp: se lo saca de encima a la persona del mostrador en los horarios
+        en que no da abasto, y sigue tomando reservas a las dos de la mañana. El
+        WhatsApp queda para lo que no es un turno: clases, torneos, dudas.
+      </p>
+    </div>
+
+    <div class="objecion">
+      <p class="objecion__dicen">Es caro. Mi sobrino me hace una página por mucho menos</p>
+      <p>
+        Una página, sí. Esto es una página <em>más</em> un sistema que no deja
+        superponer dos reservas en la misma cancha, que muestra la grilla real en
+        vivo, que le da al club un panel del día y que se banca que dos personas
+        toquen el mismo horario en el mismo segundo. Mostrá el panel, no la home:
+        la home la entiende cualquiera, el panel es lo que no le hace el sobrino.
+      </p>
+    </div>
+
+    <div class="objecion">
+      <p class="objecion__dicen">Dejalo andando y si funciona te pagamos</p>
+      <p>
+        No. Ya está hecho y ya lo estás mostrando andando: ese fue tu riesgo. Si
+        necesitás ceder algo, cedé en la forma de pago —un armado en tres veces— pero
+        nunca en cobrar después. Alternativa sana: un mes de prueba del abono, con el
+        armado pago.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── 6 · El guion ─────────────────────────────────────────────────────── -->
+  <section>
+    <div class="encabezado">
+      <p class="eyebrow">La reunión, en orden</p>
+      <h2>Primero el problema, último el precio</h2>
+    </div>
+    <ul class="guion">
+      <li>Preguntá cómo manejan los turnos hoy y cuántos se les pierden por no llegar a contestar. Que el problema lo digan ellos.</li>
+      <li>Mostrá la home desde el celular, treinta segundos. Que vean el nombre del club arriba.</li>
+      <li>Hacé una reserva delante de ellos, de punta a punta, hasta el código. Es el momento que vende.</li>
+      <li>Mostrá el panel del club: la grilla del día, las siete canchas, quién reservó. Acá es donde el dueño se engancha.</li>
+      <li>Recién ahí, la propuesta impresa. Dejásela: es de ellos.</li>
+      <li>Sacá esta cartilla, opción A primero. Callate después de decir el número.</li>
+      <li>Cerrá con la lista de datos que te faltan. Pedir tarea es pedir compromiso, y te da excusa para volver.</li>
+    </ul>
+    <div class="nota">
+      <b>Llevá todo offline.</b> El archivo <code>vista-previa/index.html</code> abre con
+      doble clic y funciona sin internet. Si el wifi del club no anda, la reunión
+      sigue igual. Y pedí permiso para mostrar el caso en tu portfolio: siendo el
+      segundo cliente, eso vale casi tanto como la plata.
+    </div>
+  </section>
+
+  <!-- ── Hoja para el cliente ─────────────────────────────────────────────── -->
+  <section class="para-cliente">
+    <p class="eyebrow">Los Naranjos · Condiciones</p>
+    <h2>Sitio web y sistema de turnos</h2>
+    <p style="color:var(--tinta-2);margin-bottom:1.4rem">
+      Valores en pesos, vigentes por 30 días. El abono se actualiza cada tres meses.
+    </p>
+
+    <div class="renglones">
+      <div class="renglon">
+        <span class="renglon__que">Armado, pago único
+          <small>Sitio completo, sistema de reservas online, panel del club, carga de los datos reales, dominio y publicación. Se abona mitad al comenzar y mitad al publicar.</small>
+        </span>
+        <span class="renglon__cuanto">$550.000</span>
+      </div>
+      <div class="renglon">
+        <span class="renglon__que">Servicio mensual
+          <small>Servidor, dominio, copias de seguridad diarias, actualización de horarios y tarifas, cambios menores y soporte. Sin permanencia mínima.</small>
+        </span>
+        <span class="renglon__cuanto">$55.000</span>
+      </div>
+      <div class="renglon renglon--total">
+        <span class="renglon__que">Primer año</span>
+        <span class="renglon__cuanto">$1.210.000</span>
+      </div>
+    </div>
+
+    <div class="dos-columnas" style="margin-top:2rem">
+      <div>
+        <h3>Incluido</h3>
+        <ul class="lista si">
+          <li>Reservas online las 24 horas</li>
+          <li>Panel del club con la grilla del día</li>
+          <li>Cancelaciones sin llamar por teléfono</li>
+          <li>Todas las reservas quedan en poder del club</li>
+          <li>Sin comisión por reserva</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Opcionales</h3>
+        <ul class="lista">
+          <li>Seña online con Mercado Pago — $180.000</li>
+          <li>Inscripción a escuela y torneos — $120.000</li>
+          <li>Logo vectorial — $90.000</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="firma">
+      Mateo Berchot · Mar del Plata · Propuesta válida hasta el 4 de octubre de 2026
+    </p>
+  </section>
+
+  <div class="fuentes">
+    <p>
+      Los valores en pesos envejecen rápido: si esta cartilla tiene más de dos meses,
+      recalculala antes de usarla. Referencias de mercado consultadas el 4 de
+      septiembre de 2026:
+    </p>
+    <ul>
+      <li>Precios de sitios web y de mantenimiento en Argentina, 2026 (varias agencias locales).</li>
+      <li>Arancel de dominios .com.ar de NIC Argentina: $8.500 anuales.</li>
+      <li>Modelo de cobro de Playtomic a clubes: 4% por reserva con tope de €1,99.</li>
+      <li>Dólar blue del 4 de septiembre de 2026: $1.545.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
