@@ -144,7 +144,9 @@ los-naranjos/
 ├── vista-previa/
 │   └── index.html    Generado por `npm run vista-previa` — no editar a mano
 ├── propuesta/
-│   └── index.html    Propuesta comercial para presentarle al club
+│   ├── index.html                    Propuesta comercial para presentarle al club
+│   ├── Propuesta-Los-Naranjos.pdf    La misma propuesta en PDF, para descargar y mandar
+│   └── prompt-planilla-cowork.md     Prompt para pedirle a Cowork la propuesta en planilla
 ├── cartilla/
 │   └── index.html    Cartilla económica — documento interno, no va al club
 └── data/turnos.db    Base de datos (no se versiona)
@@ -311,6 +313,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Vista previa navegable | [claude.ai/code/artifact/ba140d58](https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d) (privada) |
 | Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
 | Propuesta para el club | `propuesta/index.html`, y publicada en [claude.ai/code/artifact/86d5b927](https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89) (privada) |
+| Propuesta en PDF | `propuesta/Propuesta-Los-Naranjos.pdf` — para descargar y mandar directamente |
 | Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
 
