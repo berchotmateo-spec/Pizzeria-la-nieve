@@ -65,6 +65,20 @@ db.exec(`
     ip         TEXT
   ) WITHOUT ROWID;
 
+  /* Quién hizo qué en el panel del club. Con varias personas atendiendo el
+     mostrador, "¿quién canceló este turno?" deja de ser una pregunta sin
+     respuesta. */
+  CREATE TABLE IF NOT EXISTS bitacora (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    cuando     TEXT NOT NULL,
+    quien      TEXT NOT NULL,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    accion     TEXT NOT NULL,
+    detalle    TEXT,
+    ip         TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_bitacora_cuando  ON bitacora (cuando DESC);
   CREATE INDEX IF NOT EXISTS idx_reservas_fecha    ON reservas (fecha, estado);
   CREATE INDEX IF NOT EXISTS idx_reservas_telefono ON reservas (telefono, estado);
   CREATE INDEX IF NOT EXISTS idx_ocupacion_fecha   ON ocupacion (fecha);
@@ -79,6 +93,14 @@ if (!columnasReservas.some((c) => c.name === 'usuario_id')) {
   db.exec('ALTER TABLE reservas ADD COLUMN usuario_id INTEGER REFERENCES usuarios(id)');
 }
 db.exec('CREATE INDEX IF NOT EXISTS idx_reservas_usuario ON reservas (usuario_id, fecha)');
+
+/* Una misma cuenta sirve para jugar y para atender el mostrador: lo único que
+   cambia es el rol. Así el dueño, que además juega, no necesita dos cuentas. */
+const columnasUsuarios = db.prepare('SELECT name FROM pragma_table_info(?)').all('usuarios');
+if (!columnasUsuarios.some((c) => c.name === 'rol')) {
+  db.exec("ALTER TABLE usuarios ADD COLUMN rol TEXT NOT NULL DEFAULT 'jugador'");
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios (rol)');
 
 const ALFABETO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // sin 0/O ni 1/I
 const existeCodigo = db.prepare('SELECT 1 FROM reservas WHERE codigo = ?');
@@ -163,6 +185,21 @@ const q = {
       WHERE usuario_id = ? AND tipo = 'reserva'
       ORDER BY fecha DESC, inicio_min DESC
       LIMIT ?`
+  ),
+
+  // ── Personal del club ────────────────────────────────────────────────────
+  personalDelClub: db.prepare(
+    `SELECT id, nombre, telefono, email, creado_en, ultimo_acceso
+       FROM usuarios WHERE rol = 'club' ORDER BY nombre`
+  ),
+  cambiarRol: db.prepare('UPDATE usuarios SET rol = ? WHERE id = ?'),
+
+  // ── Bitácora ─────────────────────────────────────────────────────────────
+  anotar: db.prepare(
+    'INSERT INTO bitacora (cuando, quien, usuario_id, accion, detalle, ip) VALUES (?, ?, ?, ?, ?, ?)'
+  ),
+  ultimosMovimientos: db.prepare(
+    'SELECT * FROM bitacora ORDER BY id DESC LIMIT ?'
   ),
 
   // ── Sesiones ─────────────────────────────────────────────────────────────
@@ -271,6 +308,17 @@ export const cuentas = {
   marcarAcceso: (id) => q.marcarAcceso.run(ahoraISO(), id),
   reservasActivas: (id, desde) => q.reservasDeUsuario.all(id, desde),
   historial: (id, limite = 20) => q.historialDeUsuario.all(id, limite),
+};
+
+export const personal = {
+  listar: () => q.personalDelClub.all(),
+  cambiarRol: (id, rol) => q.cambiarRol.run(rol, id),
+};
+
+export const bitacora = {
+  anotar: ({ quien, usuarioId, accion, detalle, ip }) =>
+    q.anotar.run(ahoraISO(), quien, usuarioId ?? null, accion, detalle ?? null, ip ?? null),
+  ultimos: (limite = 40) => q.ultimosMovimientos.all(limite),
 };
 
 export const sesiones = {

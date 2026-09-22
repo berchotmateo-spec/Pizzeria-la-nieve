@@ -70,13 +70,18 @@ Un sitio web propio con sistema de turnos. Cinco partes:
 5. Panel del club: la grilla del día completa, canchas en las filas y horarios
    en las columnas. Muestra quién reservó cada turno, permite cancelar y
    bloquear una cancha por torneo o mantenimiento, y resume turnos y horas
-   vendidas del día.
+   vendidas del día. Cada persona que atiende entra con su teléfono y su
+   contraseña —no hay una clave compartida que ande dando vueltas— y todo lo
+   que se hace queda anotado con nombre y hora: quién canceló qué turno y
+   cuándo.
 
 Características que importan y conviene que la planilla destaque:
 - Es imposible que dos personas reserven la misma cancha en el mismo horario:
   no es una validación que se puede escapar, lo garantiza la base de datos.
 - No hay comisión por reserva. Ni al club ni al jugador.
 - Las reservas y los datos de los jugadores quedan en poder del club.
+- El club decide quién entra al panel y puede sacarle el acceso a alguien en
+  cualquier momento, sin perder su historial.
 - El jugador no necesita bajarse ninguna aplicación. Puede crearse una cuenta
   para reservar más rápido, pero no está obligado.
 - Anda en celular.

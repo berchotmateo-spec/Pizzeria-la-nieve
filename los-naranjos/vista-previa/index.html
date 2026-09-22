@@ -2242,6 +2242,234 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
     </div>
   </form>
 </dialog></div>
+<div class="vista" id="vista-admin" hidden>
+<section class="tapa">
+  <div class="envoltura tapa__interior" style="flex-direction:row;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;display:flex">
+    <div>
+      <p class="migas"><a href="/">Inicio</a> <span>/</span> <span>Panel del club</span></p>
+      <h1 class="display-md" style="margin-top:.3rem">Panel del club</h1>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center">
+      <span class="cuenta-enlace" id="quien-entro" hidden style="cursor:default">
+        <svg><use href="#i-usuario"/></svg>
+        <span data-quien></span>
+      </span>
+      <button class="boton boton--chico boton--contorno-claro" id="salir" hidden>Salir</button>
+    </div>
+  </div>
+</section><main id="contenido">
+  <!-- Acceso -->
+  <section id="pantalla-acceso" style="padding-block:clamp(3rem,8vw,6rem)">
+    <div class="envoltura">
+      <form class="acceso" id="formulario-acceso">
+        <div>
+          <p class="etiqueta">Acceso restringido</p>
+          <h1 class="display-sm" style="margin-top:.4rem">Panel del club</h1>
+        </div>
+        <p class="plomo" style="font-size:.92rem">
+          Desde acá ves la grilla del día, cancelás turnos y bloqueás canchas por
+          mantenimiento o torneos.
+        </p>
+
+        <div class="campo" data-modo="cuenta">
+          <label for="acceso-telefono">Teléfono</label>
+          <input id="acceso-telefono" type="tel" inputmode="tel" autocomplete="username" placeholder="223 555-1234">
+        </div>
+        <div class="campo">
+          <label for="clave" data-etiqueta-clave>Contraseña</label>
+          <input id="clave" type="password" autocomplete="current-password" required placeholder="••••••••">
+        </div>
+
+        <div class="aviso" style="background:var(--papel-3);border-color:var(--linea)">
+          <svg width="20" height="20" style="flex:none"><use href="#i-usuario"/></svg>
+          <div>
+            <b>Datos para probar el panel.</b><br>
+            Teléfono <b>223 555-1212</b> · contraseña <b>demo1234</b>.<br>
+            O la clave del panel: <b>demo1234</b>.
+          </div>
+        </div>
+        <div class="aviso aviso--error" id="error-acceso" hidden><span></span></div>
+        <button class="boton boton--ancho" type="submit" id="boton-entrar">Entrar</button>
+
+        <p class="plomo" style="font-size:.85rem;text-align:center">
+          <button type="button" class="enlace-linea" id="cambiar-modo"
+                  style="color:var(--naranja);font-weight:600">Entrar con la clave del panel</button>
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Panel -->
+  <section id="pantalla-panel" hidden>
+    <div class="envoltura" style="padding-bottom:clamp(3rem,6vw,5rem)">
+
+      <div class="aviso aviso--alerta" id="aviso-clave" hidden style="margin-top:1.5rem">
+        <svg width="20" height="20" style="flex:none"><use href="#i-reloj"/></svg>
+        <div>
+          <b>Estás usando la clave por defecto.</b>
+          Antes de publicar el sitio definí la variable de entorno <code>ADMIN_TOKEN</code>
+          con una clave propia, o cualquiera puede entrar a este panel.
+        </div>
+      </div>
+
+      <div class="barra-admin">
+        <div class="barra-admin__fecha">
+          <button class="boton boton--fantasma boton--chico" id="dia-anterior" aria-label="Día anterior">←</button>
+          <input type="date" id="fecha" aria-label="Fecha a mostrar">
+          <button class="boton boton--fantasma boton--chico" id="dia-siguiente" aria-label="Día siguiente">→</button>
+          <button class="boton boton--fantasma boton--chico" id="ir-hoy">Hoy</button>
+        </div>
+        <div class="barra-admin__derecha">
+          <span class="plomo" style="font-size:.85rem" id="etiqueta-fecha"></span>
+          <button class="boton boton--chico" id="nuevo-bloqueo">Bloquear cancha</button>
+        </div>
+      </div>
+
+      <div class="tarjetas-resumen" id="resumen"></div>
+
+      <h2 class="display-sm" style="margin-bottom:.9rem">Grilla del día</h2>
+      <div class="grilla-envoltorio">
+        <table class="grilla" id="grilla"><tbody></tbody></table>
+      </div>
+      <div class="leyenda">
+        <span><i style="background:var(--naranja)"></i> Turno reservado</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#4A4F58,#4A4F58 4px,#5A6069 4px,#5A6069 8px)"></i> Bloqueo del club</span>
+        <span><i style="background:var(--papel-2);border:1px solid var(--linea)"></i> Libre</span>
+        <span><i style="background:var(--papel-3)"></i> Fuera de horario</span>
+        <span class="plomo">Tocá una celda libre para bloquearla.</span>
+      </div>
+
+      <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Turnos del día</h2>
+      <div class="tabla-envoltorio">
+        <table class="tabla-reservas" id="tabla-reservas">
+          <thead>
+            <tr>
+              <th>Hora</th><th>Cancha</th><th>Deporte</th><th>A nombre de</th>
+              <th>Teléfono</th><th>Código</th><th>Nota</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- ── Personal del club ─────────────────────────────────────────── -->
+      <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Quién entra al panel</h2>
+
+      <div class="aviso aviso--alerta" id="aviso-sin-personal" hidden style="margin-bottom:1.25rem">
+        <svg width="20" height="20" style="flex:none"><use href="#i-usuario"/></svg>
+        <div>
+          <b>Todavía no hay nadie cargado.</b>
+          Mientras tanto se entra con la clave compartida del panel, que no deja
+          rastro de quién hizo cada cosa. Cargá a las personas que atienden y cada
+          una entra con su teléfono y su contraseña.
+        </div>
+      </div>
+
+      <div class="cuenta-grilla">
+        <section class="panel">
+          <div class="panel__tapa">
+            <h3 style="font-size:1.05rem">Personal cargado</h3>
+            <span class="pildora pildora--gris" id="cuenta-personal"></span>
+          </div>
+          <div class="tabla-envoltorio">
+            <table class="tabla-reservas" id="tabla-personal">
+              <thead>
+                <tr><th>Nombre</th><th>Teléfono</th><th>Último ingreso</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3 style="font-size:1.05rem">Dar acceso a alguien</h3>
+          <form id="formulario-personal" novalidate>
+            <div class="campo">
+              <label for="personal-nombre">Nombre y apellido</label>
+              <input id="personal-nombre" type="text" required maxlength="80" placeholder="Quién atiende el mostrador">
+            </div>
+            <div class="campo">
+              <label for="personal-telefono">Teléfono</label>
+              <input id="personal-telefono" type="tel" inputmode="tel" required placeholder="223 555-1234">
+            </div>
+            <div class="campo">
+              <label for="personal-clave">Contraseña</label>
+              <input id="personal-clave" type="password" autocomplete="new-password">
+              <p class="ayuda">
+                Si esa persona ya tiene cuenta de jugador, entra con la suya y este
+                campo se ignora.
+              </p>
+            </div>
+            <div class="aviso aviso--error" id="error-personal" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-personal" hidden><span></span></div>
+            <button class="boton boton--ancho" type="submit" id="boton-personal">
+              <span data-texto-personal>Dar acceso</span>
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <!-- ── Bitácora ──────────────────────────────────────────────────── -->
+      <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Últimos movimientos</h2>
+      <p class="plomo" style="font-size:.88rem;margin-bottom:.9rem">
+        Todo lo que se hace desde el panel queda anotado acá, con nombre y hora.
+      </p>
+      <div class="tabla-envoltorio">
+        <table class="tabla-reservas" id="tabla-movimientos">
+          <thead>
+            <tr><th>Cuándo</th><th>Quién</th><th>Qué hizo</th><th>Detalle</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main><dialog class="modal" id="modal-bloqueo">
+  <form class="modal__cuerpo" id="formulario-bloqueo">
+    <h2 class="display-sm">Bloquear una cancha</h2>
+    <p class="plomo" style="font-size:.88rem">El horario deja de estar disponible para reservas online.</p>
+    <div class="campo">
+      <label for="bloqueo-cancha">Cancha</label>
+      <select id="bloqueo-cancha" required></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem">
+      <div class="campo"><label for="bloqueo-fecha">Fecha</label><input type="date" id="bloqueo-fecha" required></div>
+      <div class="campo"><label for="bloqueo-hora">Desde</label><input type="time" id="bloqueo-hora" step="1800" required></div>
+      <div class="campo">
+        <label for="bloqueo-duracion">Duración</label>
+        <select id="bloqueo-duracion">
+          <option value="30">30 min</option>
+          <option value="60">1 h</option>
+          <option value="90">1 h 30</option>
+          <option value="120" selected>2 h</option>
+          <option value="180">3 h</option>
+          <option value="360">6 h</option>
+          <option value="720">Todo el día</option>
+        </select>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="bloqueo-motivo">Motivo</label>
+      <input id="bloqueo-motivo" maxlength="80" placeholder="Mantenimiento, torneo, clase…" value="Mantenimiento">
+    </div>
+    <div class="aviso aviso--error" id="error-bloqueo" hidden><span></span></div>
+    <div class="modal__acciones">
+      <button class="boton boton--fantasma boton--chico" type="button" data-cerrar>Cancelar</button>
+      <button class="boton boton--chico" type="submit">Bloquear</button>
+    </div>
+  </form>
+</dialog><dialog class="modal" id="adm-modal">
+  <div class="modal__cuerpo">
+    <h2 class="display-sm">Cancelar este turno</h2>
+    <p class="plomo" id="adm-detalle" style="font-size:.93rem"></p>
+    <p class="plomo" style="font-size:.86rem">El horario vuelve a quedar libre para reservas online.</p>
+    <div class="aviso aviso--error" id="adm-error-cancelacion" hidden><span></span></div>
+    <div class="modal__acciones">
+      <button class="boton boton--fantasma boton--chico" type="button" data-cerrar>Volver</button>
+      <button class="boton boton--chico" type="button" id="adm-confirmar">Cancelar turno</button>
+    </div>
+  </div>
+</dialog></div>
 
 <footer class="pie">
   <div class="envoltura">
@@ -2352,10 +2580,27 @@ function semilla(texto) {
  * —que dejaría huecos irreales— se arman turnos completos por cancha, con más
  * movimiento a la tarde y a la noche, como pasa de verdad en un club.
  */
+/* Nombres para los turnos de la demostración. El panel del club muestra quién
+   reservó cada cancha, así que una grilla con casilleros anónimos no mostraría
+   lo que el panel realmente hace. */
+const NOMBRES = [
+  'Martín Rodríguez', 'Sofía Gutiérrez', 'Lucas Fernández', 'Camila Pérez',
+  'Nicolás Álvarez', 'Julieta Sosa', 'Federico Ibáñez', 'Agustina Ramos',
+  'Diego Benítez', 'Valentina Ortiz', 'Matías Herrera', 'Carolina Díaz',
+  'Joaquín Molina', 'Rocío Castro', 'Tomás Aguirre', 'Florencia Vega',
+];
+const NOTAS = [null, null, null, null, 'Alquilan paletas', 'Vienen con chicos', null, 'Juegan siempre los martes'];
+
 const cacheSimulada = new Map();
-function ocupacionSimulada(fecha) {
+
+/**
+ * El día de demostración: turnos completos, no casilleros sueltos.
+ * De acá salen las dos cosas: qué horarios están ocupados (para la grilla
+ * pública) y quién reservó cada uno (para el panel del club).
+ */
+function reservasSimuladas(fecha) {
   if (cacheSimulada.has(fecha)) return cacheSimulada.get(fecha);
-  const ocupado = new Set();
+  const reservas = [];
   const horario = horarioDe(fecha);
   if (horario) {
     const abre = Math.ceil(aMin(horario.abre) / SLOT) * SLOT;
@@ -2369,7 +2614,23 @@ function ocupacionSimulada(fecha) {
         if (azar() < demanda) {
           const dur = azar() < 0.6 ? 90 : 60;
           if (m + dur <= cierra) {
-            for (let s = m; s < m + dur; s += SLOT) ocupado.add(cancha.id + ':' + s / SLOT);
+            const i = Math.floor(azar() * NOMBRES.length);
+            const esBloqueo = azar() < 0.04;
+            reservas.push({
+              codigo: 'LN-' + (fecha + cancha.id + m).slice(-5).toUpperCase().replace(/[^A-Z0-9]/g, 'X'),
+              tipo: esBloqueo ? 'bloqueo' : 'reserva',
+              disciplina: cancha.disciplina,
+              canchaId: cancha.id,
+              fecha,
+              hora: aHora(m),
+              duracionMin: dur,
+              nombre: esBloqueo ? 'Mantenimiento' : NOMBRES[i],
+              telefono: esBloqueo ? null : '22355' + String(10000 + Math.floor(azar() * 89999)),
+              email: null,
+              notas: esBloqueo ? null : NOTAS[Math.floor(azar() * NOTAS.length)],
+              estado: 'confirmada',
+              simulada: true,
+            });
             m += dur;
             continue;
           }
@@ -2378,7 +2639,17 @@ function ocupacionSimulada(fecha) {
       }
     }
   }
-  cacheSimulada.set(fecha, ocupado);
+  cacheSimulada.set(fecha, reservas);
+  return reservas;
+}
+
+/** Los casilleros que ocupan esos turnos. */
+function ocupacionSimulada(fecha) {
+  const ocupado = new Set();
+  for (const r of reservasSimuladas(fecha)) {
+    const inicio = aMin(r.hora);
+    for (let m = inicio; m < inicio + r.duracionMin; m += SLOT) ocupado.add(r.canchaId + ':' + m / SLOT);
+  }
   return ocupado;
 }
 
@@ -2560,6 +2831,232 @@ function manejar(url, metodo, cuerpo) {
   }
 
   if (ruta.startsWith('/api/cuenta')) return manejarCuenta(ruta, metodo, cuerpo);
+  if (ruta.startsWith('/api/admin')) return manejarPanel(ruta, metodo, cuerpo, url);
+
+  return fallo('Ese endpoint no existe.', 404);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Panel del club, versión vista previa.
+   Mismo panel que el real, con datos de demostración. La clave y el personal
+   viven en este navegador: es una muestra, no un sistema con algo que cuidar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CLAVE_DEMO = 'demo1234';
+const LLAVE_BITACORA = 'naranjos:vista-previa-bitacora';
+const LLAVE_CANCELADAS = 'naranjos:vista-previa-canceladas';
+
+/* El club arranca con una persona cargada para que se pueda probar el ingreso
+   con cuenta propia sin tener que crearla primero. */
+function sembrarPersonal() {
+  const cuentas = leerCuentas();
+  if (cuentas.some((u) => u.rol === 'club')) return;
+  cuentas.push({
+    nombre: 'Vale Recepción',
+    telefono: '2235551212',
+    email: null,
+    clave: revolver(CLAVE_DEMO),
+    rol: 'club',
+  });
+  guardarCuentas(cuentas);
+}
+
+const leerBitacora = () => { try { return JSON.parse(localStorage.getItem(LLAVE_BITACORA) || '[]'); } catch { return []; } };
+const anotar = (quien, accion, detalle) => {
+  try {
+    const b = leerBitacora();
+    b.push({ cuando: new Date().toISOString(), quien, accion, detalle: detalle || null });
+    localStorage.setItem(LLAVE_BITACORA, JSON.stringify(b.slice(-100)));
+  } catch { /* sin almacenamiento */ }
+};
+
+/* Los turnos simulados se generan cada vez, así que las cancelaciones se
+   anotan aparte, por código. */
+const leerCanceladas = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CANCELADAS) || '[]'); } catch { return []; } };
+const cancelarSimulada = (codigo) => {
+  try {
+    const c = leerCanceladas();
+    if (!c.includes(codigo)) { c.push(codigo); localStorage.setItem(LLAVE_CANCELADAS, JSON.stringify(c)); }
+  } catch { /* sin almacenamiento */ }
+};
+
+/** Quién está entrando al panel: alguien del club, o la clave compartida. */
+function quienEntra(cabeceras) {
+  const u = usuarioActual();
+  if (u && u.rol === 'club') return { quien: u.nombre, conClaveMaestra: false };
+  const auth = (cabeceras && cabeceras.authorization) || '';
+  if (auth === 'Bearer ' + CLAVE_DEMO) return { quien: 'Clave del panel', conClaveMaestra: true };
+  return null;
+}
+
+/** Los turnos de un día: los simulados más los que se reservaron en la demo. */
+function turnosDelDia(fecha) {
+  const canceladas = leerCanceladas();
+  const simulados = reservasSimuladas(fecha).filter((r) => !canceladas.includes(r.codigo));
+  const propias = leerReservas().filter((r) => r.fecha === fecha && r.estado === 'confirmada');
+  return [...simulados, ...propias].sort((a, b) => aMin(a.hora) - aMin(b.hora));
+}
+
+function manejarPanel(ruta, metodo, cuerpo, url) {
+  sembrarPersonal();
+  const entrada = quienEntra(window.__cabecerasPanel);
+  if (!entrada) return fallo('Necesitás iniciar sesión como administrador.', 401);
+
+  if (ruta === '/api/admin/sesion') {
+    anotar(entrada.quien, 'ingreso', null);
+    return {
+      status: 200,
+      datos: {
+        ok: true,
+        quien: entrada.quien,
+        conClaveMaestra: entrada.conClaveMaestra,
+        avisoTokenPorDefecto: false,
+        sinPersonal: !leerCuentas().some((u) => u.rol === 'club'),
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/dia') {
+    const fecha = url.searchParams.get('fecha') || hoy();
+    const horario = horarioDe(fecha);
+    const reservas = horario ? turnosDelDia(fecha).map(serializar) : [];
+    const minutos = reservas.filter((r) => r.tipo === 'reserva').reduce((a, r) => a + r.duracionMin, 0);
+    return {
+      status: 200,
+      datos: {
+        fecha,
+        fechaLarga: fechaLarga(fecha),
+        horario,
+        canchas: CONFIG.canchas,
+        reservas,
+        resumen: {
+          turnos: reservas.filter((r) => r.tipo === 'reserva').length,
+          bloqueos: reservas.filter((r) => r.tipo === 'bloqueo').length,
+          horasVendidas: +(minutos / 60).toFixed(1),
+        },
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/agenda') {
+    const desde = url.searchParams.get('desde') || hoy();
+    const hasta = url.searchParams.get('hasta') || sumarDias(desde, 7);
+    const reservas = [];
+    for (let f = desde; f <= hasta; f = sumarDias(f, 1)) reservas.push(...turnosDelDia(f).map(serializar));
+    return { status: 200, datos: { desde, hasta, reservas } };
+  }
+
+  if (ruta === '/api/admin/bloqueos') {
+    const cancha = CONFIG.canchas.find((c) => c.id === cuerpo.canchaId);
+    if (!cancha) return fallo('Esa cancha no existe.');
+    const dur = Number(cuerpo.duracionMin);
+    const inicio = aMin(cuerpo.hora);
+    const ocupado = ocupacionTotal(cuerpo.fecha);
+    for (let m = inicio; m < inicio + dur; m += SLOT) {
+      if (ocupado.has(cancha.id + ':' + m / SLOT)) {
+        return fallo('Ese horario ya está ocupado.', 409, 'OCUPADO');
+      }
+    }
+    const bloqueo = {
+      codigo: nuevoCodigo(), tipo: 'bloqueo', disciplina: cancha.disciplina, canchaId: cancha.id,
+      fecha: cuerpo.fecha, hora: cuerpo.hora, duracionMin: dur,
+      nombre: String(cuerpo.motivo || 'Bloqueo').slice(0, 80),
+      telefono: null, email: null, notas: null, estado: 'confirmada',
+      creadaEn: new Date().toISOString(),
+    };
+    const todas = leerReservas();
+    todas.push(bloqueo);
+    guardarReservas(todas);
+    anotar(entrada.quien, 'bloqueo', `${cancha.nombre} · ${cuerpo.fecha} ${cuerpo.hora} · ${bloqueo.nombre}`);
+    return { status: 200, datos: { ok: true, reserva: serializar(bloqueo) } };
+  }
+
+  if (ruta === '/api/admin/cancelar') {
+    const codigo = String(cuerpo.codigo || '').trim().toUpperCase();
+    const todas = leerReservas();
+    const propia = todas.find((r) => r.codigo === codigo);
+    if (propia) {
+      propia.estado = 'cancelada';
+      guardarReservas(todas);
+      anotar(entrada.quien, 'cancelación', `${codigo} · ${propia.fecha} ${propia.hora} · ${propia.nombre || 'sin nombre'}`);
+      return { status: 200, datos: { ok: true, reserva: serializar(propia) } };
+    }
+    for (const f of [hoy(), ...Array.from({ length: CONFIG.reglas.diasAnticipacion }, (_, i) => sumarDias(hoy(), i + 1))]) {
+      const r = reservasSimuladas(f).find((x) => x.codigo === codigo);
+      if (r) {
+        cancelarSimulada(codigo);
+        anotar(entrada.quien, 'cancelación', `${codigo} · ${r.fecha} ${r.hora} · ${r.nombre}`);
+        return { status: 200, datos: { ok: true, reserva: serializar({ ...r, estado: 'cancelada' }) } };
+      }
+    }
+    return fallo('No existe esa reserva.', 404);
+  }
+
+  if (ruta === '/api/admin/personal' && metodo === 'GET') {
+    const actual = usuarioActual();
+    return {
+      status: 200,
+      datos: {
+        personal: leerCuentas().filter((u) => u.rol === 'club').map((u, i) => ({
+          id: i + 1,
+          nombre: u.nombre,
+          telefono: u.telefono,
+          creadoEn: null,
+          ultimoAcceso: null,
+          esVos: !!actual && actual.telefono === u.telefono,
+        })),
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/personal') {
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    const telefono = normalizarTel(cuerpo.telefono);
+    if (telefono.length < 8) return fallo('Escribí un teléfono válido.');
+    const cuentas = leerCuentas();
+    const existente = cuentas.find((u) => u.telefono === telefono);
+    if (existente) {
+      if (existente.rol === 'club') return fallo('Esa persona ya tiene acceso al panel.', 409, 'YA_ES_PERSONAL');
+      existente.rol = 'club';
+      guardarCuentas(cuentas);
+      anotar(entrada.quien, 'alta de personal', `${existente.nombre} (${telefono})`);
+      return {
+        status: 200,
+        datos: {
+          ok: true,
+          usuario: { nombre: existente.nombre, telefono, rol: 'club' },
+          promovido: true,
+          aviso: `${existente.nombre} ya tenía cuenta de jugador: entra al panel con esa misma contraseña.`,
+        },
+      };
+    }
+    const clave = String(cuerpo.clave || '');
+    if (clave.length < CONFIG.reglas.minClave) {
+      return fallo(`La contraseña tiene que tener al menos ${CONFIG.reglas.minClave} caracteres.`);
+    }
+    cuentas.push({ nombre, telefono, email: null, clave: revolver(clave), rol: 'club' });
+    guardarCuentas(cuentas);
+    anotar(entrada.quien, 'alta de personal', `${nombre} (${telefono})`);
+    return { status: 200, datos: { ok: true, usuario: { nombre, telefono, rol: 'club' }, promovido: false } };
+  }
+
+  if (ruta === '/api/admin/personal/baja') {
+    const cuentas = leerCuentas();
+    const club = cuentas.filter((u) => u.rol === 'club');
+    const objetivo = club[Number(cuerpo.id) - 1];
+    if (!objetivo) return fallo('Esa persona no existe.', 404);
+    const actual = usuarioActual();
+    if (actual && actual.telefono === objetivo.telefono) return fallo('No podés sacarte el acceso a vos mismo.');
+    objetivo.rol = 'jugador';
+    guardarCuentas(cuentas);
+    anotar(entrada.quien, 'baja de personal', `${objetivo.nombre} (${objetivo.telefono})`);
+    return { status: 200, datos: { ok: true, usuario: { nombre: objetivo.nombre, telefono: objetivo.telefono, rol: 'jugador' } } };
+  }
+
+  if (ruta === '/api/admin/movimientos') {
+    const limite = Math.min(Number(url.searchParams.get('limite')) || 40, 200);
+    return { status: 200, datos: { movimientos: leerBitacora().slice(-limite).reverse() } };
+  }
 
   return fallo('Ese endpoint no existe.', 404);
 }
@@ -2678,6 +3175,8 @@ window.fetch = async (recurso, opciones = {}) => {
   if (!url.pathname.startsWith('/api/')) return fetchReal(recurso, opciones);
   await new Promise((r) => setTimeout(r, 90)); // una pizca de latencia, para que se sienta real
   const cuerpo = opciones.body ? JSON.parse(opciones.body) : {};
+  // El panel del club manda la clave en una cabecera; acá no hay request real.
+  window.__cabecerasPanel = opciones.headers || {};
   const { status, datos } = manejar(url, opciones.method || 'GET', cuerpo);
   return new Response(JSON.stringify(datos), { status, headers: { 'content-type': 'application/json' } });
 };
@@ -2941,6 +3440,7 @@ const VISTAS = {
   '/reservar': 'vista-reservar',
   '/mis-turnos': 'vista-turnos',
   '/cuenta': 'vista-cuenta',
+  '/admin': 'vista-admin',
 };
 
 function mostrarVista(ruta) {
@@ -2993,11 +3493,6 @@ document.addEventListener('click', (e) => {
   if (!href.startsWith('/') && !href.startsWith('#')) return;
 
   const url = new URL(href, location.href);
-  if (url.pathname === '/admin') {
-    e.preventDefault();
-    alert('El panel del club no entra en la vista previa porque necesita el servidor de turnos.\n\nSe ve corriendo el proyecto: npm start → localhost:3000/admin');
-    return;
-  }
   if (!(url.pathname in VISTAS)) return;
   e.preventDefault();
   irA(href);
@@ -3995,6 +4490,425 @@ function listo(boton, selectorTexto, texto) {
   boton.disabled = false;
   $(selectorTexto).textContent = texto;
 }
+
+}
+{
+/** Panel del club: grilla del día, cancelaciones y bloqueos. */
+const $ = (sel) => document.querySelector(sel);
+const LLAVE = 'naranjos:clave-panel';
+
+/* Dos maneras de entrar: con la cuenta propia de quien atiende —la buena, la
+   que deja rastro— o con la clave compartida del panel, que sirve para
+   arrancar y como salida de emergencia. */
+let modo = 'cuenta';     // 'cuenta' | 'clave'
+let clave = null;        // sólo se usa en modo 'clave'
+let config = null;
+let dia = null;          // datos del día que se está mostrando
+let codigoAcancelar = null;
+
+iniciarCabecera();
+arrancar();
+
+async function arrancar() {
+  config = await traerConfig().catch(() => null);
+  if (!config) {
+    $('#error-acceso').hidden = false;
+    $('#error-acceso').querySelector('span').textContent =
+      'No pudimos conectarnos con el servidor de turnos. Revisá que esté encendido.';
+    return;
+  }
+
+  $('#fecha').value = config.hoy;
+  $('#fecha').min = config.hoy;
+  $('#bloqueo-fecha').value = config.hoy;
+  $('#bloqueo-cancha').innerHTML = config.canchas
+    .map((c) => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+
+  // ¿Ya hay una sesión de alguien del club abierta en este navegador?
+  if (await verificar()) return entrar();
+
+  // Si no, puede quedar la clave del panel de esta misma pestaña.
+  const guardada = sessionStorage.getItem(LLAVE);
+  if (guardada) {
+    modo = 'clave';
+    clave = guardada;
+    if (await verificar()) return entrar();
+    clave = null;
+    modo = 'cuenta';
+  }
+}
+
+/** Alterna entre entrar con la cuenta propia y entrar con la clave del panel. */
+$('#cambiar-modo').addEventListener('click', () => {
+  modo = modo === 'cuenta' ? 'clave' : 'cuenta';
+  const conCuenta = modo === 'cuenta';
+  $('[data-modo="cuenta"]').hidden = !conCuenta;
+  $('[data-etiqueta-clave]').textContent = conCuenta ? 'Contraseña' : 'Clave del panel';
+  $('#cambiar-modo').textContent = conCuenta
+    ? 'Entrar con la clave del panel'
+    : 'Entrar con mi cuenta';
+  $('#error-acceso').hidden = true;
+  $('#clave').value = '';
+  (conCuenta ? $('#acceso-telefono') : $('#clave')).focus();
+});
+
+/* Con la cuenta propia la sesión viaja en la cookie y no hay nada que agregar;
+   con la clave del panel va en la cabecera, como antes. */
+const cabeceras = () => (modo === 'clave' && clave ? { authorization: `Bearer ${clave}` } : {});
+
+async function verificar() {
+  try {
+    const r = await pedir('/api/admin/sesion', { method: 'POST', headers: cabeceras() });
+    $('#aviso-clave').hidden = !r.avisoTokenPorDefecto;
+    $('#aviso-sin-personal').hidden = !r.sinPersonal;
+    $('#quien-entro').hidden = false;
+    $('#quien-entro').querySelector('[data-quien]').textContent = r.quien;
+    return true;
+  } catch {
+    if (modo === 'clave') sessionStorage.removeItem(LLAVE);
+    return false;
+  }
+}
+
+$('#formulario-acceso').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const caja = $('#error-acceso');
+  caja.hidden = true;
+  $('#boton-entrar').disabled = true;
+  $('#boton-entrar').innerHTML = '<span class="cargando"></span>';
+
+  let adentro = false;
+  let mensaje = 'La clave no es correcta.';
+
+  if (modo === 'cuenta') {
+    try {
+      await pedir('/api/cuenta/ingreso', {
+        method: 'POST',
+        body: { telefono: $('#acceso-telefono').value.trim(), clave: $('#clave').value },
+      });
+      adentro = await verificar();
+      if (!adentro) mensaje = 'Esa cuenta no tiene acceso al panel del club.';
+    } catch (err) {
+      mensaje = err.message;
+    }
+  } else {
+    clave = $('#clave').value;
+    adentro = await verificar();
+    if (adentro) sessionStorage.setItem(LLAVE, clave);
+    else clave = null;
+  }
+
+  if (adentro) {
+    entrar();
+  } else {
+    caja.hidden = false;
+    caja.querySelector('span').textContent = mensaje;
+  }
+  $('#boton-entrar').disabled = false;
+  $('#boton-entrar').textContent = 'Entrar';
+});
+
+$('#salir').addEventListener('click', async () => {
+  sessionStorage.removeItem(LLAVE);
+  if (modo === 'cuenta') await pedir('/api/cuenta/salir', { method: 'POST' }).catch(() => {});
+  location.reload();
+});
+
+function entrar() {
+  $('#pantalla-acceso').hidden = true;
+  $('#pantalla-panel').hidden = false;
+  $('#salir').hidden = false;
+  cargarDia();
+  cargarPersonal();
+  cargarMovimientos();
+}
+
+/* ── Personal del club ────────────────────────────────────────────────────── */
+async function cargarPersonal() {
+  const cuerpo = $('#tabla-personal').querySelector('tbody');
+  try {
+    const { personal } = await pedir('/api/admin/personal', { headers: cabeceras() });
+    $('#cuenta-personal').textContent =
+      personal.length === 1 ? '1 persona' : `${personal.length} personas`;
+
+    cuerpo.innerHTML = personal.length
+      ? personal.map((u) => `
+          <tr>
+            <td>${esc(u.nombre)}${u.esVos ? ' <span class="pildora pildora--verde">vos</span>' : ''}</td>
+            <td class="numeros">${esc(u.telefono)}</td>
+            <td>${u.ultimoAcceso ? esc(fechaCorta(u.ultimoAcceso)) : '—'}</td>
+            <td>${u.esVos ? '' : `<button class="boton boton--fantasma boton--chico" data-baja="${u.id}">Sacar acceso</button>`}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="plomo" style="padding:1.2rem">Todavía no cargaste a nadie.</td></tr>';
+  } catch (err) {
+    cuerpo.innerHTML = `<tr><td colspan="4" style="padding:1.2rem">${esc(err.message)}</td></tr>`;
+  }
+}
+
+const fechaCorta = (iso) =>
+  new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+$('#formulario-personal').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-personal');
+  $('#error-personal').hidden = true;
+  $('#ok-personal').hidden = true;
+  boton.disabled = true;
+  $('[data-texto-personal]').innerHTML = '<span class="cargando"></span> Dando acceso…';
+  try {
+    const r = await pedir('/api/admin/personal', {
+      method: 'POST',
+      headers: cabeceras(),
+      body: {
+        nombre: $('#personal-nombre').value.trim(),
+        telefono: $('#personal-telefono').value.trim(),
+        clave: $('#personal-clave').value,
+      },
+    });
+    $('#formulario-personal').reset();
+    $('#ok-personal').hidden = false;
+    $('#ok-personal').querySelector('span').textContent =
+      r.aviso || `${r.usuario.nombre} ya puede entrar al panel con su teléfono y su contraseña.`;
+    cargarPersonal();
+    cargarMovimientos();
+  } catch (err) {
+    $('#error-personal').hidden = false;
+    $('#error-personal').querySelector('span').textContent = err.message;
+  } finally {
+    boton.disabled = false;
+    $('[data-texto-personal]').textContent = 'Dar acceso';
+  }
+});
+
+$('#tabla-personal').addEventListener('click', async (e) => {
+  const boton = e.target.closest('[data-baja]');
+  if (!boton) return;
+  const fila = boton.closest('tr');
+  const nombre = fila.querySelector('td').textContent.trim();
+  if (!confirm(`¿Sacarle el acceso al panel a ${nombre}?\n\nSu cuenta de jugador y sus turnos quedan como están.`)) return;
+  boton.disabled = true;
+  try {
+    await pedir('/api/admin/personal/baja', {
+      method: 'POST', headers: cabeceras(), body: { id: Number(boton.dataset.baja) },
+    });
+    cargarPersonal();
+    cargarMovimientos();
+  } catch (err) {
+    alert(err.message);
+    boton.disabled = false;
+  }
+});
+
+/* ── Bitácora ─────────────────────────────────────────────────────────────── */
+async function cargarMovimientos() {
+  const cuerpo = $('#tabla-movimientos').querySelector('tbody');
+  try {
+    const { movimientos } = await pedir('/api/admin/movimientos?limite=25', { headers: cabeceras() });
+    cuerpo.innerHTML = movimientos.length
+      ? movimientos.map((m) => `
+          <tr>
+            <td class="numeros">${esc(fechaCorta(m.cuando))}</td>
+            <td>${esc(m.quien)}</td>
+            <td>${esc(m.accion)}</td>
+            <td class="plomo">${esc(m.detalle || '—')}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="plomo" style="padding:1.2rem">Todavía no hay movimientos.</td></tr>';
+  } catch (err) {
+    cuerpo.innerHTML = `<tr><td colspan="4" style="padding:1.2rem">${esc(err.message)}</td></tr>`;
+  }
+}
+
+/* ── Navegación por fecha ─────────────────────────────────────────────────── */
+const sumarDias = (fecha, n) => {
+  const [a, m, d] = fecha.split('-').map(Number);
+  const t = new Date(Date.UTC(a, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + n);
+  return t.toISOString().slice(0, 10);
+};
+
+$('#fecha').addEventListener('change', cargarDia);
+$('#dia-anterior').addEventListener('click', () => { $('#fecha').value = sumarDias($('#fecha').value, -1); cargarDia(); });
+$('#dia-siguiente').addEventListener('click', () => { $('#fecha').value = sumarDias($('#fecha').value, 1); cargarDia(); });
+$('#ir-hoy').addEventListener('click', () => { $('#fecha').value = config.hoy; cargarDia(); });
+
+async function cargarDia() {
+  const fecha = $('#fecha').value;
+  if (!fecha) return;
+  $('#grilla').querySelector('tbody').innerHTML =
+    '<tr><td style="padding:1.5rem" colspan="99">Cargando…</td></tr>';
+  try {
+    dia = await pedir(`/api/admin/dia?fecha=${encodeURIComponent(fecha)}`, { headers: cabeceras() });
+  } catch (err) {
+    $('#grilla').querySelector('tbody').innerHTML =
+      `<tr><td style="padding:1.5rem" colspan="99">${esc(err.message)}</td></tr>`;
+    return;
+  }
+  $('#etiqueta-fecha').textContent = dia.fechaLarga;
+  pintarResumen();
+  pintarGrilla();
+  pintarTabla();
+}
+
+function pintarResumen() {
+  const canchas = dia.canchas.length;
+  const horasDia = dia.horario
+    ? (aMin(dia.horario.cierra) - aMin(dia.horario.abre)) / 60 * canchas
+    : 0;
+  const ocupacion = horasDia ? Math.round((dia.resumen.horasVendidas / horasDia) * 100) : 0;
+
+  $('#resumen').innerHTML = `
+    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.turnos}</b><span>Turnos reservados</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.horasVendidas}</b><span>Horas de cancha</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${ocupacion}%</b><span>Ocupación del día</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.bloqueos}</b><span>Bloqueos activos</span></div>`;
+}
+
+const aMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+const aHora = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+function pintarGrilla() {
+  const tabla = $('#grilla');
+  if (!dia.horario) {
+    tabla.innerHTML = '<tbody><tr><td style="padding:1.5rem">Ese día el complejo está cerrado.</td></tr></tbody>';
+    return;
+  }
+
+  const paso = config.reglas.slotMinutos;
+  const desde = Math.floor(aMin(dia.horario.abre) / paso) * paso;
+  const hasta = Math.ceil(aMin(dia.horario.cierra) / paso) * paso;
+  const slots = [];
+  for (let m = desde; m < hasta; m += paso) slots.push(m);
+
+  // Qué reserva ocupa cada casillero de cada cancha.
+  const ocupado = new Map();
+  for (const r of dia.reservas) {
+    const inicio = aMin(r.hora);
+    for (let m = inicio; m < inicio + r.duracionMin; m += paso) {
+      ocupado.set(`${r.canchaId}:${m}`, { reserva: r, esInicio: m === inicio });
+    }
+  }
+
+  const encabezado = `<thead><tr><th style="left:0;z-index:3">Cancha</th>${
+    slots.map((m) => `<th>${m % 60 === 0 ? aHora(m) : ''}</th>`).join('')}</tr></thead>`;
+
+  const filas = dia.canchas.map((c) => {
+    const celdas = slots.map((m) => {
+      const uso = ocupado.get(`${c.id}:${m}`);
+      if (!uso) {
+        return `<td><button class="celda" type="button" data-libre data-cancha="${esc(c.id)}" data-hora="${aHora(m)}" aria-label="Bloquear ${esc(c.nombre)} a las ${aHora(m)}"></button></td>`;
+      }
+      const { reserva, esInicio } = uso;
+      const clase = reserva.tipo === 'bloqueo' ? 'celda celda--ocupada celda--bloqueo' : 'celda celda--ocupada';
+      const titulo = `${reserva.hora}–${reserva.fin} · ${reserva.canchaNombre} · ${reserva.nombre || 'Bloqueo'}`;
+      return `<td><button class="${clase}" type="button" data-codigo="${esc(reserva.codigo)}" title="${esc(titulo)}">${
+        esInicio ? esc((reserva.nombre || 'Bloqueo').split(' ')[0]) : ''}</button></td>`;
+    }).join('');
+    return `<tr><th>${esc(c.nombre)}</th>${celdas}</tr>`;
+  }).join('');
+
+  tabla.innerHTML = `${encabezado}<tbody>${filas}</tbody>`;
+}
+
+function pintarTabla() {
+  const cuerpo = $('#tabla-reservas').querySelector('tbody');
+  const turnos = dia.reservas;
+  if (!turnos.length) {
+    cuerpo.innerHTML = '<tr><td colspan="8" style="padding:1.5rem;color:var(--tinta-3)">Todavía no hay turnos para este día.</td></tr>';
+    return;
+  }
+  cuerpo.innerHTML = turnos.map((r) => `
+    <tr>
+      <td class="numeros"><b>${esc(r.hora)}</b><br><span style="color:var(--tinta-3)">${esc(r.fin)}</span></td>
+      <td>${esc(r.canchaNombre)}</td>
+      <td>${r.tipo === 'bloqueo' ? '<span class="pildora pildora--gris">Bloqueo</span>' : esc(r.disciplinaNombre)}</td>
+      <td>${esc(r.nombre || '—')}</td>
+      <td>${r.telefono ? `<a class="enlace-linea" href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a>` : '—'}</td>
+      <td><code>${esc(r.codigo)}</code></td>
+      <td style="max-width:180px;color:var(--tinta-2)">${esc(r.notas || '')}</td>
+      <td><button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">
+        ${r.tipo === 'bloqueo' ? 'Liberar' : 'Cancelar'}</button></td>
+    </tr>`).join('');
+}
+
+/* ── Bloqueos ─────────────────────────────────────────────────────────────── */
+$('#nuevo-bloqueo').addEventListener('click', () => {
+  $('#bloqueo-fecha').value = $('#fecha').value;
+  $('#error-bloqueo').hidden = true;
+  $('#modal-bloqueo').showModal();
+});
+
+$('#grilla').addEventListener('click', (e) => {
+  const libre = e.target.closest('[data-libre]');
+  if (libre) {
+    $('#bloqueo-cancha').value = libre.dataset.cancha;
+    $('#bloqueo-fecha').value = $('#fecha').value;
+    $('#bloqueo-hora').value = libre.dataset.hora;
+    $('#error-bloqueo').hidden = true;
+    $('#modal-bloqueo').showModal();
+    return;
+  }
+  const ocupada = e.target.closest('[data-codigo]');
+  if (ocupada) abrirCancelacion(ocupada.dataset.codigo);
+});
+
+$('#formulario-bloqueo').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await pedir('/api/admin/bloqueos', {
+      method: 'POST',
+      headers: cabeceras(),
+      body: {
+        canchaId: $('#bloqueo-cancha').value,
+        fecha: $('#bloqueo-fecha').value,
+        hora: $('#bloqueo-hora').value,
+        duracionMin: Number($('#bloqueo-duracion').value),
+        motivo: $('#bloqueo-motivo').value,
+      },
+    });
+    $('#modal-bloqueo').close();
+    if ($('#bloqueo-fecha').value !== $('#fecha').value) $('#fecha').value = $('#bloqueo-fecha').value;
+    cargarDia();
+    cargarMovimientos();
+  } catch (err) {
+    const caja = $('#error-bloqueo');
+    caja.hidden = false;
+    caja.querySelector('span').textContent = err.message;
+  }
+});
+
+/* ── Cancelaciones ────────────────────────────────────────────────────────── */
+$('#tabla-reservas').addEventListener('click', (e) => {
+  const boton = e.target.closest('[data-cancelar]');
+  if (boton) abrirCancelacion(boton.dataset.cancelar);
+});
+
+function abrirCancelacion(codigo) {
+  const r = dia.reservas.find((x) => x.codigo === codigo);
+  if (!r) return;
+  codigoAcancelar = codigo;
+  $('#adm-detalle').textContent =
+    `${r.hora}–${r.fin} · ${r.canchaNombre} · ${r.nombre || 'Bloqueo'} · ${duracionTexto(r.duracionMin)}`;
+  $('#adm-error-cancelacion').hidden = true;
+  $('#adm-modal').showModal();
+}
+
+$('#adm-confirmar').addEventListener('click', async () => {
+  try {
+    await pedir('/api/admin/cancelar', {
+      method: 'POST', headers: cabeceras(), body: { codigo: codigoAcancelar },
+    });
+    $('#adm-modal').close();
+    cargarDia();
+    cargarMovimientos();
+  } catch (err) {
+    const caja = $('#adm-error-cancelacion');
+    caja.hidden = false;
+    caja.querySelector('span').textContent = err.message;
+  }
+});
+
+document.querySelectorAll('[data-cerrar]').forEach((b) =>
+  b.addEventListener('click', () => b.closest('dialog').close()));
 
 }
 </script>

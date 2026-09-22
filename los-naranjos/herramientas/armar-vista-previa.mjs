@@ -33,6 +33,7 @@ const indice = leer('public/index.html');
 const reservar = leer('public/reservar.html');
 const turnos = leer('public/mis-turnos.html');
 const cuenta = leer('public/cuenta.html');
+const admin = leer('public/admin.html');
 
 const sprite = entre(indice, '<svg xmlns="http://www.w3.org/2000/svg" style="display:none"', '</svg>', 'sprite');
 const cabecera = entre(indice, '<header class="cabecera">', '</header>', 'cabecera');
@@ -79,6 +80,62 @@ const renombrarEnCuenta = (texto) => ID_CUENTA.reduce(
 );
 vistaCuenta = renombrarEnCuenta(vistaCuenta);
 
+/* El panel del club entra entero: pantalla de acceso, panel y los dos modales.
+   Su modal de cancelación choca con el de "mis turnos", así que va con prefijo. */
+const ID_ADMIN = [
+  ['modal-cancelar', 'adm-modal'],
+  ['detalle-cancelacion', 'adm-detalle'],
+  ['error-cancelacion', 'adm-error-cancelacion'],
+  ['confirmar-cancelacion', 'adm-confirmar'],
+];
+const renombrarEnAdmin = (texto) => ID_ADMIN.reduce(
+  (acc, [viejo, nuevo]) =>
+    acc.replaceAll(`id="${viejo}"`, `id="${nuevo}"`).replaceAll(`$('#${viejo}')`, `$('#${nuevo}')`),
+  texto
+);
+
+/* El panel real tiene su propia cabecera oscura, con quién entró y el botón de
+   salir. Acá la cabecera es la del sitio, así que esa barra se rearma como una
+   tapa: sin ella, admin.js busca botones que no existen. */
+const tapaAdmin = `
+<section class="tapa">
+  <div class="envoltura tapa__interior" style="flex-direction:row;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;display:flex">
+    <div>
+      <p class="migas"><a href="/">Inicio</a> <span>/</span> <span>Panel del club</span></p>
+      <h1 class="display-md" style="margin-top:.3rem">Panel del club</h1>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center">
+      <span class="cuenta-enlace" id="quien-entro" hidden style="cursor:default">
+        <svg><use href="#i-usuario"/></svg>
+        <span data-quien></span>
+      </span>
+      <button class="boton boton--chico boton--contorno-claro" id="salir" hidden>Salir</button>
+    </div>
+  </div>
+</section>`;
+
+let vistaAdmin = renombrarEnAdmin(
+  tapaAdmin +
+  entre(admin, '<main id="contenido">', '</main>', 'main del panel') +
+  entre(admin, '<dialog class="modal" id="modal-bloqueo">', '</dialog>', 'modal de bloqueo') +
+  entre(admin, '<dialog class="modal" id="modal-cancelar">', '</dialog>', 'modal de cancelación del panel')
+);
+
+/* En la vista previa no hay servidor donde definir una clave, así que el panel
+   dice con qué datos se entra. Es una demo: no hay nada real que proteger. */
+vistaAdmin = vistaAdmin.replace(
+  '<div class="aviso aviso--error" id="error-acceso" hidden><span></span></div>',
+  `<div class="aviso" style="background:var(--papel-3);border-color:var(--linea)">
+          <svg width="20" height="20" style="flex:none"><use href="#i-usuario"/></svg>
+          <div>
+            <b>Datos para probar el panel.</b><br>
+            Teléfono <b>223 555-1212</b> · contraseña <b>demo1234</b>.<br>
+            O la clave del panel: <b>demo1234</b>.
+          </div>
+        </div>
+        <div class="aviso aviso--error" id="error-acceso" hidden><span></span></div>`
+);
+
 // ── CSS ────────────────────────────────────────────────────────────────────
 const css = ['public/css/base.css', 'public/css/site.css', 'public/css/app.css']
   .map(leer).join('\n\n');
@@ -95,6 +152,7 @@ const jsInicio = sinImport(
 );
 const jsReservar = sinImport(leer('public/js/reservar.js'));
 const jsCuenta = renombrarEnCuenta(sinImport(leer('public/js/cuenta.js')));
+const jsAdmin = renombrarEnAdmin(sinImport(leer('public/js/admin.js')));
 const jsTurnos = sinImport(leer('public/js/mis-turnos.js'))
   .replace(/\$\('#telefono'\)/g, "$('#mt-telefono')")
   .replace(/\$\('#codigo'\)/g, "$('#mt-codigo')");
@@ -151,6 +209,7 @@ ${cabecera}
 <div class="vista" id="vista-reservar" hidden>${vistaReservar}</div>
 <div class="vista" id="vista-turnos" hidden>${vistaTurnos}</div>
 <div class="vista" id="vista-cuenta" hidden>${vistaCuenta}</div>
+<div class="vista" id="vista-admin" hidden>${vistaAdmin}</div>
 
 ${pie}
 ${flotante}
@@ -197,10 +256,27 @@ function semilla(texto) {
  * —que dejaría huecos irreales— se arman turnos completos por cancha, con más
  * movimiento a la tarde y a la noche, como pasa de verdad en un club.
  */
+/* Nombres para los turnos de la demostración. El panel del club muestra quién
+   reservó cada cancha, así que una grilla con casilleros anónimos no mostraría
+   lo que el panel realmente hace. */
+const NOMBRES = [
+  'Martín Rodríguez', 'Sofía Gutiérrez', 'Lucas Fernández', 'Camila Pérez',
+  'Nicolás Álvarez', 'Julieta Sosa', 'Federico Ibáñez', 'Agustina Ramos',
+  'Diego Benítez', 'Valentina Ortiz', 'Matías Herrera', 'Carolina Díaz',
+  'Joaquín Molina', 'Rocío Castro', 'Tomás Aguirre', 'Florencia Vega',
+];
+const NOTAS = [null, null, null, null, 'Alquilan paletas', 'Vienen con chicos', null, 'Juegan siempre los martes'];
+
 const cacheSimulada = new Map();
-function ocupacionSimulada(fecha) {
+
+/**
+ * El día de demostración: turnos completos, no casilleros sueltos.
+ * De acá salen las dos cosas: qué horarios están ocupados (para la grilla
+ * pública) y quién reservó cada uno (para el panel del club).
+ */
+function reservasSimuladas(fecha) {
   if (cacheSimulada.has(fecha)) return cacheSimulada.get(fecha);
-  const ocupado = new Set();
+  const reservas = [];
   const horario = horarioDe(fecha);
   if (horario) {
     const abre = Math.ceil(aMin(horario.abre) / SLOT) * SLOT;
@@ -214,7 +290,23 @@ function ocupacionSimulada(fecha) {
         if (azar() < demanda) {
           const dur = azar() < 0.6 ? 90 : 60;
           if (m + dur <= cierra) {
-            for (let s = m; s < m + dur; s += SLOT) ocupado.add(cancha.id + ':' + s / SLOT);
+            const i = Math.floor(azar() * NOMBRES.length);
+            const esBloqueo = azar() < 0.04;
+            reservas.push({
+              codigo: 'LN-' + (fecha + cancha.id + m).slice(-5).toUpperCase().replace(/[^A-Z0-9]/g, 'X'),
+              tipo: esBloqueo ? 'bloqueo' : 'reserva',
+              disciplina: cancha.disciplina,
+              canchaId: cancha.id,
+              fecha,
+              hora: aHora(m),
+              duracionMin: dur,
+              nombre: esBloqueo ? 'Mantenimiento' : NOMBRES[i],
+              telefono: esBloqueo ? null : '22355' + String(10000 + Math.floor(azar() * 89999)),
+              email: null,
+              notas: esBloqueo ? null : NOTAS[Math.floor(azar() * NOTAS.length)],
+              estado: 'confirmada',
+              simulada: true,
+            });
             m += dur;
             continue;
           }
@@ -223,7 +315,17 @@ function ocupacionSimulada(fecha) {
       }
     }
   }
-  cacheSimulada.set(fecha, ocupado);
+  cacheSimulada.set(fecha, reservas);
+  return reservas;
+}
+
+/** Los casilleros que ocupan esos turnos. */
+function ocupacionSimulada(fecha) {
+  const ocupado = new Set();
+  for (const r of reservasSimuladas(fecha)) {
+    const inicio = aMin(r.hora);
+    for (let m = inicio; m < inicio + r.duracionMin; m += SLOT) ocupado.add(r.canchaId + ':' + m / SLOT);
+  }
   return ocupado;
 }
 
@@ -405,6 +507,232 @@ function manejar(url, metodo, cuerpo) {
   }
 
   if (ruta.startsWith('/api/cuenta')) return manejarCuenta(ruta, metodo, cuerpo);
+  if (ruta.startsWith('/api/admin')) return manejarPanel(ruta, metodo, cuerpo, url);
+
+  return fallo('Ese endpoint no existe.', 404);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Panel del club, versión vista previa.
+   Mismo panel que el real, con datos de demostración. La clave y el personal
+   viven en este navegador: es una muestra, no un sistema con algo que cuidar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CLAVE_DEMO = 'demo1234';
+const LLAVE_BITACORA = 'naranjos:vista-previa-bitacora';
+const LLAVE_CANCELADAS = 'naranjos:vista-previa-canceladas';
+
+/* El club arranca con una persona cargada para que se pueda probar el ingreso
+   con cuenta propia sin tener que crearla primero. */
+function sembrarPersonal() {
+  const cuentas = leerCuentas();
+  if (cuentas.some((u) => u.rol === 'club')) return;
+  cuentas.push({
+    nombre: 'Vale Recepción',
+    telefono: '2235551212',
+    email: null,
+    clave: revolver(CLAVE_DEMO),
+    rol: 'club',
+  });
+  guardarCuentas(cuentas);
+}
+
+const leerBitacora = () => { try { return JSON.parse(localStorage.getItem(LLAVE_BITACORA) || '[]'); } catch { return []; } };
+const anotar = (quien, accion, detalle) => {
+  try {
+    const b = leerBitacora();
+    b.push({ cuando: new Date().toISOString(), quien, accion, detalle: detalle || null });
+    localStorage.setItem(LLAVE_BITACORA, JSON.stringify(b.slice(-100)));
+  } catch { /* sin almacenamiento */ }
+};
+
+/* Los turnos simulados se generan cada vez, así que las cancelaciones se
+   anotan aparte, por código. */
+const leerCanceladas = () => { try { return JSON.parse(localStorage.getItem(LLAVE_CANCELADAS) || '[]'); } catch { return []; } };
+const cancelarSimulada = (codigo) => {
+  try {
+    const c = leerCanceladas();
+    if (!c.includes(codigo)) { c.push(codigo); localStorage.setItem(LLAVE_CANCELADAS, JSON.stringify(c)); }
+  } catch { /* sin almacenamiento */ }
+};
+
+/** Quién está entrando al panel: alguien del club, o la clave compartida. */
+function quienEntra(cabeceras) {
+  const u = usuarioActual();
+  if (u && u.rol === 'club') return { quien: u.nombre, conClaveMaestra: false };
+  const auth = (cabeceras && cabeceras.authorization) || '';
+  if (auth === 'Bearer ' + CLAVE_DEMO) return { quien: 'Clave del panel', conClaveMaestra: true };
+  return null;
+}
+
+/** Los turnos de un día: los simulados más los que se reservaron en la demo. */
+function turnosDelDia(fecha) {
+  const canceladas = leerCanceladas();
+  const simulados = reservasSimuladas(fecha).filter((r) => !canceladas.includes(r.codigo));
+  const propias = leerReservas().filter((r) => r.fecha === fecha && r.estado === 'confirmada');
+  return [...simulados, ...propias].sort((a, b) => aMin(a.hora) - aMin(b.hora));
+}
+
+function manejarPanel(ruta, metodo, cuerpo, url) {
+  sembrarPersonal();
+  const entrada = quienEntra(window.__cabecerasPanel);
+  if (!entrada) return fallo('Necesitás iniciar sesión como administrador.', 401);
+
+  if (ruta === '/api/admin/sesion') {
+    anotar(entrada.quien, 'ingreso', null);
+    return {
+      status: 200,
+      datos: {
+        ok: true,
+        quien: entrada.quien,
+        conClaveMaestra: entrada.conClaveMaestra,
+        avisoTokenPorDefecto: false,
+        sinPersonal: !leerCuentas().some((u) => u.rol === 'club'),
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/dia') {
+    const fecha = url.searchParams.get('fecha') || hoy();
+    const horario = horarioDe(fecha);
+    const reservas = horario ? turnosDelDia(fecha).map(serializar) : [];
+    const minutos = reservas.filter((r) => r.tipo === 'reserva').reduce((a, r) => a + r.duracionMin, 0);
+    return {
+      status: 200,
+      datos: {
+        fecha,
+        fechaLarga: fechaLarga(fecha),
+        horario,
+        canchas: CONFIG.canchas,
+        reservas,
+        resumen: {
+          turnos: reservas.filter((r) => r.tipo === 'reserva').length,
+          bloqueos: reservas.filter((r) => r.tipo === 'bloqueo').length,
+          horasVendidas: +(minutos / 60).toFixed(1),
+        },
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/agenda') {
+    const desde = url.searchParams.get('desde') || hoy();
+    const hasta = url.searchParams.get('hasta') || sumarDias(desde, 7);
+    const reservas = [];
+    for (let f = desde; f <= hasta; f = sumarDias(f, 1)) reservas.push(...turnosDelDia(f).map(serializar));
+    return { status: 200, datos: { desde, hasta, reservas } };
+  }
+
+  if (ruta === '/api/admin/bloqueos') {
+    const cancha = CONFIG.canchas.find((c) => c.id === cuerpo.canchaId);
+    if (!cancha) return fallo('Esa cancha no existe.');
+    const dur = Number(cuerpo.duracionMin);
+    const inicio = aMin(cuerpo.hora);
+    const ocupado = ocupacionTotal(cuerpo.fecha);
+    for (let m = inicio; m < inicio + dur; m += SLOT) {
+      if (ocupado.has(cancha.id + ':' + m / SLOT)) {
+        return fallo('Ese horario ya está ocupado.', 409, 'OCUPADO');
+      }
+    }
+    const bloqueo = {
+      codigo: nuevoCodigo(), tipo: 'bloqueo', disciplina: cancha.disciplina, canchaId: cancha.id,
+      fecha: cuerpo.fecha, hora: cuerpo.hora, duracionMin: dur,
+      nombre: String(cuerpo.motivo || 'Bloqueo').slice(0, 80),
+      telefono: null, email: null, notas: null, estado: 'confirmada',
+      creadaEn: new Date().toISOString(),
+    };
+    const todas = leerReservas();
+    todas.push(bloqueo);
+    guardarReservas(todas);
+    anotar(entrada.quien, 'bloqueo', \`\${cancha.nombre} · \${cuerpo.fecha} \${cuerpo.hora} · \${bloqueo.nombre}\`);
+    return { status: 200, datos: { ok: true, reserva: serializar(bloqueo) } };
+  }
+
+  if (ruta === '/api/admin/cancelar') {
+    const codigo = String(cuerpo.codigo || '').trim().toUpperCase();
+    const todas = leerReservas();
+    const propia = todas.find((r) => r.codigo === codigo);
+    if (propia) {
+      propia.estado = 'cancelada';
+      guardarReservas(todas);
+      anotar(entrada.quien, 'cancelación', \`\${codigo} · \${propia.fecha} \${propia.hora} · \${propia.nombre || 'sin nombre'}\`);
+      return { status: 200, datos: { ok: true, reserva: serializar(propia) } };
+    }
+    for (const f of [hoy(), ...Array.from({ length: CONFIG.reglas.diasAnticipacion }, (_, i) => sumarDias(hoy(), i + 1))]) {
+      const r = reservasSimuladas(f).find((x) => x.codigo === codigo);
+      if (r) {
+        cancelarSimulada(codigo);
+        anotar(entrada.quien, 'cancelación', \`\${codigo} · \${r.fecha} \${r.hora} · \${r.nombre}\`);
+        return { status: 200, datos: { ok: true, reserva: serializar({ ...r, estado: 'cancelada' }) } };
+      }
+    }
+    return fallo('No existe esa reserva.', 404);
+  }
+
+  if (ruta === '/api/admin/personal' && metodo === 'GET') {
+    const actual = usuarioActual();
+    return {
+      status: 200,
+      datos: {
+        personal: leerCuentas().filter((u) => u.rol === 'club').map((u, i) => ({
+          id: i + 1,
+          nombre: u.nombre,
+          telefono: u.telefono,
+          creadoEn: null,
+          ultimoAcceso: null,
+          esVos: !!actual && actual.telefono === u.telefono,
+        })),
+      },
+    };
+  }
+
+  if (ruta === '/api/admin/personal') {
+    const nombre = String(cuerpo.nombre || '').trim();
+    if (nombre.length < 2) return fallo('Escribí tu nombre y apellido.');
+    const telefono = normalizarTel(cuerpo.telefono);
+    if (telefono.length < 8) return fallo('Escribí un teléfono válido.');
+    const cuentas = leerCuentas();
+    const existente = cuentas.find((u) => u.telefono === telefono);
+    if (existente) {
+      if (existente.rol === 'club') return fallo('Esa persona ya tiene acceso al panel.', 409, 'YA_ES_PERSONAL');
+      existente.rol = 'club';
+      guardarCuentas(cuentas);
+      anotar(entrada.quien, 'alta de personal', \`\${existente.nombre} (\${telefono})\`);
+      return {
+        status: 200,
+        datos: {
+          ok: true,
+          usuario: { nombre: existente.nombre, telefono, rol: 'club' },
+          promovido: true,
+          aviso: \`\${existente.nombre} ya tenía cuenta de jugador: entra al panel con esa misma contraseña.\`,
+        },
+      };
+    }
+    const clave = String(cuerpo.clave || '');
+    if (clave.length < CONFIG.reglas.minClave) {
+      return fallo(\`La contraseña tiene que tener al menos \${CONFIG.reglas.minClave} caracteres.\`);
+    }
+    cuentas.push({ nombre, telefono, email: null, clave: revolver(clave), rol: 'club' });
+    guardarCuentas(cuentas);
+    anotar(entrada.quien, 'alta de personal', \`\${nombre} (\${telefono})\`);
+    return { status: 200, datos: { ok: true, usuario: { nombre, telefono, rol: 'club' }, promovido: false } };
+  }
+
+  if (ruta === '/api/admin/personal/baja') {
+    const cuentas = leerCuentas();
+    const club = cuentas.filter((u) => u.rol === 'club');
+    const objetivo = club[Number(cuerpo.id) - 1];
+    if (!objetivo) return fallo('Esa persona no existe.', 404);
+    const actual = usuarioActual();
+    if (actual && actual.telefono === objetivo.telefono) return fallo('No podés sacarte el acceso a vos mismo.');
+    objetivo.rol = 'jugador';
+    guardarCuentas(cuentas);
+    anotar(entrada.quien, 'baja de personal', \`\${objetivo.nombre} (\${objetivo.telefono})\`);
+    return { status: 200, datos: { ok: true, usuario: { nombre: objetivo.nombre, telefono: objetivo.telefono, rol: 'jugador' } } };
+  }
+
+  if (ruta === '/api/admin/movimientos') {
+    const limite = Math.min(Number(url.searchParams.get('limite')) || 40, 200);
+    return { status: 200, datos: { movimientos: leerBitacora().slice(-limite).reverse() } };
+  }
 
   return fallo('Ese endpoint no existe.', 404);
 }
@@ -523,6 +851,8 @@ window.fetch = async (recurso, opciones = {}) => {
   if (!url.pathname.startsWith('/api/')) return fetchReal(recurso, opciones);
   await new Promise((r) => setTimeout(r, 90)); // una pizca de latencia, para que se sienta real
   const cuerpo = opciones.body ? JSON.parse(opciones.body) : {};
+  // El panel del club manda la clave en una cabecera; acá no hay request real.
+  window.__cabecerasPanel = opciones.headers || {};
   const { status, datos } = manejar(url, opciones.method || 'GET', cuerpo);
   return new Response(JSON.stringify(datos), { status, headers: { 'content-type': 'application/json' } });
 };
@@ -549,6 +879,7 @@ const VISTAS = {
   '/reservar': 'vista-reservar',
   '/mis-turnos': 'vista-turnos',
   '/cuenta': 'vista-cuenta',
+  '/admin': 'vista-admin',
 };
 
 function mostrarVista(ruta) {
@@ -601,11 +932,6 @@ document.addEventListener('click', (e) => {
   if (!href.startsWith('/') && !href.startsWith('#')) return;
 
   const url = new URL(href, location.href);
-  if (url.pathname === '/admin') {
-    e.preventDefault();
-    alert('El panel del club no entra en la vista previa porque necesita el servidor de turnos.\\n\\nSe ve corriendo el proyecto: npm start → localhost:3000/admin');
-    return;
-  }
   if (!(url.pathname in VISTAS)) return;
   e.preventDefault();
   irA(href);
@@ -624,6 +950,9 @@ ${jsTurnos}
 }
 {
 ${jsCuenta}
+}
+{
+${jsAdmin}
 }
 </script>
 `;

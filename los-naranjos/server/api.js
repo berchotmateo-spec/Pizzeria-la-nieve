@@ -6,7 +6,7 @@ import {
 import * as N from './turnos.js';
 import * as T from './tiempo.js';
 import * as C from './cuentas.js';
-import { cuentas } from './db.js';
+import { cuentas, personal, bitacora } from './db.js';
 
 /** Payload público: todo lo que el navegador necesita, nada más. */
 export function configPublica() {
@@ -52,15 +52,45 @@ const noAutorizado = () => {
   return e;
 };
 
-function exigirAdmin(req) {
+function claveMaestraValida(req) {
   const auth = req.headers['authorization'] || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   const esperado = ADMIN.token;
+  if (!token) return false;
   // Comparación de longitud constante para no filtrar el token por tiempos.
-  if (token.length !== esperado.length) throw noAutorizado();
+  if (token.length !== esperado.length) return false;
   let distinto = 0;
   for (let i = 0; i < token.length; i++) distinto |= token.charCodeAt(i) ^ esperado.charCodeAt(i);
-  if (distinto !== 0) throw noAutorizado();
+  return distinto === 0;
+}
+
+/**
+ * Deja pasar al panel y devuelve quién entró, para la bitácora.
+ *
+ * Hay dos formas de entrar: con la cuenta propia de alguien del club —que es
+ * la que queremos, porque deja rastro con nombre y apellido— o con la clave
+ * maestra del panel, que sirve para arrancar cuando todavía no hay nadie
+ * cargado y como salida de emergencia si alguien se queda afuera.
+ */
+function exigirClub({ req, usuario }) {
+  if (C.esDelClub(usuario)) {
+    return { quien: usuario.nombre, usuarioId: usuario.id, conClaveMaestra: false };
+  }
+  if (claveMaestraValida(req)) {
+    return { quien: 'Clave del panel', usuarioId: null, conClaveMaestra: true };
+  }
+  throw noAutorizado();
+}
+
+/** Anota un movimiento del panel, sin que un fallo al anotar tire la acción. */
+function anotar(quienEntro, accion, detalle, ip) {
+  try {
+    bitacora.anotar({
+      quien: quienEntro.quien, usuarioId: quienEntro.usuarioId, accion, detalle, ip,
+    });
+  } catch (err) {
+    console.error('No se pudo anotar en la bitácora:', err.message);
+  }
 }
 
 /** Tabla de rutas: 'MÉTODO /ruta' → handler(ctx). */
@@ -151,13 +181,23 @@ export const rutas = {
   },
 
   // ── Administración ────────────────────────────────────────────────────────
-  'POST /api/admin/sesion': ({ req }) => {
-    exigirAdmin(req);
-    return { ok: true, avisoTokenPorDefecto: ADMIN.tokenPorDefecto };
+  'POST /api/admin/sesion': (ctx) => {
+    const quien = exigirClub(ctx);
+    anotar(quien, 'ingreso', null, ctx.ip);
+    return {
+      ok: true,
+      quien: quien.quien,
+      conClaveMaestra: quien.conClaveMaestra,
+      avisoTokenPorDefecto: ADMIN.tokenPorDefecto,
+      /* Si todavía no hay nadie del club cargado, el panel lo dice: es el
+         primer paso para dejar de depender de una clave compartida. */
+      sinPersonal: personal.listar().length === 0,
+    };
   },
 
-  'GET /api/admin/dia': ({ req, query }) => {
-    exigirAdmin(req);
+  'GET /api/admin/dia': (ctx) => {
+    exigirClub(ctx);
+    const { query } = ctx;
     const fecha = query.get('fecha') || T.hoy();
     if (!T.esFechaValida(fecha)) { const e = new Error('Fecha inválida.'); e.status = 400; throw e; }
     const horario = N.horarioDe(fecha);
@@ -179,8 +219,9 @@ export const rutas = {
     };
   },
 
-  'GET /api/admin/agenda': ({ req, query }) => {
-    exigirAdmin(req);
+  'GET /api/admin/agenda': (ctx) => {
+    exigirClub(ctx);
+    const { query } = ctx;
     const desde = query.get('desde') || T.hoy();
     const hasta = query.get('hasta') || T.sumarDias(desde, 7);
     if (!T.esFechaValida(desde) || !T.esFechaValida(hasta)) {
@@ -189,16 +230,69 @@ export const rutas = {
     return { desde, hasta, reservas: N.consultas.rango(desde, hasta).map(N.serializar) };
   },
 
-  'POST /api/admin/bloqueos': ({ req, body }) => {
-    exigirAdmin(req);
-    return { ok: true, reserva: N.serializar(N.bloquear(body)) };
+  'POST /api/admin/bloqueos': (ctx) => {
+    const quien = exigirClub(ctx);
+    const r = N.bloquear(ctx.body);
+    anotar(quien, 'bloqueo', `${r.cancha_id} · ${r.fecha} ${T.aHora(r.inicio_min)} · ${r.nombre}`, ctx.ip);
+    return { ok: true, reserva: N.serializar(r) };
   },
 
-  'POST /api/admin/cancelar': ({ req, body }) => {
-    exigirAdmin(req);
-    const r = N.consultas.porCodigo(String(body.codigo || '').trim().toUpperCase());
+  'POST /api/admin/cancelar': (ctx) => {
+    const quien = exigirClub(ctx);
+    const r = N.consultas.porCodigo(String(ctx.body.codigo || '').trim().toUpperCase());
     if (!r) { const e = new Error('No existe esa reserva.'); e.status = 404; throw e; }
     if (r.estado === 'cancelada') { const e = new Error('Ya estaba cancelada.'); e.status = 400; throw e; }
+    anotar(quien, 'cancelación', `${r.codigo} · ${r.fecha} ${T.aHora(r.inicio_min)} · ${r.nombre || 'sin nombre'}`, ctx.ip);
     return { ok: true, reserva: N.serializar(N.cancelarReserva(r.id)) };
+  },
+
+  // ── Personal del club ─────────────────────────────────────────────────────
+  'GET /api/admin/personal': (ctx) => {
+    exigirClub(ctx);
+    return {
+      personal: personal.listar().map((u) => ({
+        id: u.id,
+        nombre: u.nombre,
+        telefono: u.telefono,
+        creadoEn: u.creado_en,
+        ultimoAcceso: u.ultimo_acceso,
+        esVos: ctx.usuario ? ctx.usuario.id === u.id : false,
+      })),
+    };
+  },
+
+  'POST /api/admin/personal': async (ctx) => {
+    const quien = exigirClub(ctx);
+    const r = await C.altaDePersonal(ctx.body);
+    anotar(quien, 'alta de personal', `${r.usuario.nombre} (${r.usuario.telefono})`, ctx.ip);
+    return r;
+  },
+
+  'POST /api/admin/personal/baja': (ctx) => {
+    const quien = exigirClub(ctx);
+    /* Sacarse el acceso a uno mismo es la forma más fácil de quedarse afuera
+       en el peor momento, así que no se puede desde acá. */
+    if (ctx.usuario && Number(ctx.body.id) === ctx.usuario.id) {
+      const e = new Error('No podés sacarte el acceso a vos mismo.');
+      e.status = 400;
+      throw e;
+    }
+    const r = C.bajaDePersonal(ctx.body.id);
+    anotar(quien, 'baja de personal', `${r.usuario.nombre} (${r.usuario.telefono})`, ctx.ip);
+    return r;
+  },
+
+  // ── Bitácora ──────────────────────────────────────────────────────────────
+  'GET /api/admin/movimientos': (ctx) => {
+    exigirClub(ctx);
+    const limite = Math.min(Number(ctx.query.get('limite')) || 40, 200);
+    return {
+      movimientos: bitacora.ultimos(limite).map((m) => ({
+        cuando: m.cuando,
+        quien: m.quien,
+        accion: m.accion,
+        detalle: m.detalle,
+      })),
+    };
   },
 };

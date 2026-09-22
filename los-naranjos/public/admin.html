@@ -76,6 +76,9 @@
   <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
     <path d="M3 7h18M3 12h18M3 17h18"/>
   </symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8.2" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>
+  </symbol>
   <symbol id="i-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
     <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/>
   </symbol>
@@ -101,6 +104,10 @@
       </span>
     </a>
     <div class="cabecera__acciones">
+      <span class="cuenta-enlace" id="quien-entro" hidden style="cursor:default">
+        <svg><use href="#i-usuario"/></svg>
+        <span data-quien></span>
+      </span>
       <a class="boton boton--chico boton--contorno-claro" href="/">Ver el sitio</a>
       <button class="boton boton--chico boton--contorno-claro" id="salir" hidden>Salir</button>
     </div>
@@ -120,12 +127,23 @@
           Desde acá ves la grilla del día, cancelás turnos y bloqueás canchas por
           mantenimiento o torneos.
         </p>
+
+        <div class="campo" data-modo="cuenta">
+          <label for="acceso-telefono">Teléfono</label>
+          <input id="acceso-telefono" type="tel" inputmode="tel" autocomplete="username" placeholder="223 555-1234">
+        </div>
         <div class="campo">
-          <label for="clave">Clave del panel</label>
+          <label for="clave" data-etiqueta-clave>Contraseña</label>
           <input id="clave" type="password" autocomplete="current-password" required placeholder="••••••••">
         </div>
+
         <div class="aviso aviso--error" id="error-acceso" hidden><span></span></div>
         <button class="boton boton--ancho" type="submit" id="boton-entrar">Entrar</button>
+
+        <p class="plomo" style="font-size:.85rem;text-align:center">
+          <button type="button" class="enlace-linea" id="cambiar-modo"
+                  style="color:var(--naranja);font-weight:600">Entrar con la clave del panel</button>
+        </p>
       </form>
     </div>
   </section>
@@ -178,6 +196,77 @@
               <th>Hora</th><th>Cancha</th><th>Deporte</th><th>A nombre de</th>
               <th>Teléfono</th><th>Código</th><th>Nota</th><th></th>
             </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- ── Personal del club ─────────────────────────────────────────── -->
+      <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Quién entra al panel</h2>
+
+      <div class="aviso aviso--alerta" id="aviso-sin-personal" hidden style="margin-bottom:1.25rem">
+        <svg width="20" height="20" style="flex:none"><use href="#i-usuario"/></svg>
+        <div>
+          <b>Todavía no hay nadie cargado.</b>
+          Mientras tanto se entra con la clave compartida del panel, que no deja
+          rastro de quién hizo cada cosa. Cargá a las personas que atienden y cada
+          una entra con su teléfono y su contraseña.
+        </div>
+      </div>
+
+      <div class="cuenta-grilla">
+        <section class="panel">
+          <div class="panel__tapa">
+            <h3 style="font-size:1.05rem">Personal cargado</h3>
+            <span class="pildora pildora--gris" id="cuenta-personal"></span>
+          </div>
+          <div class="tabla-envoltorio">
+            <table class="tabla-reservas" id="tabla-personal">
+              <thead>
+                <tr><th>Nombre</th><th>Teléfono</th><th>Último ingreso</th><th></th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3 style="font-size:1.05rem">Dar acceso a alguien</h3>
+          <form id="formulario-personal" novalidate>
+            <div class="campo">
+              <label for="personal-nombre">Nombre y apellido</label>
+              <input id="personal-nombre" type="text" required maxlength="80" placeholder="Quién atiende el mostrador">
+            </div>
+            <div class="campo">
+              <label for="personal-telefono">Teléfono</label>
+              <input id="personal-telefono" type="tel" inputmode="tel" required placeholder="223 555-1234">
+            </div>
+            <div class="campo">
+              <label for="personal-clave">Contraseña</label>
+              <input id="personal-clave" type="password" autocomplete="new-password">
+              <p class="ayuda">
+                Si esa persona ya tiene cuenta de jugador, entra con la suya y este
+                campo se ignora.
+              </p>
+            </div>
+            <div class="aviso aviso--error" id="error-personal" hidden><span></span></div>
+            <div class="aviso aviso--exito" id="ok-personal" hidden><span></span></div>
+            <button class="boton boton--ancho" type="submit" id="boton-personal">
+              <span data-texto-personal>Dar acceso</span>
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <!-- ── Bitácora ──────────────────────────────────────────────────── -->
+      <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Últimos movimientos</h2>
+      <p class="plomo" style="font-size:.88rem;margin-bottom:.9rem">
+        Todo lo que se hace desde el panel queda anotado acá, con nombre y hora.
+      </p>
+      <div class="tabla-envoltorio">
+        <table class="tabla-reservas" id="tabla-movimientos">
+          <thead>
+            <tr><th>Cuándo</th><th>Quién</th><th>Qué hizo</th><th>Detalle</th></tr>
           </thead>
           <tbody></tbody>
         </table>

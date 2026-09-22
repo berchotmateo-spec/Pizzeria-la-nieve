@@ -463,6 +463,146 @@ test('salir cierra la sesión y editar el perfil la mantiene', async () => {
   assert.equal(sinSesion.status, 401);
 });
 
+test('alguien del club entra al panel con su cuenta, sin la clave maestra', async () => {
+  const tel = '2235557020';
+  const clave = 'mostrador-2026';
+
+  // La clave maestra sirve para cargar a la primera persona del club.
+  const conMaestra = navegador();
+  const alta = await conMaestra.llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Recepción Mañana', telefono: tel, clave },
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.usuario.rol, 'club');
+
+  // Y desde ahí entra con su propio teléfono y contraseña.
+  const nav = navegador();
+  assert.ok((await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } })).ok);
+
+  const sesion = await nav.llamar('POST /api/admin/sesion');
+  assert.ok(sesion.ok, sesion.error);
+  assert.equal(sesion.datos.quien, 'Recepción Mañana');
+  assert.equal(sesion.datos.conClaveMaestra, false);
+
+  const dia = await nav.llamar('GET /api/admin/dia', { query: params({ fecha: PROXIMO_MIERCOLES }) });
+  assert.ok(dia.ok, 've la grilla del día');
+});
+
+test('un jugador cualquiera no entra al panel del club', async () => {
+  const tel = '2235557021';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const intento = await nav.llamar('POST /api/admin/sesion');
+  assert.equal(intento.ok, false);
+  assert.equal(intento.status, 401);
+
+  const grilla = await nav.llamar('GET /api/admin/dia', { query: params({ fecha: PROXIMO_MIERCOLES }) });
+  assert.equal(grilla.status, 401, 'tampoco por la puerta de atrás');
+});
+
+test('queda registrado quién canceló cada turno', async () => {
+  const tel = '2235557022';
+  const clave = 'quien-fue-2026';
+  await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Lucas Mostrador', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+
+  const turno = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '14:00', duracionMin: 60, telefono: '2235550077' }),
+  });
+  assert.ok(turno.ok, turno.error);
+
+  const baja = await nav.llamar('POST /api/admin/cancelar', {
+    body: { codigo: turno.datos.reserva.codigo },
+  });
+  assert.ok(baja.ok, baja.error);
+
+  const { datos } = await nav.llamar('GET /api/admin/movimientos');
+  const cancelacion = datos.movimientos.find(
+    (m) => m.accion === 'cancelación' && m.detalle.includes(turno.datos.reserva.codigo)
+  );
+  assert.ok(cancelacion, 'la cancelación quedó anotada');
+  assert.equal(cancelacion.quien, 'Lucas Mostrador');
+});
+
+test('dar de alta a alguien que ya juega no le pisa la contraseña', async () => {
+  const tel = '2235557023';
+  const suya = 'la-mia-de-siempre';
+
+  const jugadora = navegador();
+  await jugadora.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Dueña Jugadora', clave: suya }),
+  });
+
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Dueña Jugadora', telefono: tel, clave: 'una-que-le-inventan' },
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.promovido, true);
+
+  // La clave inventada no entra; la suya sí, y ahora con acceso al panel.
+  const inventada = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'una-que-le-inventan' },
+  });
+  assert.equal(inventada.ok, false, 'la contraseña ajena no se puede reescribir');
+
+  const nav = navegador();
+  assert.ok((await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave: suya } })).ok);
+  assert.ok((await nav.llamar('POST /api/admin/sesion')).ok, 'entra al panel con la suya');
+});
+
+test('la baja del personal corta el acceso pero deja la cuenta de jugador', async () => {
+  const tel = '2235557024';
+  const clave = 'hasta-luego-2026';
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Temporada Verano', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok((await nav.llamar('POST /api/admin/sesion')).ok);
+
+  const baja = await navegador().llamar('POST /api/admin/personal/baja', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { id: alta.datos.usuario.id },
+  });
+  assert.ok(baja.ok, baja.error);
+
+  // La sesión que tenía abierta ya no sirve para el panel.
+  assert.equal((await nav.llamar('POST /api/admin/sesion')).status, 401);
+
+  // Pero la cuenta sigue viva: entra como jugadora.
+  const otra = navegador();
+  const ingreso = await otra.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok(ingreso.ok, 'la cuenta no se borró');
+  assert.equal(ingreso.datos.usuario.rol, 'jugador');
+});
+
+test('nadie puede sacarse a sí mismo del panel', async () => {
+  const tel = '2235557025';
+  const clave = 'no-me-borro-2026';
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Única Encargada', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  const intento = await nav.llamar('POST /api/admin/personal/baja', {
+    body: { id: alta.datos.usuario.id },
+  });
+  assert.equal(intento.ok, false);
+  assert.match(intento.error, /a vos mismo/);
+});
+
 test('el servidor HTTP sirve el sitio y el API', async () => {
   const { servidor } = await import('./index.js');
   await new Promise((r) => (servidor.listening ? r() : servidor.once('listening', r)));

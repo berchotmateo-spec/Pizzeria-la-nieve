@@ -4,7 +4,11 @@ import { pedir, traerConfig, iniciarCabecera, esc, duracionTexto } from './comun
 const $ = (sel) => document.querySelector(sel);
 const LLAVE = 'naranjos:clave-panel';
 
-let clave = null;
+/* Dos maneras de entrar: con la cuenta propia de quien atiende —la buena, la
+   que deja rastro— o con la clave compartida del panel, que sirve para
+   arrancar y como salida de emergencia. */
+let modo = 'cuenta';     // 'cuenta' | 'clave'
+let clave = null;        // sólo se usa en modo 'clave'
 let config = null;
 let dia = null;          // datos del día que se está mostrando
 let codigoAcancelar = null;
@@ -27,44 +31,93 @@ async function arrancar() {
   $('#bloqueo-cancha').innerHTML = config.canchas
     .map((c) => `<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
 
-  // Sesión recordada mientras la pestaña siga abierta.
+  // ¿Ya hay una sesión de alguien del club abierta en este navegador?
+  if (await verificar()) return entrar();
+
+  // Si no, puede quedar la clave del panel de esta misma pestaña.
   const guardada = sessionStorage.getItem(LLAVE);
-  if (guardada) { clave = guardada; if (await verificar()) return entrar(); clave = null; }
+  if (guardada) {
+    modo = 'clave';
+    clave = guardada;
+    if (await verificar()) return entrar();
+    clave = null;
+    modo = 'cuenta';
+  }
 }
 
-const cabeceras = () => ({ authorization: `Bearer ${clave}` });
+/** Alterna entre entrar con la cuenta propia y entrar con la clave del panel. */
+$('#cambiar-modo').addEventListener('click', () => {
+  modo = modo === 'cuenta' ? 'clave' : 'cuenta';
+  const conCuenta = modo === 'cuenta';
+  $('[data-modo="cuenta"]').hidden = !conCuenta;
+  $('[data-etiqueta-clave]').textContent = conCuenta ? 'Contraseña' : 'Clave del panel';
+  $('#cambiar-modo').textContent = conCuenta
+    ? 'Entrar con la clave del panel'
+    : 'Entrar con mi cuenta';
+  $('#error-acceso').hidden = true;
+  $('#clave').value = '';
+  (conCuenta ? $('#acceso-telefono') : $('#clave')).focus();
+});
+
+/* Con la cuenta propia la sesión viaja en la cookie y no hay nada que agregar;
+   con la clave del panel va en la cabecera, como antes. */
+const cabeceras = () => (modo === 'clave' && clave ? { authorization: `Bearer ${clave}` } : {});
 
 async function verificar() {
   try {
     const r = await pedir('/api/admin/sesion', { method: 'POST', headers: cabeceras() });
     $('#aviso-clave').hidden = !r.avisoTokenPorDefecto;
+    $('#aviso-sin-personal').hidden = !r.sinPersonal;
+    $('#quien-entro').hidden = false;
+    $('#quien-entro').querySelector('[data-quien]').textContent = r.quien;
     return true;
   } catch {
-    sessionStorage.removeItem(LLAVE);
+    if (modo === 'clave') sessionStorage.removeItem(LLAVE);
     return false;
   }
 }
 
 $('#formulario-acceso').addEventListener('submit', async (e) => {
   e.preventDefault();
-  clave = $('#clave').value;
+  const caja = $('#error-acceso');
+  caja.hidden = true;
   $('#boton-entrar').disabled = true;
   $('#boton-entrar').innerHTML = '<span class="cargando"></span>';
-  if (await verificar()) {
-    sessionStorage.setItem(LLAVE, clave);
+
+  let adentro = false;
+  let mensaje = 'La clave no es correcta.';
+
+  if (modo === 'cuenta') {
+    try {
+      await pedir('/api/cuenta/ingreso', {
+        method: 'POST',
+        body: { telefono: $('#acceso-telefono').value.trim(), clave: $('#clave').value },
+      });
+      adentro = await verificar();
+      if (!adentro) mensaje = 'Esa cuenta no tiene acceso al panel del club.';
+    } catch (err) {
+      mensaje = err.message;
+    }
+  } else {
+    clave = $('#clave').value;
+    adentro = await verificar();
+    if (adentro) sessionStorage.setItem(LLAVE, clave);
+    else clave = null;
+  }
+
+  if (adentro) {
     entrar();
   } else {
-    clave = null;
-    const caja = $('#error-acceso');
     caja.hidden = false;
-    caja.querySelector('span').textContent = 'La clave no es correcta.';
+    caja.querySelector('span').textContent = mensaje;
   }
   $('#boton-entrar').disabled = false;
   $('#boton-entrar').textContent = 'Entrar';
 });
 
-$('#salir').addEventListener('click', () => {
+$('#salir').addEventListener('click', async () => {
   sessionStorage.removeItem(LLAVE);
+  if (modo === 'cuenta') await pedir('/api/cuenta/salir', { method: 'POST' }).catch(() => {});
   location.reload();
 });
 
@@ -73,6 +126,103 @@ function entrar() {
   $('#pantalla-panel').hidden = false;
   $('#salir').hidden = false;
   cargarDia();
+  cargarPersonal();
+  cargarMovimientos();
+}
+
+/* ── Personal del club ────────────────────────────────────────────────────── */
+async function cargarPersonal() {
+  const cuerpo = $('#tabla-personal').querySelector('tbody');
+  try {
+    const { personal } = await pedir('/api/admin/personal', { headers: cabeceras() });
+    $('#cuenta-personal').textContent =
+      personal.length === 1 ? '1 persona' : `${personal.length} personas`;
+
+    cuerpo.innerHTML = personal.length
+      ? personal.map((u) => `
+          <tr>
+            <td>${esc(u.nombre)}${u.esVos ? ' <span class="pildora pildora--verde">vos</span>' : ''}</td>
+            <td class="numeros">${esc(u.telefono)}</td>
+            <td>${u.ultimoAcceso ? esc(fechaCorta(u.ultimoAcceso)) : '—'}</td>
+            <td>${u.esVos ? '' : `<button class="boton boton--fantasma boton--chico" data-baja="${u.id}">Sacar acceso</button>`}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="plomo" style="padding:1.2rem">Todavía no cargaste a nadie.</td></tr>';
+  } catch (err) {
+    cuerpo.innerHTML = `<tr><td colspan="4" style="padding:1.2rem">${esc(err.message)}</td></tr>`;
+  }
+}
+
+const fechaCorta = (iso) =>
+  new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+$('#formulario-personal').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boton = $('#boton-personal');
+  $('#error-personal').hidden = true;
+  $('#ok-personal').hidden = true;
+  boton.disabled = true;
+  $('[data-texto-personal]').innerHTML = '<span class="cargando"></span> Dando acceso…';
+  try {
+    const r = await pedir('/api/admin/personal', {
+      method: 'POST',
+      headers: cabeceras(),
+      body: {
+        nombre: $('#personal-nombre').value.trim(),
+        telefono: $('#personal-telefono').value.trim(),
+        clave: $('#personal-clave').value,
+      },
+    });
+    $('#formulario-personal').reset();
+    $('#ok-personal').hidden = false;
+    $('#ok-personal').querySelector('span').textContent =
+      r.aviso || `${r.usuario.nombre} ya puede entrar al panel con su teléfono y su contraseña.`;
+    cargarPersonal();
+    cargarMovimientos();
+  } catch (err) {
+    $('#error-personal').hidden = false;
+    $('#error-personal').querySelector('span').textContent = err.message;
+  } finally {
+    boton.disabled = false;
+    $('[data-texto-personal]').textContent = 'Dar acceso';
+  }
+});
+
+$('#tabla-personal').addEventListener('click', async (e) => {
+  const boton = e.target.closest('[data-baja]');
+  if (!boton) return;
+  const fila = boton.closest('tr');
+  const nombre = fila.querySelector('td').textContent.trim();
+  if (!confirm(`¿Sacarle el acceso al panel a ${nombre}?\n\nSu cuenta de jugador y sus turnos quedan como están.`)) return;
+  boton.disabled = true;
+  try {
+    await pedir('/api/admin/personal/baja', {
+      method: 'POST', headers: cabeceras(), body: { id: Number(boton.dataset.baja) },
+    });
+    cargarPersonal();
+    cargarMovimientos();
+  } catch (err) {
+    alert(err.message);
+    boton.disabled = false;
+  }
+});
+
+/* ── Bitácora ─────────────────────────────────────────────────────────────── */
+async function cargarMovimientos() {
+  const cuerpo = $('#tabla-movimientos').querySelector('tbody');
+  try {
+    const { movimientos } = await pedir('/api/admin/movimientos?limite=25', { headers: cabeceras() });
+    cuerpo.innerHTML = movimientos.length
+      ? movimientos.map((m) => `
+          <tr>
+            <td class="numeros">${esc(fechaCorta(m.cuando))}</td>
+            <td>${esc(m.quien)}</td>
+            <td>${esc(m.accion)}</td>
+            <td class="plomo">${esc(m.detalle || '—')}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" class="plomo" style="padding:1.2rem">Todavía no hay movimientos.</td></tr>';
+  } catch (err) {
+    cuerpo.innerHTML = `<tr><td colspan="4" style="padding:1.2rem">${esc(err.message)}</td></tr>`;
+  }
 }
 
 /* ── Navegación por fecha ─────────────────────────────────────────────────── */
@@ -225,6 +375,7 @@ $('#formulario-bloqueo').addEventListener('submit', async (e) => {
     $('#modal-bloqueo').close();
     if ($('#bloqueo-fecha').value !== $('#fecha').value) $('#fecha').value = $('#bloqueo-fecha').value;
     cargarDia();
+    cargarMovimientos();
   } catch (err) {
     const caja = $('#error-bloqueo');
     caja.hidden = false;
@@ -255,6 +406,7 @@ $('#confirmar-cancelacion').addEventListener('click', async () => {
     });
     $('#modal-cancelar').close();
     cargarDia();
+    cargarMovimientos();
   } catch (err) {
     const caja = $('#error-cancelacion');
     caja.hidden = false;

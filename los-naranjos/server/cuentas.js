@@ -15,7 +15,7 @@
 import { randomBytes, scrypt as scryptCb, createHash, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { CUENTAS } from './config.js';
-import { crearUsuario, cuentas, sesiones } from './db.js';
+import { crearUsuario, cuentas, sesiones, personal } from './db.js';
 import { normalizarTelefono } from './turnos.js';
 
 const scrypt = promisify(scryptCb);
@@ -132,8 +132,60 @@ export const perfilPublico = (u) => ({
   nombre: u.nombre,
   telefono: u.telefono,
   email: u.email || null,
+  rol: u.rol || 'jugador',
   creadoEn: u.creado_en,
 });
+
+/** ¿Esta cuenta atiende el mostrador? */
+export const esDelClub = (u) => !!u && u.rol === 'club';
+
+/* ── Personal del club ──────────────────────────────────────────────────── */
+
+/**
+ * Da de alta a alguien del club.
+ * Si el teléfono ya tiene cuenta de jugador, no se le toca la contraseña: se
+ * le suma el acceso al panel y entra con la que ya usaba. Poder escribirle una
+ * clave nueva a una cuenta ajena sería una forma cómoda de robársela.
+ */
+export async function altaDePersonal(datos) {
+  const nombre = validarNombre(datos.nombre);
+  const telefono = validarTelefono(datos.telefono);
+  const existente = cuentas.porTelefono(telefono);
+
+  if (existente) {
+    if (existente.rol === 'club') {
+      throw error('Esa persona ya tiene acceso al panel.', 409, 'YA_ES_PERSONAL');
+    }
+    personal.cambiarRol(existente.id, 'club');
+    return {
+      ok: true,
+      usuario: perfilPublico({ ...existente, rol: 'club' }),
+      promovido: true,
+      aviso: `${existente.nombre} ya tenía cuenta de jugador: entra al panel con esa misma contraseña.`,
+    };
+  }
+
+  const clave = validarClave(datos.clave);
+  const { usuario } = crearUsuario({
+    telefono, nombre, email: validarEmail(datos.email), clave: await hashearClave(clave),
+  });
+  personal.cambiarRol(usuario.id, 'club');
+  return { ok: true, usuario: perfilPublico({ ...usuario, rol: 'club' }), promovido: false };
+}
+
+/**
+ * Le saca el acceso al panel a alguien.
+ * La cuenta no se borra: queda como jugador, con sus turnos y su historial.
+ * Lo que sí se corta son sus sesiones abiertas, para que el cambio valga ya.
+ */
+export function bajaDePersonal(id) {
+  const u = cuentas.porId(Number(id));
+  if (!u) throw error('Esa persona no existe.', 404, 'NO_ENCONTRADO');
+  if (u.rol !== 'club') throw error('Esa persona no tiene acceso al panel.', 400);
+  personal.cambiarRol(u.id, 'jugador');
+  sesiones.borrarTodasDe(u.id);
+  return { ok: true, usuario: perfilPublico({ ...u, rol: 'jugador' }) };
+}
 
 /* ── Freno a la fuerza bruta ────────────────────────────────────────────── */
 

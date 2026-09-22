@@ -13,6 +13,8 @@ mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
   como visitante.
 - **Panel del socio** — consultá y cancelá tus turnos con el teléfono y el código.
 - **Panel del club** — grilla del día por cancha, cancelaciones y bloqueos.
+  Cada persona que atiende entra con su teléfono y su contraseña, y todo lo que
+  se hace desde el panel queda anotado con nombre y hora.
 
 Está hecho **sin dependencias externas**: sólo Node 22 y su SQLite embebido.
 No hay `npm install`, ni build, ni servicios de terceros.
@@ -175,6 +177,28 @@ reservar y el que el club le pide por WhatsApp. De ahí para abajo:
 - Si un teléfono **tiene cuenta**, sus turnos se ven entrando, no escribiendo el
   número. Para los visitantes sin cuenta, la consulta por teléfono sigue igual
   que siempre.
+
+### Quién entra al panel del club
+
+Hay dos puertas, y la diferencia importa:
+
+- **La cuenta de cada persona.** Quien atiende el mostrador entra con su
+  teléfono y su contraseña, igual que un jugador; lo que cambia es el rol. Es
+  la puerta que queremos, porque todo lo que hace queda firmado.
+- **La clave compartida** (`ADMIN_TOKEN`). Sirve para arrancar —alguien tiene
+  que cargar a la primera persona— y como salida de emergencia si el club se
+  queda afuera. Mientras no haya nadie cargado, el panel lo avisa en pantalla.
+
+El rol vive en la misma cuenta: el dueño que además juega usa una sola, con su
+teléfono de siempre. Dar de alta a alguien que ya tiene cuenta de jugador
+**no le toca la contraseña** —entra con la suya—, porque poder escribirle una
+clave nueva a una cuenta ajena sería una forma cómoda de robársela. Y darle de
+baja no borra nada: vuelve a ser jugador, con sus turnos y su historial, y se
+le cierran las sesiones abiertas.
+
+La **bitácora** anota ingresos, cancelaciones, bloqueos y altas o bajas de
+personal, con quién, cuándo y sobre qué. Es la respuesta a "¿quién canceló este
+turno?", que con una clave compartida no tenía respuesta.
 
 ### Cómo se evita la doble reserva
 
