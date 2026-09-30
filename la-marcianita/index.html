@@ -1,0 +1,2818 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pizzería La Marcianita</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Pizzería La Marcianita, Mar del Plata, desde 1959. Los Marcianitos: sándwiches calientes en pan casero propio. Pizzas, empanadas de masa casera. Tres sucursales: Av. Colón 3232, Constitución 5892 y Olavarría 3268.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&amp;family=Barlow:wght@400;500;600;700&amp;family=Yellowtail&amp;display=swap">
+
+<style>
+/* ============================================================
+   PIZZERÍA LA MARCIANITA — Mar del Plata, desde el 7/11/1959
+   Tres sucursales: Av. Colón 3232 · Constitución 5892 · Olavarría 3268
+
+   LA IDEA DEL DISEÑO: "Googie de día, 1959". La página es un cartel
+   de ruta de la era espacial, pintado y visto a la luz del día, parado
+   sobre un mostrador de fórmica aguamarina. El cartel (la portada) es
+   lo ÚNICO ruidoso: la tabla roja con el nombre en letra de cartelista,
+   el Sputnik amarillo que dice DESDE 1959 y el poste con la estrella
+   atómica que sostiene las tres flechas, una por sucursal.
+   Todo lo de abajo es tranquilo: tablas blancas, filetes de tinta, y
+   el rojo tomate aparece sólo en lo que se toca.
+
+   Regla de formas (cada forma tiene un solo trabajo):
+   · paralelogramo inclinado = algo que se aprieta (+, pestañas, botones)
+   · flecha = una sucursal o una dirección (cómo llegar)
+   · borde PUNTEADO = dato sin confirmar. Nada más en la página es punteado.
+
+   Tipografías: Yellowtail (letra de cartelista, SÓLO para "La Marcianita"
+   y "Los Marcianitos"), Barlow Condensed (mayúsculas de cartel: títulos,
+   precios, botones) y Barlow (texto).
+   ============================================================ */
+
+:root{
+  color-scheme:light;
+
+  --formica:#DCF0EB;      /* fondo de la página: fórmica aguamarina */
+  --veta:#C8E6DE;         /* sólo decorativo: los bumeranes del fondo */
+  --cielo:#6FCBBE;        /* turquesa de día: la portada y el pie */
+  --tinta:#15292D;        /* todo el texto y todos los filetes */
+  --tinta-suave:#3B5559;  /* texto secundario. NUNCA sobre --cielo */
+  --tomate:#B42F1D;       /* rojo de cartel: la tabla y lo que se aprieta */
+  --tomate-osc:#962617;   /* hover de lo rojo */
+  --mostaza:#F4C23D;      /* amarillo atómico, siempre como relleno */
+  --rosa:#F9DDD6;         /* rosa de heladera 1959: la franja de los Marcianitos */
+  --blanco:#FFFFFF;       /* tablas, tarjetas, barra de pedido */
+  --punteado:#7FA59D;     /* sólo decorativo: renglones punteados de la carta */
+  --alu-1:#F2F6F5;        /* sólo decorativo: la moldura de aluminio */
+  --alu-2:#9FB0AE;
+  --velo:rgba(21,41,45,.55);
+
+  --f-script:"Yellowtail","Brush Script MT","Segoe Script",cursive;
+  --f-cond:"Barlow Condensed","Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Barlow","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+
+  --bar-h:0px;            /* alto de la barra de pedido, lo mide el script */
+}
+
+/* La página va SIEMPRE de día, sin importar el tema del navegador: es la
+   identidad del local. Todos los colores están puestos de forma explícita. */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:light;background:var(--formica);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;
+  padding-bottom:var(--bar-h);
+  color:var(--tinta);
+  font-family:var(--f-body);
+  font-size:16px;font-weight:400;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  /* la fórmica: bumeranes de un solo tono y motitas blancas */
+  background-color:var(--formica);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 160 160'%3E%3Cg fill='%23C8E6DE'%3E%3Cpath d='M3 21L17 4Q20 1 23 4L39 17Q40 21 36 19L20 9L7 23Q2 26 3 21Z' transform='translate(14 22) rotate(-12)'/%3E%3Cpath d='M3 21L17 4Q20 1 23 4L39 17Q40 21 36 19L20 9L7 23Q2 26 3 21Z' transform='translate(98 38) rotate(28)'/%3E%3Cpath d='M3 21L17 4Q20 1 23 4L39 17Q40 21 36 19L20 9L7 23Q2 26 3 21Z' transform='translate(40 104) rotate(160)'/%3E%3Cpath d='M3 21L17 4Q20 1 23 4L39 17Q40 21 36 19L20 9L7 23Q2 26 3 21Z' transform='translate(112 118) rotate(-40)'/%3E%3C/g%3E%3Cg fill='%23FFFFFF'%3E%3Ccircle cx='70' cy='18' r='2'/%3E%3Ccircle cx='12' cy='76' r='1.8'/%3E%3Ccircle cx='146' cy='88' r='2'/%3E%3Ccircle cx='84' cy='146' r='1.8'/%3E%3Ccircle cx='60' cy='66' r='1.6'/%3E%3Ccircle cx='128' cy='8' r='1.6'/%3E%3Ccircle cx='24' cy='140' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:200px 200px;
+}
+h1,h2,h3,h4,p,ul,ol,dl,dd,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+svg{max-width:100%}
+.ic{display:block;width:1em;height:1em;flex-shrink:0}
+
+:focus-visible{outline:3px solid var(--tinta);outline-offset:2px}
+
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.env{width:min(1160px, 100% - 32px);margin-inline:auto}
+@media (min-width:768px){ .env{width:min(1160px, 100% - 48px)} }
+@media (min-width:1180px){ .env{width:min(1160px, 100% - 64px)} }
+
+section[id]{scroll-margin-top:80px}
+.sec{padding-block:48px}
+@media (min-width:960px){ .sec{padding-block:88px} }
+
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------------- títulos ---------------- */
+.kicker{
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1.2;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--tomate);
+  margin-bottom:8px;
+}
+.h2{
+  font-family:var(--f-cond);font-weight:800;font-style:italic;
+  font-size:clamp(32px, 9vw, 52px);line-height:1;letter-spacing:.01em;
+  text-transform:uppercase;color:var(--tinta);text-wrap:balance;
+}
+.intro{margin-top:14px;font-size:16px;max-width:60ch}
+@media (min-width:960px){ .intro{font-size:17px} }
+
+/* ---------------- aviso de vista previa ----------------
+   Se saca solo poniendo VISTA_PREVIA = false en el script
+   (el div tiene data-preview). */
+.vista-previa{
+  background:var(--mostaza);border-bottom:2px solid var(--tinta);
+  padding:8px 16px;color:var(--tinta);
+  font-weight:600;font-size:14px;line-height:1.35;
+}
+.vp-in{width:min(1160px,100%);margin-inline:auto;display:flex;gap:10px;align-items:flex-start}
+.vp-in > .ic{width:18px;height:18px;margin-top:1px;color:var(--tinta)}
+.vp-in b{font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:15px;letter-spacing:.08em;white-space:nowrap}
+
+/* ---------------- chip de "a confirmar" ----------------
+   El borde PUNTEADO quiere decir "dato sin confirmar". Es la única cosa
+   punteada de la página (además del "Delivery ?", que sigue la misma regla).
+   Los chips que pone el script (teléfono, horario, WhatsApp de cada
+   sucursal) desaparecen solos cuando se carga el dato. */
+.chk{
+  display:inline-flex;align-items:center;gap:5px;vertical-align:middle;
+  min-height:24px;padding:2px 7px;
+  border:1.5px dashed var(--tinta);border-radius:3px;background:transparent;
+  font-family:var(--f-cond);font-weight:700;font-size:14px;line-height:1;font-style:normal;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--tinta);white-space:nowrap;
+}
+.chk::before{
+  content:"";width:13px;height:13px;flex-shrink:0;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5.9' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M5.2 5.6a1.8 1.8 0 1 1 2.5 1.6c-.5.2-.7.6-.7 1.1v.3' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='7' cy='10.4' r='.9' fill='%23000'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5.9' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3Cpath d='M5.2 5.6a1.8 1.8 0 1 1 2.5 1.6c-.5.2-.7.6-.7 1.1v.3' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='7' cy='10.4' r='.9' fill='%23000'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.chk.larga{white-space:normal;line-height:1.2;text-align:left}
+
+/* ---------------- botones: paralelogramos ---------------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:46px;padding:0 20px;
+  border:2px solid transparent;border-radius:4px;
+  transform:skewX(-10deg);
+  font-family:var(--f-cond);font-weight:700;font-size:16px;line-height:1.1;
+  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;
+  cursor:pointer;white-space:nowrap;
+  transition:background-color .15s, border-color .15s;
+}
+.btn > span{display:inline-flex;align-items:center;gap:8px;transform:skewX(10deg)}
+.btn .ic{width:18px;height:18px}
+.btn:active{translate:0 1px}
+.btn-pri{background:var(--tomate);color:var(--blanco)}
+.btn-pri:hover{background:var(--tomate-osc)}
+.btn-sec{background:var(--blanco);color:var(--tinta);border-color:var(--tinta)}
+.btn-sec:hover{background:var(--rosa)}
+.btn-full{display:flex;width:calc(100% - 10px);margin-inline:5px;min-height:52px}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;padding-left:5px}
+
+/* el link de "Cómo llegar": una flecha chica, porque señala una dirección */
+.llegar{
+  position:relative;display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 30px 0 14px;
+  background:var(--tinta);color:var(--tinta);
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%);
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1.1;
+  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap;
+}
+.llegar::before{
+  content:"";position:absolute;inset:2px 2.5px 2px 2px;background:var(--blanco);
+  clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%);
+  transition:background-color .15s;
+}
+.llegar > *{position:relative}
+.llegar .ic{width:16px;height:16px}
+.llegar:hover::before{background:var(--rosa)}
+.llegar:focus-visible{outline:none}
+.llegar:focus-visible::before{inset:4.5px 6px 4.5px 4.5px;background:var(--rosa)}
+
+.link{
+  color:var(--tomate);font-weight:600;
+  text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;
+}
+.link:hover{color:var(--tomate-osc)}
+.link-btn{
+  border:0;background:none;padding:8px 4px;cursor:pointer;
+  color:var(--tomate);font-weight:600;font-size:15px;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;
+}
+.link-btn:hover{color:var(--tomate-osc)}
+
+/* ---------------- navegación ---------------- */
+.nav{position:sticky;top:env(safe-area-inset-top, 0px);z-index:40;background:var(--blanco)}
+.nav-in{display:flex;align-items:center;gap:10px;height:56px}
+.logo{
+  flex-shrink:0;padding:6px 2px;
+  font-family:var(--f-script);font-weight:400;font-size:24px;line-height:1;
+  color:var(--tomate);text-decoration:none;white-space:nowrap;
+}
+@media (min-width:380px){ .logo{font-size:26px} }
+.trim{
+  height:9px;border-top:2px solid var(--tinta);
+  background:repeating-linear-gradient(180deg, var(--alu-1) 0 2px, var(--alu-2) 2px 3px);
+}
+
+.anclas{display:none}
+.anclas a{
+  font-family:var(--f-cond);font-weight:600;font-size:16px;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--tinta);
+  padding:10px 2px;
+  text-decoration-line:underline;text-decoration-color:transparent;
+  text-decoration-thickness:3px;text-underline-offset:8px;
+  transition:text-decoration-color .15s;
+}
+.anclas a:hover{text-decoration-color:var(--mostaza)}
+.anclas a.act{text-decoration-color:var(--tomate)}
+
+/* el selector de sucursal: segmentado en tablet y compu */
+.nav-suc{display:none;align-items:center;gap:10px;margin-left:auto}
+.pedis-a{
+  font-family:var(--f-cond);font-weight:700;font-size:14px;line-height:1;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-suave);white-space:nowrap;
+}
+.segm{display:flex;padding-inline:4px}
+.seg{
+  position:relative;height:40px;padding:0 14px;margin-left:-2px;
+  border:2px solid var(--tinta);background:var(--blanco);color:var(--tinta);
+  transform:skewX(-10deg);cursor:pointer;
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  transition:background-color .15s, color .15s;
+}
+.seg:first-child{margin-left:0;border-radius:3px 0 0 3px}
+.seg:last-child{border-radius:0 3px 3px 0}
+.seg > span{display:block;transform:skewX(10deg)}
+.seg:hover:not([aria-checked="true"]){background:var(--rosa)}
+.seg[aria-checked="true"]{background:var(--tinta);color:var(--blanco);box-shadow:inset 0 -4px 0 var(--mostaza)}
+.seg:focus-visible{z-index:1}
+
+/* el selector de sucursal en el celular: una flecha llena */
+.suc-boton{
+  margin-left:auto;flex-shrink:0;
+  display:flex;align-items:center;min-height:44px;padding:4px 30px 4px 12px;
+  border:0;background:var(--tinta);color:var(--blanco);cursor:pointer;text-align:left;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%);
+  transition:background-color .15s;
+}
+.suc-boton.vacia{background:var(--tomate)}
+.suc-boton small{
+  display:block;font-family:var(--f-cond);font-weight:700;font-size:12px;line-height:1.15;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--mostaza);
+}
+.suc-boton.vacia small{color:var(--blanco)}
+.suc-boton b{
+  display:block;font-family:var(--f-cond);font-weight:700;font-size:17px;line-height:1.15;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+.suc-boton:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--mostaza)}
+
+.secc-btn{
+  width:44px;height:44px;flex-shrink:0;
+  display:grid;place-content:center;gap:3px;
+  border:2px solid var(--tinta);border-radius:4px;background:var(--blanco);cursor:pointer;
+}
+.secc-btn i{display:block;height:2.5px;background:var(--tinta);border-radius:2px;width:16px;margin-inline:auto}
+.secc-btn i:nth-child(2){width:12px}
+.secc-btn:hover{background:var(--rosa)}
+
+.secc-panel{
+  position:absolute;left:0;right:0;top:100%;
+  background:var(--blanco);border-bottom:2px solid var(--tinta);
+  padding:6px 0 14px;
+}
+.secc-panel a{
+  display:flex;align-items:center;gap:12px;min-height:52px;
+  font-family:var(--f-cond);font-weight:700;font-size:20px;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--tinta);
+  border-bottom:1.5px dotted var(--punteado);
+}
+.secc-panel a:last-child{border-bottom:0}
+.secc-panel a .ic{width:12px;height:12px;color:var(--tomate)}
+.secc-panel a:hover{color:var(--tomate)}
+
+@media (max-width:359px){
+  .nav-in{gap:6px}
+  .logo{font-size:22px;padding-inline:0}
+  .suc-boton{padding-right:24px}
+  .suc-boton b{font-size:15px}
+  .barra-in{gap:8px}
+  .barra .btn{padding:0 12px}
+}
+@media (min-width:768px){
+  .suc-boton{display:none}
+  .nav-suc{display:flex}
+}
+@media (min-width:1180px){
+  .nav-in{height:64px;gap:24px}
+  .logo{font-size:30px}
+  .anclas{display:flex;gap:20px}
+  .secc-btn,.secc-panel{display:none!important}
+}
+
+/* ---------------- portada: el cartel ----------------
+   Es lo único ruidoso de la página. */
+.hero{
+  position:relative;overflow:hidden;
+  background:var(--cielo);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 28px),0 100%);
+  padding:16px 0 64px;
+}
+.hero-deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-deco.d{display:none}
+.chispa{position:absolute;pointer-events:none;color:var(--blanco)}
+.chispa.c1{width:22px;height:22px;right:9%;top:6%}
+.chispa.c2{width:14px;height:14px;left:4%;top:44%}
+.chispa.c3{width:12px;height:12px;right:30%;bottom:14%;display:none}
+/* minmax(0,…): que el título largo no ensanche la columna y corte las flechas */
+.hero-in{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+
+.board-wrap{position:relative;padding-top:22px;padding-right:48px}
+.tab-pizzeria{
+  position:absolute;left:18px;top:0;z-index:2;
+  background:var(--mostaza);border:2.5px solid var(--tinta);
+  transform:skewX(-12deg);padding:1px 12px;
+}
+.tab-pizzeria span{
+  display:block;transform:skewX(12deg);
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:18px;line-height:1.25;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--tinta);
+}
+.board{
+  position:relative;
+  background:var(--tomate);color:var(--blanco);
+  border:4px solid var(--blanco);
+  box-shadow:0 0 0 3px var(--tinta), 9px 9px 0 3px var(--tinta);
+  border-radius:22px 22px 22px 60px;
+  transform:skewX(-7deg);
+  padding:24px 22px 18px 26px;
+}
+.board > *{transform:skewX(7deg)}
+.board h1{
+  font-family:var(--f-script);font-weight:400;
+  font-size:clamp(44px, 14.5vw, 104px);line-height:.92;
+  color:var(--blanco);text-shadow:3px 3px 0 var(--tinta);
+  text-transform:none;letter-spacing:0;
+}
+.board h1 span{display:block}
+.board h1 .l2{padding-left:.18em}
+.board-sub{margin-top:10px;font-weight:600;font-size:15px;line-height:1.35;max-width:34ch}
+.sputnik{position:absolute;z-index:3;top:-14px;right:-4px;width:112px;height:112px}
+
+/* el poste con las tres flechas */
+.pick{position:relative;padding-left:52px}
+.pick::before{
+  content:"";position:absolute;left:14px;top:44px;bottom:30px;width:14px;
+  background:repeating-linear-gradient(180deg, var(--tinta) 0 14px, var(--blanco) 14px 18px);
+  border:2px solid var(--tinta);
+}
+.estrella-poste{position:absolute;left:-7px;top:-12px;width:56px;height:56px;animation:girar 90s linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+.pick-tit{
+  font-family:var(--f-cond);font-weight:800;font-style:italic;
+  font-size:22px;line-height:1.15;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--tinta);margin:6px 0 12px;
+}
+.pick-ayuda{margin-top:10px;font-weight:500;font-size:15px;color:var(--tinta)}
+.prueba{margin-top:6px;font-weight:500;font-size:14px;line-height:1.45;color:var(--tinta)}
+
+/* ---------------- flechas: una por sucursal ---------------- */
+.flechas{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.flecha{
+  position:relative;display:block;width:100%;
+  min-height:64px;padding:8px 44px 9px 18px;
+  border:0;background:var(--tinta);color:var(--tinta);
+  clip-path:polygon(0 0,calc(100% - 26px) 0,100% 50%,calc(100% - 26px) 100%,0 100%);
+  text-align:left;cursor:pointer;
+}
+.flecha::before{
+  content:"";position:absolute;inset:2.5px 3px 2.5px 2.5px;background:var(--blanco);
+  clip-path:polygon(0 0,calc(100% - 25px) 0,100% 50%,calc(100% - 25px) 100%,0 100%);
+  transition:background-color .15s;
+}
+.flecha > *{position:relative}
+.flecha-nom{
+  display:block;font-family:var(--f-cond);font-weight:800;font-size:21px;line-height:1.1;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+.flecha .del{margin-top:5px;max-width:100%;white-space:normal;line-height:1.15;text-align:left}
+.flecha:not([aria-checked="true"]):hover::before{background:var(--rosa)}
+.flecha[aria-checked="true"]{color:var(--blanco)}
+.flecha[aria-checked="true"]::before{background:var(--tomate)}
+.flecha[aria-checked="true"] .del-confirmar{border-color:var(--blanco);color:var(--blanco)}
+.flecha:focus-visible{outline:none}
+.flecha:focus-visible::before{inset:5.5px 7px 5.5px 5.5px}
+.flecha:not([aria-checked="true"]):focus-visible::before{background:var(--rosa)}
+
+/* ---------------- los tres estados del delivery ----------------
+   sí = relleno turquesa · a confirmar = punteado · no = círculo tachado.
+   Nunca se tacha el texto. */
+.del{
+  display:inline-flex;align-items:center;gap:6px;
+  min-height:28px;padding:3px 10px;
+  border:1.5px solid var(--tinta);border-radius:3px;background:var(--blanco);color:var(--tinta);
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1;
+  letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;
+}
+.del .ic{width:14px;height:14px}
+.del-si{background:var(--cielo)}
+.del-confirmar{border-style:dashed;background:transparent}
+.del-no{background:var(--blanco)}
+
+/* ---------------- los Marcianitos ---------------- */
+.marc{background:var(--rosa);border-block:2px solid var(--tinta);padding-block:48px}
+.marc-in{display:grid;gap:28px}
+.script-h2{
+  font-family:var(--f-script);font-weight:400;font-size:clamp(44px, 12vw, 64px);line-height:1.05;
+  color:var(--tinta);text-transform:none;letter-spacing:0;
+}
+.swash{width:180px;height:14px;margin:2px 0 16px}
+.marc-txt{font-size:16px;max-width:52ch}
+.marc-chip{margin-top:14px}
+.marc-fig{margin-top:22px}
+.marc-fig > svg{display:block;width:100%;max-width:420px;height:auto}
+.leyenda{margin-top:12px;display:grid;gap:8px;font-weight:500;font-size:15px}
+.leyenda li{display:flex;align-items:center;gap:10px}
+.disco{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;
+  background:var(--mostaza);border:1.5px solid var(--tinta);
+  display:grid;place-items:center;
+  font-family:var(--f-cond);font-weight:800;font-size:14px;line-height:1;
+}
+.marc-fig figcaption{margin-top:10px;font-weight:500;font-size:14px;color:var(--tinta-suave)}
+
+.platos{display:grid;gap:14px}
+.plato{
+  background:var(--blanco);border:2px solid var(--tinta);border-radius:26px 4px 26px 4px;
+  padding:16px 16px 14px 18px;
+  display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;
+  transition:box-shadow .15s;
+}
+.plato.en-pedido{box-shadow:inset 5px 0 0 var(--tomate)}
+.plato-nom{font-weight:700;font-size:18px;line-height:1.25}
+.plato-precio{font-family:var(--f-cond);font-weight:800;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.plato-desc{grid-column:1 / -1;font-size:15px;line-height:1.45;color:var(--tinta-suave)}
+.plato-acc{grid-column:1 / -1;justify-self:end;margin-top:8px;padding-right:4px}
+.marc-link{display:inline-block;margin-top:18px}
+
+@media (min-width:960px){
+  .marc{padding-block:88px}
+  .marc-in{grid-template-columns:5fr 7fr;gap:48px;align-items:start}
+  .marc-txt{font-size:17px}
+  .platos{grid-template-columns:1fr 1fr;gap:16px}
+}
+
+/* ---------------- la carta: una pizarra de menú 1959 ---------------- */
+.carta-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.carta-cab .chk{margin-top:14px}
+.atomo{width:96px;height:96px;flex-shrink:0}
+@media (min-width:960px){ .atomo{width:132px;height:132px} }
+
+.buscador{position:relative;margin-bottom:14px}
+.buscador .lupa{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--tinta);pointer-events:none}
+.buscador input{
+  display:block;width:100%;height:48px;padding:0 48px 0 44px;
+  border:2px solid var(--tinta);border-radius:4px;background:var(--blanco);
+  font-size:16px;line-height:1.2;-webkit-appearance:none;appearance:none;
+}
+.buscador input::placeholder{color:var(--tinta-suave);opacity:1}
+.buscador input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.limpiar{
+  position:absolute;right:2px;top:2px;width:44px;height:44px;
+  border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--tinta);
+}
+.limpiar .ic{width:16px;height:16px}
+
+.tabs{display:grid;grid-template-columns:repeat(6, 1fr);gap:8px;margin-bottom:16px;padding-inline:4px}
+.tab{
+  grid-column:span 2;min-width:0;height:44px;padding:0 6px;
+  border:2px solid var(--tinta);border-radius:3px;background:var(--blanco);color:var(--tinta);
+  transform:skewX(-10deg);cursor:pointer;
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  transition:background-color .15s, color .15s;
+}
+.tab:nth-child(-n+2){grid-column:span 3}
+.tab > span{display:flex;align-items:center;justify-content:center;gap:6px;transform:skewX(10deg)}
+.tab .ic{width:13px;height:13px}
+.tab:hover:not([aria-selected="true"]){background:var(--rosa)}
+.tab[aria-selected="true"]{background:var(--tinta);color:var(--blanco);box-shadow:inset 0 -5px 0 var(--mostaza)}
+.tab:active{translate:0 1px}
+/* la cuenta de resultados va colgada arriba a la derecha, fuera del texto,
+   para no empujar la palabra contra los bordes inclinados */
+.tab > span{position:relative}
+.tab-n{
+  position:absolute;top:-17px;right:-14px;
+  min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  display:inline-grid;place-items:center;
+  background:var(--mostaza);color:var(--tinta);border:1.5px solid var(--tinta);
+  font-size:13px;font-weight:800;letter-spacing:0;
+}
+.tab-n.cero{background:var(--blanco)}
+@media (max-width:359px){ .tab{font-size:14px;letter-spacing:.03em;padding:0 3px} }
+@media (min-width:720px){
+  .tabs{display:flex;flex-wrap:wrap}
+  .tab{grid-column:auto;padding:0 18px}
+}
+
+.resultados{margin:0 0 12px;font-weight:500;font-size:15px}
+
+.tablero{
+  background:var(--blanco);border:2px solid var(--tinta);border-radius:28px 6px 28px 6px;
+  padding:6px 16px;overflow:hidden;
+}
+@media (min-width:960px){
+  .tablero{padding:12px 28px}
+  .tablero-cols{column-count:2;column-gap:48px;column-rule:1.5px solid var(--veta)}
+}
+.grupo-cab{
+  display:flex;align-items:center;gap:8px;
+  padding:18px 0 4px;break-after:avoid;
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:20px;line-height:1.15;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+.grupo-cab .ic{width:16px;height:16px}
+
+.fp{
+  display:grid;grid-template-columns:1fr auto;column-gap:12px;row-gap:4px;align-items:center;
+  padding:14px 0;border-bottom:1.5px dotted var(--punteado);
+  break-inside:avoid;
+  transition:background-color .15s;
+}
+.fp.ult{border-bottom:0}
+.fp-linea{grid-column:1 / -1;display:flex;align-items:baseline;gap:8px}
+.fp-nom{min-width:0;font-weight:600;font-size:17px;line-height:1.3}
+.fp-lider{flex:1 1 12px;min-width:12px;border-bottom:2px dotted var(--punteado);transform:translateY(-4px)}
+.fp-precio{font-family:var(--f-cond);font-weight:800;font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fp-uni{font-weight:500;font-size:14px;color:var(--tinta-suave);white-space:nowrap}
+.fp-desc{font-size:15px;line-height:1.45;color:var(--tinta-suave)}
+.fp-acc{padding-right:4px}
+.fp.en-pedido{
+  background:var(--rosa);box-shadow:inset 4px 0 0 var(--tomate);
+  margin:0 -16px;padding:14px 20px 14px 16px;
+}
+@media (min-width:960px){ .fp.en-pedido{margin:0 -12px;padding:14px 12px} }
+
+.vacio{padding:36px 8px;text-align:left}
+.vacio b{display:block;font-size:17px;font-weight:600;margin-bottom:4px}
+.vacio p{color:var(--tinta-suave);font-size:15px}
+
+.nota-carta{margin-top:16px;font-weight:500;font-size:15px;max-width:70ch}
+
+/* el + y el contador */
+.mas{
+  width:48px;height:44px;border:0;border-radius:4px;
+  background:var(--tomate);color:var(--blanco);
+  transform:skewX(-10deg);cursor:pointer;
+  display:grid;place-items:center;
+  transition:background-color .15s;
+}
+.mas .ic{width:18px;height:18px;transform:skewX(10deg)}
+.mas:hover{background:var(--tomate-osc)}
+.mas:active{translate:0 1px}
+.stepper{
+  display:flex;align-items:stretch;height:44px;
+  border:2px solid var(--tinta);border-radius:4px;background:var(--blanco);
+  transform:skewX(-10deg);overflow:hidden;
+}
+.stepper button{
+  width:42px;border:0;background:var(--blanco);color:var(--tinta);cursor:pointer;
+  display:grid;place-items:center;transition:background-color .15s;
+}
+.stepper button .ic{width:16px;height:16px;transform:skewX(10deg)}
+.stepper .st-menos:hover{background:var(--rosa)}
+.stepper .st-mas{background:var(--tomate);color:var(--blanco)}
+.stepper .st-mas:hover{background:var(--tomate-osc)}
+.stepper button:focus-visible{outline:3px solid var(--tinta);outline-offset:-5px}
+.stepper .st-mas:focus-visible{outline-color:var(--blanco)}
+.stepper output{
+  min-width:34px;display:grid;place-items:center;
+  border-inline:2px solid var(--tinta);
+  font-family:var(--f-cond);font-weight:800;font-size:20px;line-height:1;font-variant-numeric:tabular-nums;
+}
+.stepper output span{transform:skewX(10deg)}
+
+/* ---------------- sucursales ---------------- */
+.sedes{display:grid;gap:16px;margin-top:26px}
+@media (min-width:960px){ .sedes{grid-template-columns:repeat(3, 1fr);gap:24px;align-items:stretch} }
+.sede{
+  display:flex;flex-direction:column;
+  background:var(--blanco);border:2px solid var(--tinta);border-radius:4px 26px 4px 26px;
+  overflow:hidden;padding-bottom:16px;
+  transition:border-color .15s, box-shadow .15s;
+}
+.sede.activa{border-color:var(--tomate);box-shadow:0 0 0 2px var(--tomate)}
+.calle{
+  display:block;background:var(--tinta);color:var(--blanco);
+  padding:10px 16px;border-bottom:3px solid var(--mostaza);
+  font-family:var(--f-cond);font-weight:800;font-size:24px;line-height:1.15;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.calle small{
+  display:block;font-weight:700;font-size:14px;letter-spacing:.12em;color:var(--mostaza);margin-bottom:2px;
+}
+.esquina{
+  display:inline-block;align-self:flex-start;margin-left:28px;
+  background:var(--tomate);color:var(--blanco);padding:6px 12px;
+  font-family:var(--f-cond);font-weight:700;font-size:16px;line-height:1.1;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.sede-ref{padding:10px 16px 0;font-weight:500;font-size:15px}
+.datos-suc{margin:8px 16px 0}
+.datos-suc > div{
+  display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:center;
+  min-height:44px;padding:9px 0;border-bottom:1.5px dotted var(--punteado);
+}
+.datos-suc > div:last-child{border-bottom:0}
+.datos-suc dt{
+  font-family:var(--f-cond);font-weight:700;font-size:14px;line-height:1.2;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave);
+}
+.datos-suc dd{font-size:15px;line-height:1.4;min-width:0}
+/* en las tarjetas angostas el chip de delivery puede ocupar dos renglones */
+.datos-suc .del,.datos-suc .chk{white-space:normal;max-width:100%;line-height:1.15;text-align:left}
+.datos-suc .del{margin-bottom:6px}
+.del-txt{display:block;font-size:14px;line-height:1.4;color:var(--tinta-suave)}
+.del-txt .chk{margin-top:2px}
+.hor-linea{display:block}
+.hor-estado{display:inline-block;margin-top:4px;font-weight:600;font-size:14px}
+.hor-estado.abierto{color:var(--tinta);background:var(--cielo);padding:1px 8px;border:1.5px solid var(--tinta);border-radius:3px}
+.tel-link{font-family:var(--f-cond);font-weight:800;font-size:19px;font-variant-numeric:tabular-nums;text-decoration:none}
+.tel-link:hover{color:var(--tomate)}
+.mini-link{display:inline-block;margin-left:6px;white-space:nowrap;font-size:14px;font-weight:500;color:var(--tinta);text-underline-offset:3px}
+.sede-acc{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:16px 16px 0;margin-top:auto}
+.tag-tuya{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 14px;
+  background:var(--mostaza);border:1.5px solid var(--tinta);border-radius:3px;
+  transform:skewX(-10deg);
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--tinta);
+}
+.tag-tuya > span{display:inline-flex;align-items:center;gap:6px;transform:skewX(10deg)}
+.tag-tuya .ic{width:12px;height:12px}
+
+/* ---------------- preguntas ---------------- */
+.faq-grid{display:grid;gap:26px}
+@media (min-width:960px){ .faq-grid{grid-template-columns:5fr 7fr;gap:56px;align-items:start} }
+.faq-izq .intro{margin-bottom:22px}
+.faq details{border-bottom:2px solid var(--tinta)}
+.faq details:first-child{border-top:2px solid var(--tinta)}
+.faq summary{
+  list-style:none;cursor:pointer;min-height:56px;
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  font-weight:600;font-size:17px;line-height:1.35;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .ic{width:16px;height:16px;color:var(--tomate);transition:transform .15s}
+.faq details[open] summary .ic{transform:rotate(45deg)}
+.faq summary:hover{color:var(--tomate)}
+.faq .resp{padding:0 0 18px 28px;font-size:16px;line-height:1.55;max-width:60ch}
+.faq .resp .chk{margin-right:4px}
+
+/* ---------------- contacto ---------------- */
+.contacto-grid{display:grid;gap:16px;margin-top:26px}
+@media (min-width:960px){ .contacto-grid{grid-template-columns:1fr 1fr;gap:24px;align-items:start} }
+.ccard{background:var(--blanco);border:2px solid var(--tinta);border-radius:4px;overflow:hidden;display:flex;flex-direction:column}
+.ccard-cuerpo{padding:16px}
+.ccard-tit{
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:22px;line-height:1.15;
+  letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;
+}
+.ccard .datos-suc{margin:4px 0 0}
+.ccard .sede-acc{padding:16px 0 0}
+.cc-vacia{margin-bottom:12px;font-weight:500}
+.tels{display:grid;margin:4px 0 12px}
+.tels a{
+  display:flex;align-items:center;min-height:48px;
+  border-bottom:1.5px dotted var(--punteado);
+  font-family:var(--f-cond);font-weight:800;font-size:22px;line-height:1;font-variant-numeric:tabular-nums;
+  text-decoration:none;
+}
+.tels a:hover{color:var(--tomate)}
+.tels a{gap:12px}
+.tel-suc{
+  min-width:92px;font-family:var(--f-cond);font-weight:700;font-size:14px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-suave);
+}
+#tels-chip{margin-top:10px}
+.cc-fila{margin-top:16px;padding-top:14px;border-top:2px solid var(--tinta)}
+.cc-fila h4{
+  font-family:var(--f-cond);font-weight:700;font-size:14px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--tinta-suave);margin-bottom:6px;
+}
+.memo{
+  margin-top:16px;background:var(--blanco);border:2px solid var(--tinta);border-radius:4px;
+  padding:16px;display:grid;gap:8px;
+}
+.memo-lbl{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:15px;line-height:1;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.memo-lbl .ic{width:20px;height:20px}
+.memo p{font-weight:500;font-size:16px;max-width:70ch}
+
+/* ---------------- pie ---------------- */
+.pie{
+  position:relative;overflow:hidden;
+  background:var(--cielo);color:var(--tinta);
+  border-top:2px solid var(--tinta);
+  padding:48px 0 24px;
+}
+/* el arco va sólo en pantallas anchas: en el celular se vuelve una
+   parábola angosta que cruza los links */
+.pie-arco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none}
+@media (min-width:960px){ .pie-arco{display:block} }
+.pie-in{position:relative;display:grid;gap:28px}
+@media (min-width:960px){ .pie-in{grid-template-columns:1.3fr 1fr 1fr;gap:40px} }
+.pie-logo{font-family:var(--f-script);font-weight:400;font-size:40px;line-height:1.1;color:var(--tinta)}
+.pie-txt{margin-top:10px;font-weight:500;font-size:15px;max-width:40ch}
+.pie h2{
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:17px;line-height:1.2;
+  letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;
+}
+.pie li{margin-bottom:10px;font-size:15px}
+.pie li b{display:block;font-weight:600}
+.pie a{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+.pie a:hover{text-decoration-thickness:3px}
+.oficial-pie{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;font-weight:600;font-size:15px}
+.pie-fin{
+  position:relative;
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;
+  margin-top:32px;padding-top:16px;border-top:2px solid var(--tinta);
+  font-weight:500;font-size:14px;
+}
+
+/* ---------------- barra de pedido ----------------
+   Aparece cuando hay algo en el pedido. */
+.barra{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:var(--blanco);
+  transform:translateY(110%);visibility:hidden;
+  transition:transform .3s cubic-bezier(.2,.8,.3,1), visibility 0s linear .3s;
+}
+.barra.abierta{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.3,1)}
+.barra .trim{border-top:0;border-bottom:2px solid var(--tinta)}
+.barra-in{
+  display:flex;align-items:center;gap:12px;
+  min-height:52px;padding:7px 0 calc(7px + env(safe-area-inset-bottom, 0px));
+}
+.cuenta{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  background:var(--mostaza);border:2px solid var(--tinta);
+  display:grid;place-items:center;
+  font-family:var(--f-cond);font-weight:800;font-size:17px;line-height:1;font-variant-numeric:tabular-nums;
+}
+.cuenta.bump{animation:bump .22s ease-out}
+@keyframes bump{50%{transform:scale(1.15)}}
+.barra-txt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+.barra-total{font-family:var(--f-cond);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.barra-suc{
+  max-width:100%;border:0;background:none;padding:3px 0;cursor:pointer;
+  font-weight:500;font-size:14px;color:var(--tinta);text-align:left;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-decoration:underline dotted 1.5px;text-underline-offset:3px;
+}
+.barra-suc.vacia{color:var(--tomate);font-weight:600}
+.barra-suc::after{
+  content:"";display:inline-block;margin-left:6px;vertical-align:middle;
+  border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;
+}
+.barra .btn{flex-shrink:0;margin-right:5px}
+
+/* ---------------- hojas (se abren desde abajo) ---------------- */
+dialog.hoja{
+  position:fixed;inset:auto 0 0 0;margin:0 auto;
+  width:100%;max-width:640px;max-height:88vh;
+  padding:0;border:0;border-top:3px solid var(--tinta);border-radius:20px 20px 0 0;
+  background:var(--blanco);color:var(--tinta);overflow:auto;
+  overscroll-behavior:contain;
+}
+dialog.hoja[open]{animation:subir .2s ease-out}
+@keyframes subir{from{transform:translateY(100%)}}
+dialog.hoja::backdrop{background:var(--velo)}
+.hoja-in{padding:18px 16px calc(24px + env(safe-area-inset-bottom, 0px))}
+.hoja-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.hoja-cab h2{
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:26px;line-height:1.05;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+.cerrar{
+  flex-shrink:0;min-height:44px;padding:0 14px;
+  border:2px solid var(--tinta);border-radius:4px;background:var(--blanco);cursor:pointer;
+  font-family:var(--f-cond);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;
+}
+.cerrar:hover{background:var(--rosa)}
+.hoja-sub{margin-bottom:14px;font-weight:500;font-size:15px}
+
+.placa{
+  display:inline-flex;align-items:center;min-height:38px;padding:4px 28px 4px 12px;
+  background:var(--tinta);color:var(--blanco);
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%);
+  font-family:var(--f-cond);font-weight:700;font-size:16px;line-height:1.1;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.hp-suc{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+.hp-lista{margin:10px 0 4px}
+.hp-fila{
+  display:grid;grid-template-columns:1fr auto auto;gap:8px 12px;align-items:center;
+  padding:10px 0;border-bottom:1.5px dotted var(--punteado);
+}
+.hp-nom{min-width:0;font-weight:600;font-size:16px;line-height:1.3}
+.hp-sub{min-width:66px;text-align:right;font-family:var(--f-cond);font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.hp-vaciar{margin-top:4px;padding-left:0}
+
+.servicio{border:0;margin:18px 0 0;padding:0;min-width:0}
+.servicio legend{
+  padding:0;margin-bottom:10px;
+  font-family:var(--f-cond);font-weight:800;font-style:italic;font-size:18px;line-height:1.1;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.segs{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;padding-inline:4px}
+.serv{
+  min-width:0;height:44px;padding:0 4px;
+  border:1.5px solid var(--tinta);border-radius:3px;background:var(--blanco);color:var(--tinta);
+  transform:skewX(-10deg);cursor:pointer;
+  font-family:var(--f-cond);font-weight:700;font-size:15px;line-height:1;
+  letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;
+  transition:background-color .15s, color .15s;
+}
+.serv > span{display:inline-flex;align-items:center;justify-content:center;gap:5px;transform:skewX(10deg)}
+.serv .ic{width:13px;height:13px;display:none}
+.serv:hover:not([aria-checked="true"]):not(.serv-no){background:var(--rosa)}
+.serv[aria-checked="true"]{background:var(--tinta);color:var(--blanco)}
+.serv.serv-confirmar{border-style:dashed}
+.serv.serv-no{background:var(--formica);color:var(--tinta-suave);cursor:not-allowed}
+.serv.serv-no .ic{display:block}
+.serv-nota{margin-top:10px;font-size:15px;line-height:1.45;min-height:1.45em}
+
+.campo{display:grid;gap:6px;margin-top:14px}
+.campo label{font-weight:600;font-size:15px}
+.campo label span{font-weight:400;color:var(--tinta-suave)}
+.campo input,.campo textarea{
+  display:block;width:100%;min-height:48px;padding:10px 12px;
+  border:2px solid var(--tinta);border-radius:4px;background:var(--blanco);
+  font-size:16px;line-height:1.4;
+}
+.campo textarea{min-height:76px;resize:vertical}
+.campo input::placeholder,.campo textarea::placeholder{color:var(--tinta-suave);opacity:1}
+.error{color:var(--tomate);font-weight:600;font-size:15px}
+.hp-wa{margin-top:16px;font-size:15px}
+.hp-total{
+  display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;
+  margin:16px 0 14px;padding-top:14px;border-top:2px solid var(--tinta);
+}
+.hp-total > span{font-weight:600}
+.hp-total b{font-family:var(--f-cond);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums}
+.hp-total .chk{margin-left:auto}
+.hp-botones{display:grid;gap:10px}
+.copiado{font-weight:600;font-size:15px;min-height:1.5em}
+.copia-manual{
+  display:block;width:100%;min-height:120px;margin-top:6px;padding:10px;
+  border:2px dashed var(--tinta);border-radius:4px;font-size:14px;
+}
+.letra-chica{margin-top:10px;font-size:14px;color:var(--tinta-suave)}
+.sin-wa{margin-bottom:12px;padding:12px 14px;border:2px solid var(--tinta);border-radius:4px;background:var(--rosa);font-weight:500;font-size:15px}
+
+/* ---------------- movimiento ---------------- */
+@media (prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ---------------- alto contraste (Windows) ----------------
+   Ahí el sistema pisa los fondos, y lo elegido se marca con relleno:
+   se reemplaza por los colores del sistema para que se siga viendo. */
+@media (forced-colors:active){
+  .flecha,.llegar,.suc-boton{forced-color-adjust:none}
+  .seg[aria-checked="true"],.tab[aria-selected="true"],.serv[aria-checked="true"]{background:Highlight;color:HighlightText}
+  .fp.en-pedido,.plato.en-pedido{outline:2px solid Highlight;outline-offset:-2px}
+  .suc-boton:focus-visible,.flecha:focus-visible,.llegar:focus-visible{outline:3px solid Highlight;outline-offset:-7px}
+}
+
+/* ---------------- tamaños grandes ---------------- */
+@media (min-width:900px){
+  .hero{clip-path:polygon(0 0,100% 0,100% calc(100% - 48px),0 100%);padding:56px 0 104px}
+  .hero-deco.m{display:none}
+  .hero-deco.d{display:block}
+  .chispa.c3{display:block}
+  .hero-in{grid-template-columns:minmax(0,7fr) minmax(0,5fr);align-items:end;gap:64px}
+  .board{padding:44px 40px 32px 44px}
+  .board h1{font-size:clamp(72px, 8.6vw, 104px)}
+  .board-sub{font-size:17px}
+  .sputnik{width:150px;height:150px;top:-24px;right:-10px}
+  .pick-tit{font-size:26px}
+  .flecha-nom{font-size:24px}
+}
+</style>
+
+<!-- ══════════════════ AVISO DE VISTA PREVIA ══════════════════
+     Los precios y las variedades de esta página son DE EJEMPLO.
+     Se saca solo poniendo VISTA_PREVIA = false en el script. -->
+<div class="vista-previa" role="note" data-preview>
+  <div class="vp-in">
+    <svg class="ic" aria-hidden="true"><use href="#i-estrella"/></svg>
+    <p><b>VISTA PREVIA</b> · Carta y precios de ejemplo. Lo marcado <span class="chk">A confirmar</span> se verifica con el local.</p>
+  </div>
+</div>
+
+<!-- ══════════════════ NAVEGACIÓN ══════════════════ -->
+<header class="nav" id="nav">
+  <div class="env nav-in">
+    <a class="logo" href="#inicio">La Marcianita</a>
+
+    <nav class="anclas" id="anclas" aria-label="Secciones">
+      <a href="#marcianitos">Marcianitos</a>
+      <a href="#carta">Carta</a>
+      <a href="#sucursales">Sucursales</a>
+      <a href="#preguntas">Preguntas</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <!-- tablet y compu: el selector de sucursal a la vista -->
+    <div class="nav-suc">
+      <span class="pedis-a" id="pedis-a">Pedís a</span>
+      <div class="segm" id="segm" role="radiogroup" aria-labelledby="pedis-a"></div>
+    </div>
+
+    <!-- celular: una flecha que abre la hoja de sucursales -->
+    <button class="suc-boton vacia" id="suc-boton" type="button" aria-haspopup="dialog" aria-label="Elegir sucursal">
+      <span><small id="sb-small">Elegí</small><b id="sb-txt">Sucursal</b></span>
+    </button>
+
+    <button class="secc-btn" id="secc-btn" type="button" aria-label="Ir a una sección" aria-expanded="false" aria-controls="secc-panel">
+      <i></i><i></i><i></i>
+    </button>
+  </div>
+  <div class="trim" aria-hidden="true"></div>
+
+  <div class="secc-panel" id="secc-panel" hidden>
+    <nav class="env" aria-label="Secciones">
+      <a href="#marcianitos"><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>Los Marcianitos</a>
+      <a href="#carta"><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>La carta</a>
+      <a href="#sucursales"><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>Sucursales</a>
+      <a href="#preguntas"><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>Preguntas</a>
+      <a href="#contacto"><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════ PORTADA: EL CARTEL ══════════════════
+     La tabla roja con el nombre, el Sputnik que dice DESDE 1959 y el poste
+     con la estrella que sostiene las tres flechas (una por sucursal).
+     Ojo: el diseño es de la era espacial, pero la página NO cuenta de dónde
+     sale el nombre. No lo sabemos. -->
+<section class="hero" id="inicio">
+  <svg class="hero-deco m" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <path d="M-40 640 Q200 -260 440 640" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+    <path d="M10 640 Q200 -120 390 640" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 8" stroke-linecap="round"/>
+  </svg>
+  <svg class="hero-deco d" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M-60 760 Q560 -420 1180 760" fill="none" stroke="#FFFFFF" stroke-width="3" vector-effect="non-scaling-stroke"/>
+    <path d="M40 760 Q560 -200 1080 760" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 8" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  </svg>
+  <svg class="chispa c1" aria-hidden="true"><use href="#i-chispa"/></svg>
+  <svg class="chispa c2" aria-hidden="true"><use href="#i-chispa"/></svg>
+  <svg class="chispa c3" aria-hidden="true"><use href="#i-chispa"/></svg>
+
+  <div class="env hero-in">
+    <div class="board-wrap">
+      <span class="tab-pizzeria"><span>Pizzería</span></span>
+      <div class="board">
+        <h1><span class="l1">La</span><span class="l2">Marcianita</span></h1>
+        <p class="board-sub">Los Marcianitos en pan casero propio, pizzas y empanadas de masa casera.</p>
+      </div>
+      <!-- el Sputnik: es un satélite, sin cara ni ojos -->
+      <svg class="sputnik" viewBox="-50 -50 120 120" role="img" aria-label="Desde el 7 de noviembre de 1959">
+        <g stroke="#15292D" stroke-width="3" stroke-linecap="round">
+          <line x1="30" y1="30" x2="62" y2="54"/>
+          <line x1="36" y1="22" x2="66" y2="34"/>
+          <line x1="22" y1="36" x2="48" y2="64"/>
+          <line x1="12" y1="40" x2="26" y2="66"/>
+        </g>
+        <circle r="44" fill="#F4C23D" stroke="#15292D" stroke-width="3.5"/>
+        <circle r="37" fill="none" stroke="#15292D" stroke-width="1.5"/>
+        <text y="-13" text-anchor="middle" fill="#15292D" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700" font-size="13" letter-spacing="2.5">DESDE</text>
+        <text y="17" text-anchor="middle" fill="#15292D" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="800" font-size="32">1959</text>
+        <path d="M0 -12 C1.2 -3.2 3.2 -1.2 12 0 C3.2 1.2 1.2 3.2 0 12 C-1.2 3.2 -3.2 1.2 -12 0 C-3.2 -1.2 -1.2 -3.2 0 -12Z" transform="translate(0 30) scale(.4)" fill="#15292D"/>
+      </svg>
+    </div>
+
+    <div class="pick">
+      <svg class="estrella-poste" viewBox="-54 -54 108 108" aria-hidden="true">
+        <use href="#i-estrella-llena" x="-54" y="-54" width="108" height="108"/>
+        <circle r="9" fill="#B42F1D" stroke="#15292D" stroke-width="3"/>
+      </svg>
+      <h2 class="pick-tit" id="pick-tit">¿A qué sucursal le pedís?</h2>
+      <div class="flechas" id="hero-flechas" role="radiogroup" aria-labelledby="pick-tit"></div>
+      <p class="pick-ayuda">Elegila una vez y te la recordamos.</p>
+      <!-- La única prueba social: la fecha de apertura y el dato real de
+           Tripadvisor (3,8 de 5 con 89 reseñas, tomado en septiembre de 2026).
+           NO hay reseñas ni testimonios, y no hay que inventarlos. -->
+      <p class="prueba">Abrimos el 7 de noviembre de 1959 · <span data-anios>Desde 1959</span> · 3,8 de 5 en Tripadvisor (89 reseñas)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ LOS MARCIANITOS ══════════════════
+     El producto que lleva el nombre de la casa. Las tarjetas suman al
+     pedido igual que la carta: son LOS MISMOS productos (salen de la
+     pestaña "marcianitos" de const CARTA), así que el precio es uno solo.
+
+     CONFIRMAR EN EL LOCAL: qué variedades hacen, cómo se venden (¿por
+     unidad?, ¿tamaños?), los precios, y por qué se llaman marcianitos.
+     NO inventar la historia del nombre. -->
+<section class="marc" id="marcianitos">
+  <div class="env marc-in">
+    <div>
+      <p class="kicker">La especialidad de la casa</p>
+      <h2 class="script-h2">Los Marcianitos</h2>
+      <svg class="swash" viewBox="0 0 180 14" aria-hidden="true"><path d="M2 11 Q60 1 120 5 Q150 7 178 2 Q150 12 118 9 Q60 6 2 11Z" fill="#B42F1D"/></svg>
+      <p class="marc-txt">
+        Sándwiches calientes hechos con nuestro propio pan casero. Llevan el
+        nombre de la casa y no los vas a encontrar en ninguna otra carta de
+        Mar del Plata.
+      </p>
+      <p class="marc-chip" data-preview><span class="chk larga">Variedades y precios de ejemplo</span></p>
+
+      <figure class="marc-fig">
+        <svg viewBox="0 0 320 180" role="img" aria-label="Ilustración de un Marcianito: un sándwich caliente en pan casero">
+          <polygon fill="#FFFFFF" transform="translate(160 96) scale(1.62)" points="0.0,-50.0 1.4,-6.9 11.9,-28.6 3.9,-5.8 35.4,-35.4 5.8,-3.9 28.6,-11.9 6.9,-1.4 50.0,0.0 6.9,1.4 28.6,11.9 5.8,3.9 35.4,35.4 3.9,5.8 11.9,28.6 1.4,6.9 0.0,50.0 -1.4,6.9 -11.9,28.6 -3.9,5.8 -35.4,35.4 -5.8,3.9 -28.6,11.9 -6.9,1.4 -50.0,0.0 -6.9,-1.4 -28.6,-11.9 -5.8,-3.9 -35.4,-35.4 -3.9,-5.8 -11.9,-28.6 -1.4,-6.9"/>
+          <g fill="none" stroke="#15292D" stroke-width="2.5" stroke-linecap="round">
+            <path d="M130 44q-7 -7 0 -14q7 -7 0 -14"/>
+            <path d="M160 40q-7 -7 0 -14q7 -7 0 -14"/>
+            <path d="M190 44q-7 -7 0 -14q7 -7 0 -14"/>
+          </g>
+          <path d="M56 100C56 66 92 54 160 54C228 54 264 66 264 100Z" fill="#F4C23D" stroke="#15292D" stroke-width="3" stroke-linejoin="round"/>
+          <g stroke="#15292D" stroke-width="3" stroke-linecap="round">
+            <path d="M112 80l14 -8"/><path d="M153 76l14 -8"/><path d="M194 80l14 -8"/>
+          </g>
+          <path d="M50 100Q64 92 78 100T106 100T134 100T162 100T190 100T218 100T246 100T274 100V110H50Z" fill="#FFFFFF" stroke="#15292D" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M48 110H272L268 124Q160 130 52 124Z" fill="#B42F1D" stroke="#15292D" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M56 124H264V136Q264 150 250 150H70Q56 150 56 136Z" fill="#F4C23D" stroke="#15292D" stroke-width="3" stroke-linejoin="round"/>
+          <g font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="800" font-size="14" text-anchor="middle" fill="#15292D">
+            <circle cx="80" cy="72" r="11" fill="#F4C23D" stroke="#15292D" stroke-width="2"/><text x="80" y="77">1</text>
+            <circle cx="222" cy="24" r="11" fill="#F4C23D" stroke="#15292D" stroke-width="2"/><text x="222" y="29">2</text>
+            <circle cx="290" cy="116" r="11" fill="#F4C23D" stroke="#15292D" stroke-width="2"/><text x="290" y="121">3</text>
+          </g>
+        </svg>
+        <ol class="leyenda">
+          <li><span class="disco" aria-hidden="true">1</span>Pan casero propio</li>
+          <li><span class="disco" aria-hidden="true">2</span>Se sirven calientes</li>
+          <li><span class="disco" aria-hidden="true">3</span>Relleno según la variedad</li>
+        </ol>
+        <figcaption>Ilustración, no a escala.</figcaption>
+      </figure>
+    </div>
+
+    <div>
+      <div class="platos" id="platos"></div>
+      <a class="link marc-link" href="#carta" data-tab="marcianitos">Ver los Marcianitos en la carta →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CARTA ══════════════════ -->
+<section class="sec" id="carta">
+  <div class="env">
+    <div class="carta-cab">
+      <div>
+        <p class="kicker">Para comer acá, llevar o pedir</p>
+        <h2 class="h2">La carta</h2>
+        <span class="chk larga" data-preview>Variedades y precios de ejemplo</span>
+      </div>
+      <!-- el átomo-pizza: un átomo, no un planeta -->
+      <svg class="atomo" viewBox="0 0 120 120" aria-hidden="true">
+        <g fill="none" stroke="#15292D" stroke-width="2">
+          <ellipse cx="60" cy="60" rx="56" ry="17"/>
+          <ellipse cx="60" cy="60" rx="56" ry="17" transform="rotate(60 60 60)"/>
+          <ellipse cx="60" cy="60" rx="56" ry="17" transform="rotate(-60 60 60)"/>
+        </g>
+        <circle cx="60" cy="60" r="27" fill="#F4C23D" stroke="#15292D" stroke-width="2.5"/>
+        <circle cx="60" cy="60" r="21" fill="#B42F1D"/>
+        <g fill="#FFFFFF">
+          <ellipse cx="52" cy="52" rx="6" ry="4.5"/>
+          <ellipse cx="67" cy="50" rx="5" ry="4"/>
+          <ellipse cx="70" cy="64" rx="6.5" ry="5"/>
+          <ellipse cx="54" cy="68" rx="5.5" ry="4"/>
+          <ellipse cx="61" cy="59" rx="3.5" ry="3"/>
+        </g>
+        <path d="M39 60H81M49.5 41.8L70.5 78.2M70.5 41.8L49.5 78.2" stroke="#15292D" stroke-width="1.2"/>
+        <g fill="none" stroke="#15292D" stroke-width="2">
+          <circle cx="60" cy="45" r="2.2"/><circle cx="73" cy="57" r="2.2"/><circle cx="48" cy="63" r="2.2"/>
+        </g>
+        <circle cx="116" cy="60" r="4" fill="#F4C23D" stroke="#15292D" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <div class="buscador">
+      <svg class="lupa" viewBox="0 0 22 22" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M13.5 13.5L19 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <input id="buscar" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscá: muzza, empanada, flan…" aria-label="Buscar en la carta">
+      <button class="limpiar" id="limpiar" type="button" aria-label="Borrar la búsqueda" hidden><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+
+    <div class="tabs" id="tabs" role="tablist" aria-label="Categorías de la carta"></div>
+    <p class="resultados" id="resultados" hidden></p>
+    <div class="tablero" id="tablero" role="tabpanel"></div>
+
+    <!-- CONFIRMAR EN EL LOCAL: la carta completa. Lo confirmado es que hacen
+         pizzas (la muzzarella clásica es la más nombrada), Marcianitos,
+         empanadas de masa casera, flan casero y bombón helado. Los demás
+         sabores, las bebidas y TODOS los precios son de ejemplo. -->
+    <p class="nota-carta" data-preview>
+      La carta y los precios son de ejemplo mientras terminamos de cargarla.
+      El local te confirma el total cuando mandás el pedido.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════ SUCURSALES ══════════════════
+     Las tarjetas las arma el script con const SUCURSALES: dirección,
+     teléfono, WhatsApp, horario y delivery de cada una. Los datos que
+     están vacíos salen solos con el chip de "A confirmar". -->
+<section class="sec" id="sucursales">
+  <div class="env">
+    <p class="kicker"><span data-cuantas="Mayus">Tres</span> direcciones</p>
+    <h2 class="h2">Nuestras sucursales</h2>
+    <p class="intro">Elegí una y el pedido, el teléfono y el cómo llegar se ajustan a esa sucursal.</p>
+    <div class="sedes" id="sedes"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ PREGUNTAS ══════════════════
+     Las respuestas marcadas con id (sucursales, delivery, horario, pago)
+     las escribe el script a partir de los datos, así nunca se contradicen
+     con las tarjetas de las sucursales. -->
+<section class="sec" id="preguntas">
+  <div class="env faq-grid">
+    <div class="faq-izq">
+      <p class="kicker">Lo que nos preguntan</p>
+      <h2 class="h2">Preguntas frecuentes</h2>
+      <p class="intro">Si te queda alguna duda, escribile a tu sucursal por WhatsApp.</p>
+      <div class="acciones">
+        <a class="btn btn-pri js-wa" href="#" target="_blank" rel="noopener"><span><svg class="ic" aria-hidden="true"><use href="#i-wa"/></svg><span class="js-wa-txt">Escribinos</span></span></a>
+      </div>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Qué es un Marcianito?</summary>
+        <div class="resp">Un sándwich caliente hecho con nuestro propio pan casero. Es la especialidad de la casa, lleva su nombre y no lo vas a encontrar en otra carta de Mar del Plata.</div>
+      </details>
+      <!-- CONFIRMAR EN EL LOCAL: de dónde sale el nombre La Marcianita y por
+           qué los sándwiches se llaman marcianitos. Esta pregunta es un lugar
+           reservado SÓLO para la vista previa (tiene data-preview): cuando
+           se sepa la respuesta, se escribe acá y se le saca el data-preview.
+           NO inventar la historia. -->
+      <details data-preview>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Por qué La Marcianita?</summary>
+        <div class="resp"><span class="chk">A confirmar</span> Esta respuesta la escribe la casa.</div>
+      </details>
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Dónde están las sucursales?</summary>
+        <div class="resp" id="faq-sucs"></div>
+      </details>
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Hacen delivery?</summary>
+        <div class="resp" id="faq-delivery"></div>
+      </details>
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Qué horarios tienen?</summary>
+        <div class="resp" id="faq-horario"></div>
+      </details>
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Con qué se puede pagar?</summary>
+        <div class="resp" id="faq-pago"></div>
+      </details>
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Cómo funciona el pedido por WhatsApp?</summary>
+        <div class="resp">Elegí tu sucursal, sumá lo que quieras con el <b>+</b> y tocá <b>Ver y enviar</b>. Ahí revisás el pedido y tocás <b>Enviar</b>: se abre WhatsApp con el pedido ya escrito, y el local te confirma el total y la demora.</div>
+      </details>
+      <details data-preview>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿La carta y los precios están al día?</summary>
+        <div class="resp">Todavía no: son de ejemplo mientras terminamos de cargar la carta. El local te confirma el total cuando mandás el pedido.</div>
+      </details>
+      <!-- Sitio oficial: se dice en positivo y sin nombrar a nadie. -->
+      <details>
+        <summary><svg class="ic" aria-hidden="true"><use href="#i-chispa"/></svg>¿Esta es la página oficial?</summary>
+        <div class="resp">Sí. Es el <b>sitio oficial</b> de La Marcianita y lo mantenemos nosotros. Si encontraste otra página o una dirección vieja con nuestro nombre, puede estar desactualizada: ante la duda, escribile a tu sucursal.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CONTACTO ══════════════════ -->
+<section class="sec" id="contacto">
+  <div class="env">
+    <p class="kicker">Llamá o escribí</p>
+    <h2 class="h2">Contacto</h2>
+
+    <div class="contacto-grid">
+      <!-- La tarjeta de "Tu sucursal" cambia con la sucursal elegida. -->
+      <article class="ccard" aria-labelledby="tu-suc-tit">
+        <h3 class="sr" id="tu-suc-tit">Tu sucursal</h3>
+        <div id="tu-suc-vacia">
+          <p class="calle"><small>Tu sucursal</small>Sin elegir</p>
+          <div class="ccard-cuerpo">
+            <p class="cc-vacia">Todavía no elegiste sucursal. Tocá la tuya:</p>
+            <div class="flechas" id="contacto-flechas" role="radiogroup" aria-label="Elegí tu sucursal"></div>
+          </div>
+        </div>
+        <div id="tu-suc-llena" hidden></div>
+      </article>
+
+      <!-- CONFIRMAR EN EL LOCAL: los dos teléfonos que aparecen online. No
+           sabemos de qué sucursal es cada uno, así que NO se asignan: se
+           muestran juntos con el chip. Los arma el script: los de cada
+           sucursal (const SUCURSALES, "tel") y los que todavía no tienen
+           dueño (const TELEFONOS_SIN_ASIGNAR). -->
+      <article class="ccard">
+        <div class="ccard-cuerpo">
+          <h3 class="ccard-tit">Teléfonos</h3>
+          <div class="tels" id="tels"></div>
+          <p id="tels-chip"></p>
+          <div class="cc-fila">
+            <h4>Medios de pago</h4>
+            <p id="pago-contacto"></p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="memo">
+      <span class="memo-lbl"><svg class="ic" aria-hidden="true"><use href="#i-estrella-llena"/></svg>Sitio oficial</span>
+      <p>Esta es la dirección oficial de La Marcianita: <b>cuando cambie un horario, un teléfono o un precio, lo vas a ver primero acá.</b></p>
+    </aside>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════ PIE ══════════════════ -->
+<footer class="pie">
+  <svg class="pie-arco" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M-60 480 Q600 -260 1260 480" fill="none" stroke="#FFFFFF" stroke-width="3" vector-effect="non-scaling-stroke"/>
+  </svg>
+  <div class="env pie-in">
+    <div>
+      <p class="pie-logo">La Marcianita</p>
+      <p class="pie-txt">
+        Pizzería en Mar del Plata desde el 7 de noviembre de 1959. Los
+        Marcianitos, pizzas y empanadas de masa casera, en
+        <span data-cuantas>tres</span> sucursales.
+      </p>
+      <!-- CONFIRMAR EN EL LOCAL: el dominio. lamarcianita.com.ar hoy no existe
+           (no resuelve y no figura registrado en NIC Argentina al 24/9/2026).
+           La idea es que esta página vuelva a vivir en esa dirección. -->
+      <p class="oficial-pie">Sitio oficial · lamarcianita.com.ar <span class="chk">A confirmar</span></p>
+    </div>
+    <div>
+      <h2>Sucursales</h2>
+      <ul id="pie-sucs"></ul>
+    </div>
+    <div>
+      <h2>La carta</h2>
+      <!-- los links a cada pestaña los arma el script con const CARTA -->
+      <ul id="pie-carta"></ul>
+    </div>
+  </div>
+  <div class="env pie-fin">
+    <span>© <span data-anio>2026</span> Pizzería La Marcianita · Mar del Plata · Desde el 7 de noviembre de 1959</span>
+    <span>Tripadvisor: 3,8 de 5 · 89 reseñas (septiembre de 2026)</span>
+    <span data-preview>Vista previa · precios de ejemplo</span>
+  </div>
+</footer>
+
+<!-- ══════════════════ BARRA DE PEDIDO ══════════════════ -->
+<div class="barra" id="barra" role="region" aria-label="Tu pedido">
+  <div class="trim" aria-hidden="true"></div>
+  <div class="env barra-in">
+    <span class="cuenta" id="cuenta" aria-hidden="true">0</span>
+    <div class="barra-txt">
+      <b class="barra-total" id="barra-total">$ 0</b>
+      <button class="barra-suc vacia" id="barra-suc" type="button" aria-haspopup="dialog">Elegí sucursal</button>
+    </div>
+    <button class="btn btn-pri" id="ver-enviar" type="button" aria-haspopup="dialog"><span>Ver y enviar</span></button>
+  </div>
+</div>
+
+<!-- ══════════════════ HOJA: ELEGIR SUCURSAL ══════════════════ -->
+<dialog class="hoja" id="hoja-suc" aria-labelledby="hs-tit">
+  <div class="hoja-in">
+    <div class="hoja-cab">
+      <h2 id="hs-tit">Elegí tu sucursal</h2>
+      <button class="cerrar" type="button" data-cerrar>Cerrar</button>
+    </div>
+    <p class="hoja-sub" id="hs-sub">El pedido, el teléfono y el cómo llegar se ajustan a la que elijas.</p>
+    <div class="flechas" id="hs-flechas" role="radiogroup" aria-labelledby="hs-tit"></div>
+  </div>
+</dialog>
+
+<!-- ══════════════════ HOJA: TU PEDIDO ══════════════════ -->
+<dialog class="hoja" id="hoja-pedido" aria-labelledby="hp-tit">
+  <div class="hoja-in">
+    <div class="hoja-cab">
+      <h2 id="hp-tit" tabindex="-1">Tu pedido</h2>
+      <button class="cerrar" type="button" data-cerrar>Cerrar</button>
+    </div>
+
+    <div class="hp-suc">
+      <span class="placa" id="hp-placa">Sucursal</span>
+      <button class="link-btn" id="hp-cambiar" type="button" aria-haspopup="dialog">Cambiar sucursal</button>
+    </div>
+
+    <div class="hp-lista" id="hp-lista"></div>
+    <button class="link-btn hp-vaciar" id="hp-vaciar" type="button">Vaciar pedido</button>
+
+    <fieldset class="servicio">
+      <legend>¿Cómo lo querés?</legend>
+      <div class="segs" id="segs" role="radiogroup" aria-label="Cómo lo querés">
+        <button class="serv" type="button" role="radio" data-serv="takeaway" aria-checked="true"><span>Take away</span></button>
+        <button class="serv" type="button" role="radio" data-serv="salon" aria-checked="false"><span><svg class="ic" aria-hidden="true"><use href="#i-prohibido"/></svg>Salón</span></button>
+        <button class="serv" type="button" role="radio" data-serv="delivery" aria-checked="false"><span><svg class="ic" aria-hidden="true"><use href="#i-prohibido"/></svg><span class="serv-lbl">Delivery</span></span></button>
+      </div>
+      <p class="serv-nota" id="serv-nota" aria-live="polite"></p>
+    </fieldset>
+
+    <div class="campo">
+      <label for="f-nombre">Tu nombre <span>(opcional)</span></label>
+      <input id="f-nombre" type="text" autocomplete="name">
+    </div>
+    <div class="campo" id="campo-dir" hidden>
+      <label for="f-dir">Dirección para el delivery</label>
+      <input id="f-dir" type="text" autocomplete="street-address" placeholder="Calle, número, piso o depto">
+      <p class="error" id="err-dir" hidden>Falta la dirección para el delivery.</p>
+    </div>
+    <div class="campo">
+      <label for="f-acl">Aclaraciones <span>(opcional)</span></label>
+      <textarea id="f-acl" rows="2" placeholder="Gustos de las empanadas, sin aceitunas, a qué hora lo pasás a buscar…"></textarea>
+    </div>
+
+    <p class="hp-wa">WhatsApp de esta sucursal: <span id="hp-wa"></span></p>
+
+    <div class="hp-total">
+      <span>Total estimado</span>
+      <b id="hp-total">$ 0</b>
+      <span class="chk" data-preview>Precios de ejemplo</span>
+    </div>
+
+    <!-- si la sucursal no tiene WhatsApp cargado (y la vista previa ya se
+         sacó), en vez del botón aparece este aviso con el teléfono -->
+    <p class="sin-wa" id="sin-wa" hidden></p>
+    <div class="hp-botones">
+      <a class="btn btn-pri btn-full" id="enviar" href="#" target="_blank" rel="noopener"><span><svg class="ic" aria-hidden="true"><use href="#i-wa"/></svg><span id="enviar-txt">Enviar por WhatsApp</span></span></a>
+      <button class="btn btn-sec btn-full" id="copiar" type="button"><span>Copiar pedido</span></button>
+    </div>
+    <p class="copiado" id="copiado" role="status"></p>
+    <textarea class="copia-manual" id="copia-manual" readonly aria-label="Tu pedido, para copiar" hidden></textarea>
+    <p class="letra-chica" id="letra-chica">Se abre WhatsApp con el pedido armado; lo confirmás con el local.</p>
+  </div>
+</dialog>
+
+<!-- anuncios para lectores de pantalla -->
+<p class="sr" id="vivo" aria-live="polite"></p>
+
+<!-- íconos -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- la estrella atómica de 16 puntas: la que más se usa en la era -->
+  <symbol id="i-estrella" viewBox="-54 -54 108 108">
+    <polygon fill="currentColor" points="0.0,-50.0 1.4,-6.9 11.9,-28.6 3.9,-5.8 35.4,-35.4 5.8,-3.9 28.6,-11.9 6.9,-1.4 50.0,0.0 6.9,1.4 28.6,11.9 5.8,3.9 35.4,35.4 3.9,5.8 11.9,28.6 1.4,6.9 0.0,50.0 -1.4,6.9 -11.9,28.6 -3.9,5.8 -35.4,35.4 -5.8,3.9 -28.6,11.9 -6.9,1.4 -50.0,0.0 -6.9,-1.4 -28.6,-11.9 -5.8,-3.9 -35.4,-35.4 -3.9,-5.8 -11.9,-28.6 -1.4,-6.9"/>
+  </symbol>
+  <symbol id="i-estrella-llena" viewBox="-54 -54 108 108">
+    <polygon fill="#F4C23D" stroke="#15292D" stroke-width="3" stroke-linejoin="round" points="0.0,-50.0 1.4,-6.9 11.9,-28.6 3.9,-5.8 35.4,-35.4 5.8,-3.9 28.6,-11.9 6.9,-1.4 50.0,0.0 6.9,1.4 28.6,11.9 5.8,3.9 35.4,35.4 3.9,5.8 11.9,28.6 1.4,6.9 0.0,50.0 -1.4,6.9 -11.9,28.6 -3.9,5.8 -35.4,35.4 -5.8,3.9 -28.6,11.9 -6.9,1.4 -50.0,0.0 -6.9,-1.4 -28.6,-11.9 -5.8,-3.9 -35.4,-35.4 -3.9,-5.8 -11.9,-28.6 -1.4,-6.9"/>
+  </symbol>
+  <symbol id="i-chispa" viewBox="-12 -12 24 24">
+    <path fill="currentColor" d="M0 -12 C1.2 -3.2 3.2 -1.2 12 0 C3.2 1.2 1.2 3.2 0 12 C-1.2 3.2 -3.2 1.2 -12 0 C-3.2 -1.2 -1.2 -3.2 0 -12Z"/>
+  </symbol>
+  <symbol id="i-mas" viewBox="0 0 18 18">
+    <path d="M9 2v14M2 9h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-menos" viewBox="0 0 16 16">
+    <path d="M2 8h12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 16 16">
+    <path d="M3 8l3.5 3.5L13 4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-pregunta" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M6 6.3a2 2 0 1 1 2.8 1.8c-.6.3-.8.7-.8 1.3v.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="8" cy="11.9" r="1" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-prohibido" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M3.8 12.2L12.2 3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 16 16">
+    <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-flecha" viewBox="0 0 16 16">
+    <path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24">
+    <path d="M4 12a8 8 0 1 1 3.2 6.4L4 20l1.6-3.2A7.9 7.9 0 0 1 4 12z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9 9.5c0 3 2.5 5.5 5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   PARA ACTUALIZAR LA PÁGINA, TOCAR SOLO ESTAS COSAS:
+   1) SUCURSALES → dirección, teléfono, WhatsApp, delivery, salón y
+      horario de cada una de las tres
+   2) TELEFONOS_SIN_ASIGNAR → los números que todavía no sabemos de
+      qué sucursal son (cuando se asignan, se borran de esta lista)
+   3) MEDIOS_DE_PAGO → vacío hasta confirmarlos
+   4) CARTA → los productos y los precios reales
+   5) VISTA_PREVIA → en false saca la franja amarilla, los chips de
+      "de ejemplo" y la aclaración del mensaje de WhatsApp.
+      ⚠ ANTES de ponerlo en false, cargar el WhatsApp de las tres
+      sucursales: sin vista previa, una sucursal sin WhatsApp NO toma
+      pedidos por la página (muestra su teléfono en su lugar).
+   Los precios se escriben como números sin puntos: 14500 es $14.500
+   Si algo quedó mal escrito, la página sigue andando y avisa en la
+   consola del navegador (F12) qué hay que revisar.
+   ════════════════════════════════════════════════════════════ */
+
+const VISTA_PREVIA = true;
+
+/* Número provisorio de la demo: mientras VISTA_PREVIA sea true, los
+   pedidos de las sucursales sin WhatsApp cargado van acá. */
+const WHATSAPP_DEMO = "5492235337853";
+
+/* ─── LAS SUCURSALES ───
+   tel:        como se lee: "0223 494-2932". "" = a confirmar
+   whatsapp:   sólo números, sin + ni espacios. "" = a confirmar
+               · celular: 549 + 223 + número, sin el 15 → "5492234942932"
+               · fijo con WhatsApp Business: 54 + 223 + número, SIN el 9
+                 → "542234942932"
+   delivery:   "si" | "no" | "confirmar" (si la sucursal toma pedidos de
+               delivery por WhatsApp)
+               · "no" → la página lo dice y NO deja elegir delivery
+               · "confirmar" → se puede pedir, pero el mensaje sale como consulta
+   pedidosya:  true si está en PedidosYa. Se muestra aparte:
+               · delivery "confirmar" + pedidosya true = hace envíos por
+                 PedidosYa; por WhatsApp, a confirmar
+               · delivery "no" + pedidosya true = envíos sólo por PedidosYa
+   envio:      zona y costo del delivery, ej. "Hasta 30 cuadras · $ 1.500".
+               "" = a confirmar
+   salon:      true | false (¿tiene mesas para comer ahí?)
+   esquina, barrio, referencia: textos opcionales ("" si no hay)
+   horario:    [] hasta confirmarlo. Cuando se sepa, una línea por tramo:
+               { dias:"Martes a domingo", d:[2,3,4,5,6,0], abre:"19:30", cierra:"00:30" }
+               (d: 0 = domingo, 1 = lunes … 6 = sábado; sin d = todos los
+               días). Con el horario cargado aparece solo el cartel de
+               "Abierto ahora", y se actualiza cada minuto. */
+const SUCURSALES = [
+  {
+    id: "colon",
+    corto: "Colón",
+    dir: "Av. Colón 3232",
+    esquina: "Esq. Independencia",
+    barrio: "Centro",
+    referencia: "Cerca de Diagonal Alberdi",
+    tel: "",               /* CONFIRMAR EN EL LOCAL */
+    whatsapp: "",          /* CONFIRMAR EN EL LOCAL */
+    delivery: "confirmar", /* CONFIRMAR EN EL LOCAL */
+    pedidosya: false,
+    envio: "",             /* CONFIRMAR EN EL LOCAL */
+    salon: true,           /* CONFIRMAR EN EL LOCAL */
+    horario: []            /* CONFIRMAR EN EL LOCAL */
+  },
+  {
+    id: "constitucion",
+    corto: "Constitución",
+    dir: "Constitución 5892",
+    esquina: "",
+    barrio: "",
+    referencia: "",
+    tel: "",               /* CONFIRMAR EN EL LOCAL */
+    whatsapp: "",          /* CONFIRMAR EN EL LOCAL */
+    delivery: "confirmar", /* está en PedidosYa. CONFIRMAR si también reparte por WhatsApp */
+    pedidosya: true,
+    envio: "",             /* CONFIRMAR EN EL LOCAL */
+    salon: true,           /* CONFIRMAR EN EL LOCAL */
+    horario: []            /* CONFIRMAR EN EL LOCAL */
+  },
+  {
+    id: "olavarria",
+    corto: "Olavarría",
+    dir: "Olavarría 3268",
+    esquina: "",
+    barrio: "",
+    referencia: "",
+    tel: "",               /* CONFIRMAR EN EL LOCAL */
+    whatsapp: "",          /* CONFIRMAR EN EL LOCAL */
+    delivery: "confirmar", /* CONFIRMAR EN EL LOCAL */
+    pedidosya: false,
+    envio: "",             /* CONFIRMAR EN EL LOCAL */
+    salon: true,           /* CONFIRMAR EN EL LOCAL */
+    horario: []            /* CONFIRMAR EN EL LOCAL */
+  }
+];
+
+/* CONFIRMAR EN EL LOCAL: los dos teléfonos que aparecen online. No sabemos
+   de cuál sucursal es cada uno. El 479-5535 figura en Tripadvisor sin la
+   característica (0223). Cuando se sepa, pasarlo al "tel" de su sucursal
+   y borrarlo de acá. */
+const TELEFONOS_SIN_ASIGNAR = ["0223 494-2932", "0223 479-5535"];
+
+/* CONFIRMAR EN EL LOCAL. Se muestran tal cual se escriben.
+   Ejemplo: ["efectivo", "débito", "transferencia", "Mercado Pago"] */
+const MEDIOS_DE_PAGO = [];
+
+/* La fecha de apertura. De acá sale la cuenta de los años (y el aviso de
+   "en tantos días cumplimos…" cuando se acerca el aniversario). */
+const APERTURA = { anio: 1959, mes: 11, dia: 7 };
+
+/* ⚠ LA CARTA. Confirmados: pizzas (la muzzarella clásica), Marcianitos,
+   empanadas de masa casera, flan casero y bombón helado. Los otros sabores,
+   las variedades de Marcianitos, las bebidas y TODOS los precios son de
+   ejemplo.
+   · No repetir nombres de producto (dos iguales suman al mismo).
+   · u: opcional, la unidad que va al lado del precio ("c/u").
+   · El id de cada pestaña no se toca: "marcianitos" alimenta también la
+     sección destacada de arriba. */
+const CARTA = [
+  {
+    id: "pizzas", tab: "Pizzas",
+    grupos: [
+      { nombre: "Pizzas", items: [
+        { n: "Muzzarella clásica", d: "Salsa de tomate, muzzarella y aceitunas.",       p: 14500 },
+        { n: "Napolitana",         d: "Muzzarella, rodajas de tomate, ajo y perejil.",  p: 16500 },
+        { n: "Fugazzeta",          d: "Muzzarella y cebolla.",                          p: 16000 },
+        { n: "Jamón y morrones",   d: "Muzzarella, jamón cocido y morrones.",           p: 17000 },
+        { n: "Calabresa",          d: "Muzzarella y longaniza calabresa.",              p: 17000 },
+        { n: "Especial",           d: "Muzzarella, jamón, morrones, huevo y aceitunas.",p: 18000 }
+      ]}
+    ]
+  },
+  {
+    /* Los Marcianitos: esta pestaña alimenta TAMBIÉN la sección destacada
+       de arriba. Mismo producto, mismo precio, en los dos lugares. */
+    id: "marcianitos", tab: "Marcianitos",
+    grupos: [
+      { nombre: "Marcianitos", items: [
+        { n: "Marcianito de jamón y queso", d: "Jamón cocido y queso, en pan casero caliente.",         p: 7900 },
+        { n: "Marcianito completo",         d: "Jamón, queso y tomate, en pan casero caliente.",        p: 8900 },
+        { n: "Marcianito de salame",        d: "Salame y queso, en pan casero caliente.",               p: 8500 },
+        { n: "Marcianito especial",         d: "Jamón, queso, huevo y morrón, en pan casero caliente.", p: 9500 }
+      ]}
+    ]
+  },
+  {
+    id: "empanadas", tab: "Empanadas",
+    grupos: [
+      { nombre: "De masa casera", items: [
+        { n: "Empanada de carne",          d: "Masa casera, al horno.", p: 2300, u: "c/u" },
+        { n: "Empanada de jamón y queso",  d: "Masa casera, al horno.", p: 2300, u: "c/u" },
+        { n: "Empanada de pollo",          d: "Masa casera, al horno.", p: 2300, u: "c/u" },
+        { n: "Empanada de humita",         d: "Masa casera, al horno.", p: 2300, u: "c/u" },
+        { n: "Empanada de verdura",        d: "Masa casera, al horno.", p: 2300, u: "c/u" }
+      ]},
+      { nombre: "Por cantidad", items: [
+        { n: "Media docena de empanadas",  d: "Seis, gustos a elección: aclaralos en el pedido.", p: 13200 },
+        { n: "Docena de empanadas",        d: "Doce, gustos a elección: aclaralos en el pedido.", p: 25000 }
+      ]}
+    ]
+  },
+  {
+    id: "postres", tab: "Postres",
+    grupos: [
+      { nombre: "Postres", items: [
+        { n: "Flan casero",   d: "Hecho en la casa.",             p: 5500 },
+        { n: "Bombón helado", d: "Helado cubierto de chocolate.", p: 4800 }
+      ]}
+    ]
+  },
+  {
+    id: "bebidas", tab: "Bebidas",
+    grupos: [
+      { nombre: "Sin alcohol", items: [
+        { n: "Gaseosa 500 ml",       d: "Consultá las marcas del día.", p: 2800 },
+        { n: "Gaseosa 1,5 L",        d: "Consultá las marcas del día.", p: 4600 },
+        { n: "Agua mineral 500 ml",  d: "Con o sin gas.",               p: 2400 }
+      ]},
+      { nombre: "Cerveza", items: [
+        { n: "Cerveza 1 L",          d: "Botella de litro.",            p: 7000 }
+      ]}
+    ]
+  }
+];
+
+/* ─────────── de acá para abajo no hace falta tocar nada ─────────── */
+
+document.documentElement.lang = "es-AR";
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+const plata = n => "$ " + n.toLocaleString("es-AR");
+const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const icono = (id, clase) => '<svg class="ic' + (clase ? " " + clase : "") + '" aria-hidden="true"><use href="#' + id + '"/></svg>';
+const avisar = m => { try{ console.warn("La Marcianita · revisar: " + m); }catch(e){} };
+const HOY = new Date();
+
+function nodo(tag, clase, texto){
+  const e = document.createElement(tag);
+  if(clase) e.className = clase;
+  if(texto != null) e.textContent = texto;
+  return e;
+}
+function lista(v){
+  if(v.length < 2) return v.join("");
+  return v.slice(0, -1).join(", ") + " y " + v[v.length - 1];
+}
+const PALABRAS = ["cero", "una", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"];
+const cuantas = n => PALABRAS[n] || String(n);
+
+/* "19:30", "19.30", "19" o "19 hs" → 19.5. Si no se entiende, null. */
+function aHoras(t){
+  const m = /^\s*(\d{1,2})(?:[:.](\d{2}))?/.exec(t == null ? "" : String(t));
+  if(!m) return null;
+  const h = +m[1], mi = +(m[2] || 0);
+  return (h > 24 || mi > 59) ? null : h + mi / 60;
+}
+
+/* ---------- los datos, prolijos ----------
+   Corrige solos los errores de tipeo más comunes ("sí" con tilde, un
+   precio escrito entre comillas, un WhatsApp con espacios) y avisa en la
+   consola lo que no puede arreglar, en vez de romper la página. */
+SUCURSALES.forEach(s => {
+  ["id", "corto", "dir", "esquina", "barrio", "referencia", "tel", "envio"].forEach(k => {
+    s[k] = s[k] == null ? "" : String(s[k]).trim();
+  });
+  s.whatsapp = String(s.whatsapp || "").replace(/\D/g, "");
+  if(s.whatsapp && (s.whatsapp.length < 12 || s.whatsapp.length > 13)) avisar("el WhatsApp de " + s.corto + " no tiene el largo esperado");
+  const d = norm(s.delivery == null ? "" : s.delivery).trim();
+  s.delivery = (s.delivery === true || d === "si") ? "si" : (s.delivery === false || d === "no") ? "no" : "confirmar";
+  s.pedidosya = s.pedidosya === true || norm(s.pedidosya) === "si";
+  s.salon = !(s.salon === false || norm(s.salon) === "no");
+  s.horario = (Array.isArray(s.horario) ? s.horario : []).filter(t => {
+    if(!t || aHoras(t.abre) == null || aHoras(t.cierra) == null){ avisar("un horario de " + s.corto + " (abre y cierra van como \"19:30\")"); return false; }
+    if(!Array.isArray(t.d) || !t.d.length) t.d = [0, 1, 2, 3, 4, 5, 6];
+    if(!t.dias) t.dias = "Todos los días";
+    return true;
+  });
+  if(!VISTA_PREVIA && !s.whatsapp) avisar(s.corto + " no tiene WhatsApp cargado: no va a poder recibir pedidos por la página");
+});
+const vistos = new Set();
+CARTA.forEach(t => {
+  t.grupos = Array.isArray(t.grupos) ? t.grupos : [];
+  t.grupos.forEach(g => {
+    g.items = (Array.isArray(g.items) ? g.items : []).filter(it => {
+      if(!it || !it.n) return false;
+      it.n = String(it.n).trim();
+      if(typeof it.p !== "number") it.p = Number(String(it.p == null ? "" : it.p).replace(/\D/g, ""));
+      if(!(it.p > 0)){ avisar("el precio de " + it.n + " (no se muestra hasta corregirlo)"); return false; }
+      if(vistos.has(it.n)) avisar("el nombre " + it.n + " está repetido en la carta");
+      vistos.add(it.n);
+      return true;
+    });
+  });
+});
+const TELEFONOS = TELEFONOS_SIN_ASIGNAR.map(t => String(t).trim()).filter(Boolean);
+const PAGOS = MEDIOS_DE_PAGO.map(t => String(t).trim()).filter(Boolean);
+
+/* el chip de "a confirmar" */
+function chip(texto, larga){
+  const c = nodo("span", "chk" + (larga ? " larga" : ""), texto || "A confirmar");
+  c.title = "Dato a confirmar con el local";
+  return c;
+}
+
+/* ---------- vista previa ---------- */
+if(!VISTA_PREVIA) $$("[data-preview]").forEach(e => e.remove());
+$$(".chk").forEach(c => { c.title = "Dato a confirmar con el local"; });
+
+/* ---------- los textos que salen de los datos ---------- */
+$$("[data-cuantas]").forEach(e => {
+  const w = cuantas(SUCURSALES.length);
+  e.textContent = e.dataset.cuantas === "Mayus" ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+});
+$$("[data-anio]").forEach(e => { e.textContent = HOY.getFullYear(); });
+
+/* ---------- los años, calculados con la fecha exacta ---------- */
+function aniosCumplidos(d){
+  let a = d.getFullYear() - APERTURA.anio;
+  const m = d.getMonth() + 1;
+  if(m < APERTURA.mes || (m === APERTURA.mes && d.getDate() < APERTURA.dia)) a--;
+  return a;
+}
+function diasParaAniversario(d){
+  const hoy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let prox = new Date(d.getFullYear(), APERTURA.mes - 1, APERTURA.dia);
+  if(prox < hoy) prox = new Date(d.getFullYear() + 1, APERTURA.mes - 1, APERTURA.dia);
+  return Math.round((prox - hoy) / 86400000);
+}
+(function pintarAnios(){
+  const anios = aniosCumplidos(HOY);
+  const faltan = diasParaAniversario(HOY);
+  let t;
+  if(faltan === 0) t = "Hoy cumplimos " + anios + " años";
+  else if(faltan <= 60) t = (faltan === 1 ? "Mañana" : "En " + faltan + " días") + " cumplimos " + (anios + 1) + " años";
+  else t = anios + " años abiertos";
+  $$("[data-anios]").forEach(e => { e.textContent = t; });
+})();
+
+/* ---------- datos de cada sucursal ---------- */
+const porId = id => SUCURSALES.find(s => s.id === id) || null;
+const numeroWa = s => s.whatsapp || (VISTA_PREVIA ? WHATSAPP_DEMO : "");
+const telHref = v => "tel:+54" + v.replace(/\D/g, "").replace(/^0/, "");
+const mapa = s => "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(s.dir + ", Mar del Plata, Buenos Aires, Argentina");
+const zona = s => [s.barrio, s.referencia].filter(Boolean).join(" · ");
+const alternativa = s => s.salon ? "retirar o comer en el salón" : "retirar por el local";
+
+function formatoWa(n){
+  let m = /^549(\d{3})(\d{3})(\d{4})$/.exec(n);
+  if(m) return "+54 9 " + m[1] + " " + m[2] + "-" + m[3];
+  m = /^54(\d{3})(\d{3})(\d{4})$/.exec(n);
+  if(m) return "+54 " + m[1] + " " + m[2] + "-" + m[3];
+  return "+" + n;
+}
+
+/* lo que ve el cliente sobre el delivery de una sucursal */
+function estadoDelivery(s){
+  if(s.delivery === "si") return { clase: "del-si", icono: "i-check", corto: "Delivery sí" };
+  if(s.pedidosya)         return { clase: "del-si", icono: "i-check", corto: "Delivery por PedidosYa" };
+  if(s.delivery === "no") return { clase: "del-no", icono: "i-prohibido", corto: "Sin delivery" };
+  return { clase: "del-confirmar", icono: "i-pregunta", corto: "Delivery a confirmar" };
+}
+function chipDelivery(s){
+  const d = estadoDelivery(s);
+  const c = nodo("span", "del " + d.clase);
+  c.innerHTML = icono(d.icono);
+  c.append(d.corto);
+  return c;
+}
+function fraseDelivery(s){
+  const p = nodo("span", "del-txt");
+  if(s.delivery === "si"){
+    p.append("Hace envíos" + (s.pedidosya ? " y también está en PedidosYa" : "") + ". Zona y costo: ");
+    p.append(s.envio ? s.envio + "." : chip());
+  }else if(s.pedidosya && s.delivery === "no"){
+    p.append("Los envíos son sólo por PedidosYa. Por acá podés " + alternativa(s) + ".");
+  }else if(s.pedidosya){
+    p.append("Hace envíos por PedidosYa. Delivery por WhatsApp: ", chip());
+  }else if(s.delivery === "no"){
+    p.append("No hace envíos: podés " + alternativa(s) + ".");
+  }else{
+    p.append("Consultá por WhatsApp si hace envíos a tu zona.");
+  }
+  return p;
+}
+function telNodo(s, conAyuda){
+  if(s.tel){
+    const a = nodo("a", "tel-link", s.tel);
+    a.href = telHref(s.tel);
+    return a;
+  }
+  const f = document.createDocumentFragment();
+  f.append(chip());
+  if(conAyuda && TELEFONOS.length){
+    const a = nodo("a", "mini-link", "Ver teléfonos");
+    a.href = "#contacto";
+    f.append(a);
+  }
+  return f;
+}
+function waNodo(s){
+  return s.whatsapp ? document.createTextNode(formatoWa(s.whatsapp)) : chip();
+}
+
+/* ---------- horario (sólo cuando esté cargado) ---------- */
+function abiertoAhora(s){
+  if(!s.horario.length) return null;
+  const a = new Date();
+  const h = a.getHours() + a.getMinutes() / 60;
+  const hoy = a.getDay(), ayer = (hoy + 6) % 7;
+  return s.horario.some(t => {
+    const ab = aHoras(t.abre), ci = aHoras(t.cierra);
+    if(ci > ab) return t.d.includes(hoy) && h >= ab && h < ci;
+    /* cruza la medianoche */
+    return (t.d.includes(hoy) && h >= ab) || (t.d.includes(ayer) && h < ci);
+  });
+}
+function horarioNodo(s){
+  if(!s.horario.length) return chip();
+  const f = document.createDocumentFragment();
+  s.horario.forEach(t => f.append(nodo("span", "hor-linea", t.dias + " · " + t.abre + " a " + t.cierra)));
+  const ab = abiertoAhora(s);
+  if(ab !== null) f.append(nodo("span", "hor-estado" + (ab ? " abierto" : ""), ab ? "Abierto ahora" : "Cerrado ahora"));
+  return f;
+}
+
+function fila(dl, titulo, contenido){
+  const d = nodo("div");
+  const dd = nodo("dd");
+  dd.append(contenido);
+  d.append(nodo("dt", "", titulo), dd);
+  dl.append(d);
+  return dd;
+}
+function servicios(s){
+  const f = document.createDocumentFragment();
+  f.append(nodo("span", "hor-linea", s.salon ? "Salón · Take away" : "Take away"));
+  const w = nodo("span", "hor-linea");
+  w.style.marginTop = "6px";
+  w.append(chipDelivery(s));
+  f.append(w, fraseDelivery(s));
+  return f;
+}
+function linkLlegar(s){
+  const a = nodo("a", "llegar");
+  a.href = mapa(s);
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.setAttribute("aria-label", "Cómo llegar a " + s.dir + " (abre Google Maps)");
+  a.innerHTML = "<span>Cómo llegar</span>" + icono("i-flecha");
+  return a;
+}
+
+/* ════════════ LA SUCURSAL ELEGIDA ════════════ */
+const CLAVE_SUC = "marcianita-sucursal";
+const CLAVE_PED = "marcianita-pedido";
+let actual = null;          /* la sucursal elegida (objeto) o null */
+let pendiente = null;       /* qué hacer después de elegir: "pedido" */
+let abridor = null;         /* quién abrió la hoja de sucursales */
+let servicio = "takeaway";  /* "takeaway" | "salon" | "delivery" */
+let avisoServicio = "";
+
+function sinDeliveryTexto(s){
+  return s.pedidosya
+    ? s.corto + " hace envíos sólo por PedidosYa. Por acá podés " + alternativa(s) + "."
+    : s.corto + " no hace delivery: podés " + alternativa(s) + ".";
+}
+function setSucursal(id){
+  const s = porId(id);
+  if(!s) return;
+  actual = s;
+  try{ localStorage.setItem(CLAVE_SUC, s.id); }catch(e){}
+  /* si lo que estaba elegido no existe en esta sucursal, pasa a take away y lo avisa */
+  avisoServicio = "";
+  if(servicio === "delivery" && s.delivery === "no"){
+    servicio = "takeaway";
+    avisoServicio = sinDeliveryTexto(s) + " Lo pasamos a take away.";
+  }else if(servicio === "salon" && !s.salon){
+    servicio = "takeaway";
+    avisoServicio = s.corto + " no tiene salón: lo pasamos a take away.";
+  }
+  pintarSucursal();
+}
+function recuperarSucursal(){
+  /* un link tipo …/#constitucion entra con esa sucursal elegida. Se usa
+     una sola vez y se borra de la dirección, para que después valga lo
+     que elija la persona. */
+  const h = location.hash.slice(1);
+  if(porId(h)){
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    return porId(h);
+  }
+  try{ return porId(localStorage.getItem(CLAVE_SUC)); }catch(e){ return null; }
+}
+
+/* ---------- los grupos de botones de sucursal ----------
+   Hay cuatro: las flechas de la portada, el segmentado de la nav, las
+   flechas de la hoja y las de la tarjeta de contacto. Se arman UNA vez y
+   después sólo se les cambia el estado, así no se pierde el foco. */
+const grupos = [];
+function grupoRadios(cont, crear, alElegir){
+  const botones = SUCURSALES.map(s => {
+    const b = crear(s);
+    b.type = "button";
+    b.setAttribute("role", "radio");
+    b.dataset.id = s.id;
+    b.addEventListener("click", () => { setSucursal(s.id); if(alElegir) alElegir(s); });
+    cont.append(b);
+    return b;
+  });
+  cont.addEventListener("keydown", e => {
+    const paso = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if(!paso) return;
+    e.preventDefault();
+    const i = Math.max(0, botones.indexOf(document.activeElement));
+    const j = (i + paso + botones.length) % botones.length;
+    setSucursal(botones[j].dataset.id);
+    /* si al elegir el grupo desapareció (la tarjeta de contacto), el foco
+       va a lo que quedó en su lugar */
+    if(botones[j].offsetParent) botones[j].focus();
+    else if(alElegir) alElegir(porId(botones[j].dataset.id));
+  });
+  grupos.push(botones);
+}
+function flecha(s){
+  const b = nodo("button", "flecha");
+  b.append(nodo("span", "flecha-nom", s.dir), chipDelivery(s));
+  return b;
+}
+function segmento(s){
+  const b = nodo("button", "seg");
+  b.append(nodo("span", "", s.corto));
+  b.setAttribute("aria-label", s.corto + ", " + s.dir);
+  return b;
+}
+function pintarGrupos(){
+  grupos.forEach(botones => botones.forEach((b, i) => {
+    const on = !!actual && b.dataset.id === actual.id;
+    b.setAttribute("aria-checked", on ? "true" : "false");
+    b.tabIndex = on || (!actual && i === 0) ? 0 : -1;
+  }));
+}
+
+/* ---------- las tarjetas de sucursales (se arman una vez) ---------- */
+function construirSedes(){
+  const cont = $("#sedes");
+  SUCURSALES.forEach(s => {
+    const card = nodo("article", "sede");
+    card.id = "suc-" + s.id;
+    card.dataset.id = s.id;
+    card.append(nodo("h3", "calle", s.dir));
+    if(s.esquina) card.append(nodo("span", "esquina", s.esquina));
+    if(zona(s)) card.append(nodo("p", "sede-ref", zona(s)));
+
+    const dl = nodo("dl", "datos-suc");
+    fila(dl, "Teléfono", telNodo(s, true));
+    fila(dl, "WhatsApp", waNodo(s));
+    fila(dl, "Horario", horarioNodo(s)).dataset.hor = s.id;
+    fila(dl, "Servicios", servicios(s));
+    card.append(dl);
+
+    const acc = nodo("div", "sede-acc");
+    const pedir = nodo("button", "btn btn-pri sede-pedir");
+    pedir.type = "button";
+    pedir.innerHTML = "<span>Pedir acá</span>";
+    pedir.setAttribute("aria-label", "Pedir acá, sucursal " + s.corto);
+    const tag = nodo("span", "tag-tuya");
+    tag.innerHTML = "<span>" + icono("i-chispa") + "Tu sucursal</span>";
+    tag.tabIndex = -1;
+    tag.hidden = true;
+    /* el botón desaparece al elegir: el foco pasa al cartel de "Tu sucursal" */
+    pedir.onclick = () => { setSucursal(s.id); tag.focus(); };
+    acc.append(linkLlegar(s), pedir, tag);
+    card.append(acc);
+    cont.append(card);
+  });
+
+  /* el pie: las sucursales y las pestañas de la carta */
+  const pie = $("#pie-sucs");
+  SUCURSALES.forEach(s => {
+    const li = nodo("li");
+    li.append(nodo("b", "", s.dir));
+    const a = nodo("a", "", "Cómo llegar");
+    a.href = mapa(s); a.target = "_blank"; a.rel = "noopener";
+    a.setAttribute("aria-label", "Cómo llegar a " + s.dir + " (abre Google Maps)");
+    li.append(a);
+    pie.append(li);
+  });
+  const pc = $("#pie-carta");
+  CARTA.forEach(t => {
+    const li = nodo("li");
+    const a = nodo("a", "", t.tab);
+    a.href = "#carta";
+    a.dataset.tab = t.id;
+    li.append(a);
+    pc.append(li);
+  });
+}
+
+/* ---------- la tarjeta de contacto "Tu sucursal" ---------- */
+function pintarContacto(){
+  const s = actual;
+  $("#tu-suc-vacia").hidden = !!s;
+  const llena = $("#tu-suc-llena");
+  llena.hidden = !s;
+  llena.innerHTML = "";
+  if(!s) return;
+
+  const calle = nodo("p", "calle");
+  calle.append(nodo("small", "", "Tu sucursal"), s.dir);
+  llena.append(calle);
+  if(s.esquina) llena.append(nodo("span", "esquina", s.esquina));
+
+  const cuerpo = nodo("div", "ccard-cuerpo");
+  if(zona(s)) cuerpo.append(nodo("p", "cc-vacia", zona(s)));
+  const dl = nodo("dl", "datos-suc");
+  fila(dl, "Teléfono", telNodo(s));
+  fila(dl, "WhatsApp", waNodo(s));
+  fila(dl, "Horario", horarioNodo(s)).dataset.hor = s.id;
+  const dd = fila(dl, "Delivery", chipDelivery(s));
+  dd.append(fraseDelivery(s));
+  cuerpo.append(dl);
+
+  const acc = nodo("div", "sede-acc");
+  const wa = nodo("a", "btn btn-pri js-wa");
+  wa.target = "_blank"; wa.rel = "noopener"; wa.href = "#";
+  wa.innerHTML = "<span>" + icono("i-wa") + '<span class="js-wa-txt">WhatsApp</span></span>';
+  const cambiar = nodo("button", "btn btn-sec js-cambiar");
+  cambiar.type = "button";
+  cambiar.innerHTML = "<span>Cambiar</span>";
+  cambiar.setAttribute("aria-label", "Cambiar sucursal");
+  cambiar.setAttribute("aria-haspopup", "dialog");
+  cambiar.onclick = () => abrirSelector();
+  acc.append(linkLlegar(s), wa, cambiar);
+  cuerpo.append(acc);
+  llena.append(cuerpo);
+}
+
+/* ---------- los teléfonos y los medios de pago ---------- */
+function pintarTelefonos(){
+  const cont = $("#tels");
+  cont.innerHTML = "";
+  SUCURSALES.filter(s => s.tel).forEach(s => {
+    const a = nodo("a");
+    a.href = telHref(s.tel);
+    a.append(nodo("span", "tel-suc", s.corto), s.tel);
+    cont.append(a);
+  });
+  TELEFONOS.forEach(t => {
+    const a = nodo("a", "", t);
+    a.href = telHref(t);
+    cont.append(a);
+  });
+  const c = $("#tels-chip");
+  c.innerHTML = "";
+  if(TELEFONOS.length) c.append(chip(TELEFONOS.length === 1 ? "A confirmar de qué sucursal es" : "A confirmar de qué sucursal es cada uno", true));
+  else if(!cont.children.length) c.append(chip());
+  c.hidden = !c.children.length;
+}
+function pagoNodo(){
+  if(!PAGOS.length){
+    const f = document.createDocumentFragment();
+    f.append(chip(), " Preguntá por WhatsApp antes de pedir y te confirman con qué se puede pagar.");
+    return f;
+  }
+  return document.createTextNode("Aceptamos " + lista(PAGOS) + ".");
+}
+
+/* ---------- las respuestas que salen de los datos ---------- */
+function pintarFaq(){
+  $("#faq-sucs").textContent = "Tenemos " + cuantas(SUCURSALES.length) + ": " + lista(SUCURSALES.map(s => {
+      const extra = [s.barrio, s.esquina.replace(/^Esq\.\s*/i, "esquina ")].filter(Boolean).join(", ");
+      return s.dir + (extra ? " (" + extra + ")" : "");
+    }))
+    + ". Elegí la tuya arriba de todo: el pedido, el teléfono y el cómo llegar se ajustan a esa sucursal.";
+
+  const del = $("#faq-delivery");
+  del.innerHTML = "";
+  const cortos = v => lista(v.map(s => s.corto));
+  const si     = SUCURSALES.filter(s => s.delivery === "si");
+  const siPy   = si.filter(s => s.pedidosya);
+  const pyConf = SUCURSALES.filter(s => s.delivery === "confirmar" && s.pedidosya);
+  const pyNo   = SUCURSALES.filter(s => s.delivery === "no" && s.pedidosya);
+  const conf   = SUCURSALES.filter(s => s.delivery === "confirmar" && !s.pedidosya);
+  const no     = SUCURSALES.filter(s => s.delivery === "no" && !s.pedidosya);
+  if(si.length){
+    let py = "";
+    if(siPy.length === si.length) py = si.length > 1 ? " (todas también están en PedidosYa)" : " (también está en PedidosYa)";
+    else if(siPy.length) py = " (" + cortos(siPy) + (siPy.length > 1 ? " también están" : " también está") + " en PedidosYa)";
+    del.append("En " + cortos(si) + ", sí" + py + ". ");
+  }
+  if(pyConf.length) del.append("En " + cortos(pyConf) + " hay envíos por PedidosYa; el delivery por WhatsApp está ", chip(), ". ");
+  if(pyNo.length) del.append("En " + cortos(pyNo) + ", los envíos son sólo por PedidosYa. ");
+  if(conf.length) del.append("En " + cortos(conf) + ", consultá por WhatsApp antes de pedir delivery ", chip(), ". ");
+  if(no.length) del.append("En " + cortos(no) + " no hay delivery: podés " + (no.every(s => s.salon) ? "retirar o comer en el salón" : "retirar por el local") + ". ");
+  if(si.length) del.append("La zona y el costo del envío te los confirma cada sucursal.");
+
+  const hor = $("#faq-horario");
+  hor.innerHTML = "";
+  if(!SUCURSALES.some(s => s.horario.length)){
+    hor.append(chip(), " Consultá el horario de tu sucursal por WhatsApp.");
+  }else{
+    SUCURSALES.forEach(s => {
+      const l = nodo("span", "hor-linea");
+      l.append(nodo("b", "", s.corto + ": "));
+      if(s.horario.length) l.append(s.horario.map(t => t.dias + " de " + t.abre + " a " + t.cierra).join("; ") + ".");
+      else l.append(chip());
+      hor.append(l);
+    });
+  }
+
+  const pago = $("#faq-pago");
+  pago.innerHTML = "";
+  pago.append(pagoNodo());
+  const pc = $("#pago-contacto");
+  pc.innerHTML = "";
+  pc.append(pagoNodo());
+}
+
+/* ════════════ PEDIDO ════════════ */
+const ITEMS = new Map();       /* nombre -> item de la carta */
+CARTA.forEach(t => t.grupos.forEach(g => g.items.forEach(it => ITEMS.set(it.n, it))));
+
+const pedido = new Map();      /* nombre -> { precio, cant } */
+const registros = new Map();   /* nombre -> [ { fila, cont, item } ]: un mismo
+                                  producto puede estar en dos lugares a la vez
+                                  (la carta y la sección de los Marcianitos) */
+
+function guardarPedido(){
+  try{ localStorage.setItem(CLAVE_PED, JSON.stringify([...pedido])); }catch(e){}
+}
+function recuperarPedido(){
+  try{
+    const crudo = localStorage.getItem(CLAVE_PED);
+    if(!crudo) return;
+    JSON.parse(crudo).forEach(([k, v]) => {
+      const it = ITEMS.get(k);          /* si el producto ya no está en la carta, se descarta */
+      const cant = v && Math.floor(v.cant);
+      if(it && cant > 0) pedido.set(k, { precio: it.p, cant: Math.min(99, cant) });
+    });
+  }catch(e){}
+}
+const total = () => { let t = 0; pedido.forEach(v => { t += v.precio * v.cant; }); return t; };
+const unidades = () => { let u = 0; pedido.forEach(v => { u += v.cant; }); return u; };
+
+let anuncioT = 0;
+function anunciar(t, demora){
+  clearTimeout(anuncioT);
+  anuncioT = setTimeout(() => { $("#vivo").textContent = t; }, demora || 0);
+}
+
+/* el + o el contador, según la cantidad. Si el foco estaba adentro, lo
+   devuelve al botón equivalente para no perderlo. */
+function controlCantidad(it, cont){
+  const cant = pedido.has(it.n) ? pedido.get(it.n).cant : 0;
+  const tenia = cont.contains(document.activeElement) ? document.activeElement.dataset.rol : null;
+  cont.innerHTML = "";
+
+  if(!cant){
+    const b = nodo("button", "mas");
+    b.type = "button";
+    b.dataset.rol = "mas";
+    b.innerHTML = icono("i-mas");
+    b.setAttribute("aria-label", "Agregar " + it.n + " al pedido");
+    b.onclick = () => agregar(it.n);
+    cont.append(b);
+    if(tenia) b.focus();
+    return;
+  }
+
+  const st = nodo("div", "stepper");
+  const menos = nodo("button", "st-menos");
+  menos.type = "button";
+  menos.dataset.rol = "menos";
+  menos.innerHTML = icono("i-menos");
+  menos.setAttribute("aria-label", "Quitar uno de " + it.n);
+  menos.onclick = () => quitar(it.n);
+
+  const out = document.createElement("output");
+  out.append(nodo("span", "", String(cant)));
+  out.setAttribute("aria-label", cant + " en tu pedido");
+
+  const mas = nodo("button", "st-mas");
+  mas.type = "button";
+  mas.dataset.rol = "mas";
+  mas.innerHTML = icono("i-mas");
+  mas.setAttribute("aria-label", "Agregar otro " + it.n);
+  mas.onclick = () => agregar(it.n);
+
+  st.append(menos, out, mas);
+  cont.append(st);
+  if(tenia === "menos") menos.focus();
+  else if(tenia) mas.focus();
+}
+
+function registrar(n, reg){
+  const l = (registros.get(n) || []).filter(r => r.fila.isConnected);
+  l.push(reg);
+  registros.set(n, l);
+}
+function pintarRegistro(r){
+  const cant = pedido.has(r.item.n) ? pedido.get(r.item.n).cant : 0;
+  r.fila.classList.toggle("en-pedido", cant > 0);
+  controlCantidad(r.item, r.cont);
+}
+/* Ojo: una fila recién creada todavía no está en la página (se agrega
+   después), así que al crearla se pinta con pintarRegistro y NO con
+   pintarAccion, que descarta lo que no está conectado. */
+function pintarAccion(n){
+  const l = (registros.get(n) || []).filter(r => r.fila.isConnected);
+  registros.set(n, l);
+  l.forEach(pintarRegistro);
+}
+
+function agregar(n){
+  const it = ITEMS.get(n);
+  if(!it) return;
+  const act = pedido.get(n) || { precio: it.p, cant: 0 };
+  act.cant = Math.min(99, act.cant + 1);
+  pedido.set(n, act);
+  cambio(n);
+}
+function quitar(n){
+  const act = pedido.get(n);
+  if(!act) return;
+  act.cant--;
+  if(act.cant <= 0) pedido.delete(n);
+  cambio(n);
+}
+function cambio(n){
+  pintarAccion(n);
+  pintarBarra();
+  pintarHoja();
+  const c = pedido.has(n) ? pedido.get(n).cant : 0;
+  anunciar(n + ": " + (c ? c + " en tu pedido" : "sacado del pedido"));
+  const disco = $("#cuenta");
+  disco.classList.remove("bump");
+  void disco.offsetWidth;
+  disco.classList.add("bump");
+}
+
+/* ---------- la sección de los Marcianitos ----------
+   Se arma con los items de la pestaña "marcianitos" de la CARTA. */
+function pintarPlatos(){
+  const cont = $("#platos");
+  cont.innerHTML = "";
+  const tab = CARTA.find(t => t.id === "marcianitos");
+  $(".marc-link").hidden = !tab;
+  if(!tab) return;
+  tab.grupos.forEach(g => g.items.forEach(it => {
+    const card = nodo("article", "plato");
+    card.append(nodo("h3", "plato-nom", it.n), nodo("span", "plato-precio", plata(it.p) + (it.u ? " " + it.u : "")));
+    if(it.d) card.append(nodo("p", "plato-desc", it.d));
+    const acc = nodo("div", "plato-acc");
+    card.append(acc);
+    cont.append(card);
+    const reg = { fila: card, cont: acc, item: it };
+    registrar(it.n, reg);
+    pintarRegistro(reg);
+  }));
+}
+
+/* ---------- la carta ---------- */
+const tabsEl = $("#tabs");
+const tablero = $("#tablero");
+const buscar = $("#buscar");
+let tabActual = CARTA[0].id;
+let filtro = "";
+
+CARTA.forEach(t => {
+  const b = nodo("button", "tab");
+  b.type = "button";
+  b.id = "tab-" + t.id;
+  b.dataset.tab = t.id;
+  b.setAttribute("role", "tab");
+  b.setAttribute("aria-controls", "tablero");
+  const sp = nodo("span");
+  if(t.id === "marcianitos") sp.innerHTML = icono("i-estrella");
+  sp.append(t.tab);
+  const n = nodo("b", "tab-n");
+  n.hidden = true;
+  sp.append(n);
+  b.append(sp);
+  b.onclick = () => irATab(t.id);
+  tabsEl.append(b);
+});
+tabsEl.addEventListener("keydown", e => {
+  const tabs = $$(".tab", tabsEl);
+  let i = tabs.indexOf(document.activeElement);
+  if(i < 0) return;
+  if(e.key === "ArrowRight") i = (i + 1) % tabs.length;
+  else if(e.key === "ArrowLeft") i = (i - 1 + tabs.length) % tabs.length;
+  else if(e.key === "Home") i = 0;
+  else if(e.key === "End") i = tabs.length - 1;
+  else return;
+  e.preventDefault();
+  irATab(tabs[i].dataset.tab);
+  tabs[i].focus();
+});
+
+function irATab(id){
+  tabActual = CARTA.some(t => t.id === id) ? id : CARTA[0].id;
+  filtro = "";
+  buscar.value = "";
+  pintarCarta();
+}
+
+function filaProducto(it){
+  const f = nodo("div", "fp");
+  const linea = nodo("div", "fp-linea");
+  linea.append(nodo("span", "fp-nom", it.n));
+  const lider = nodo("span", "fp-lider");
+  lider.setAttribute("aria-hidden", "true");
+  linea.append(lider, nodo("span", "fp-precio", plata(it.p)));
+  if(it.u) linea.append(nodo("span", "fp-uni", it.u));
+  f.append(linea);
+  f.append(nodo("p", "fp-desc", it.d || ""));
+  const acc = nodo("div", "fp-acc");
+  f.append(acc);
+  const reg = { fila: f, cont: acc, item: it };
+  registrar(it.n, reg);
+  pintarRegistro(reg);
+  return f;
+}
+
+function pintarCarta(){
+  const q = norm(filtro.trim());
+  const buscando = q.length >= 2;
+  tablero.innerHTML = "";
+  const cols = nodo("div", "tablero-cols");
+  const cuentas = {};
+  let encontrados = 0;
+
+  const fuentes = buscando ? CARTA : [CARTA.find(t => t.id === tabActual) || CARTA[0]];
+  fuentes.forEach(t => {
+    cuentas[t.id] = 0;
+    t.grupos.forEach(g => {
+      /* se busca también en el nombre de la pestaña y del grupo: "pizza"
+         encuentra las pizzas aunque ninguna diga "pizza" en el nombre */
+      const items = buscando ? g.items.filter(it => norm([t.tab, g.nombre, it.n, it.d || ""].join(" ")).includes(q)) : g.items;
+      if(!items.length) return;
+      cuentas[t.id] += items.length;
+      encontrados += items.length;
+      if(buscando || t.grupos.length > 1){
+        const h = nodo("h3", "grupo-cab");
+        h.innerHTML = icono("i-estrella-llena");
+        h.append(buscando ? t.tab + " · " + g.nombre : g.nombre);
+        cols.append(h);
+      }
+      items.forEach(it => cols.append(filaProducto(it)));
+    });
+  });
+  const filas = $$(".fp", cols);
+  if(filas.length) filas[filas.length - 1].classList.add("ult");
+  tablero.append(cols);
+
+  $$(".tab", tabsEl).forEach(b => {
+    const sel = !buscando && b.dataset.tab === tabActual;
+    b.setAttribute("aria-selected", sel ? "true" : "false");
+    b.tabIndex = sel || (buscando && b === tabsEl.firstElementChild) ? 0 : -1;
+    const n = $(".tab-n", b);
+    n.hidden = !buscando;
+    n.textContent = buscando ? cuentas[b.dataset.tab] || 0 : "";
+    n.classList.toggle("cero", buscando && !cuentas[b.dataset.tab]);
+  });
+  tablero.setAttribute("aria-labelledby", buscando ? "resultados" : "tab-" + tabActual);
+
+  const res = $("#resultados");
+  res.hidden = !buscando;
+  res.innerHTML = "";
+  if(buscando){
+    const txt = (encontrados === 1 ? "1 resultado" : encontrados + " resultados") + " para «" + filtro.trim() + "»";
+    res.append(txt + " · ");
+    const l = nodo("button", "link-btn", "Limpiar");
+    l.type = "button";
+    l.style.padding = "0";
+    l.onclick = () => { irATab(tabActual); buscar.focus(); };
+    res.append(l);
+    anunciar(txt, 600);
+  }
+
+  if(buscando && !encontrados){
+    tablero.innerHTML = "";
+    const v = nodo("div", "vacio");
+    v.append(nodo("b", "", "No encontramos «" + filtro.trim() + "» en la carta."), nodo("p", "", "Probá con otra palabra o mirá las pestañas."));
+    tablero.append(v);
+  }
+  $("#limpiar").hidden = !filtro;
+}
+buscar.addEventListener("input", () => { filtro = buscar.value; pintarCarta(); });
+$("#limpiar").onclick = () => { irATab(tabActual); buscar.focus(); };
+
+/* ---------- la barra de pedido ---------- */
+const barra = $("#barra");
+function medirBarra(){
+  const h = barra.classList.contains("abierta") ? barra.offsetHeight : 0;
+  document.documentElement.style.setProperty("--bar-h", h + "px");
+}
+if("ResizeObserver" in window) new ResizeObserver(medirBarra).observe(barra);
+
+function pintarBarra(){
+  const u = unidades();
+  barra.classList.toggle("abierta", u > 0);
+  $("#cuenta").textContent = u;
+  $("#barra-total").textContent = plata(total());
+  const bs = $("#barra-suc");
+  bs.classList.toggle("vacia", !actual);
+  bs.textContent = actual ? "a " + actual.corto : "Elegí sucursal";
+  bs.setAttribute("aria-label", actual ? "a " + actual.corto + ", cambiar sucursal" : "Elegí sucursal");
+  $("#ver-enviar").setAttribute("aria-label", "Ver y enviar el pedido" + (actual ? " a " + actual.corto : ""));
+  medirBarra();
+  guardarPedido();
+  pintarWa();
+}
+
+/* ---------- WhatsApp ---------- */
+function waLink(s, texto){
+  return "https://wa.me/" + numeroWa(s) + "?text=" + encodeURIComponent(texto);
+}
+function mensajeConsulta(){
+  return "¡Hola, La Marcianita! Te escribo a la sucursal " + actual.corto + " (" + actual.dir + ") por una consulta.";
+}
+function mensajePedido(){
+  const s = actual;
+  const L = [];
+  L.push("¡Hola, La Marcianita! Quiero hacer un pedido a la sucursal " + s.corto + " (" + s.dir + "):");
+  L.push("");
+  pedido.forEach((v, k) => L.push(v.cant + " × " + k + " — " + plata(v.precio * v.cant)));
+  L.push("");
+  L.push("Total estimado: " + plata(total()) + (VISTA_PREVIA ? " (precios de la web, a confirmar)" : ""));
+  const dir = $("#f-dir").value.trim();
+  let modo;
+  if(servicio === "salon") modo = "Para comer en el salón";
+  else if(servicio === "delivery"){
+    modo = s.delivery === "si"
+      ? "Delivery a " + (dir || "(mi dirección)")
+      : "Delivery: ¿hacen envíos a " + (dir || "mi dirección") + "?";
+  }
+  else modo = "Take away (lo paso a buscar)";
+  L.push("Modalidad: " + modo);
+  const nom = $("#f-nombre").value.trim();
+  if(nom) L.push("Nombre: " + nom);
+  const acl = $("#f-acl").value.trim();
+  if(acl) L.push("Aclaraciones: " + acl);
+  L.push("");
+  L.push("¿Me confirman el total y la demora? ¡Gracias!");
+  L.push("(Pedido armado en el sitio oficial)");
+  return L.join("\n");
+}
+function pintarWa(){
+  $$(".js-wa").forEach(a => {
+    const sinNumero = !!actual && !numeroWa(actual);
+    a.hidden = sinNumero;
+    a.href = actual && !sinNumero ? waLink(actual, mensajeConsulta()) : "#";
+    const t = $(".js-wa-txt", a);
+    if(t) t.textContent = actual ? "Escribile a " + actual.corto : "Escribinos";
+  });
+}
+/* un botón de WhatsApp sin sucursal elegida abre el selector */
+document.addEventListener("click", e => {
+  const a = e.target.closest(".js-wa");
+  if(a && !actual){ e.preventDefault(); abrirSelector("consulta"); }
+});
+
+/* ---------- la hoja del pedido ---------- */
+const hojaPedido = $("#hoja-pedido");
+const hojaSuc = $("#hoja-suc");
+
+function pintarServicio(){
+  const s = actual;
+  const del = s ? s.delivery : "confirmar";
+  if(servicio === "delivery" && del === "no") servicio = "takeaway";
+  if(servicio === "salon" && s && !s.salon) servicio = "takeaway";
+  $$(".serv").forEach(b => {
+    const v = b.dataset.serv;
+    const on = v === servicio;
+    b.setAttribute("aria-checked", on ? "true" : "false");
+    b.tabIndex = on ? 0 : -1;
+    if(v === "delivery"){
+      b.classList.toggle("serv-confirmar", del === "confirmar");
+      b.classList.toggle("serv-no", del === "no");
+      b.setAttribute("aria-disabled", del === "no" ? "true" : "false");
+      $(".serv-lbl", b).textContent = del === "confirmar" ? "¿Delivery?" : "Delivery";
+      b.setAttribute("aria-label", del === "confirmar" ? "¿Delivery?, a confirmar en esta sucursal"
+        : del === "no" ? "Delivery, esta sucursal no toma" : "Delivery");
+    }
+    if(v === "salon"){
+      const sinSalon = !!s && !s.salon;
+      b.classList.toggle("serv-no", sinSalon);
+      b.setAttribute("aria-disabled", sinSalon ? "true" : "false");
+    }
+  });
+
+  const nota = $("#serv-nota");
+  nota.innerHTML = "";
+  if(avisoServicio) nota.append(avisoServicio);
+  else if(s && servicio === "delivery" && del === "si") nota.append("Delivery desde " + s.corto + ". Zona y costo: ", s.envio ? s.envio + "." : chip());
+  else if(s && servicio === "delivery" && s.pedidosya) nota.append(s.corto + " hace envíos por PedidosYa; por WhatsApp el delivery está a confirmar, así que tu mensaje sale como consulta.");
+  else if(s && servicio === "delivery") nota.append("En " + s.corto + " el delivery está a confirmar: tu mensaje sale como consulta.");
+  else if(s && servicio === "takeaway") nota.append("Lo pasás a buscar por " + s.dir + ".");
+  else if(s && servicio === "salon") nota.append("Para comer en el salón de " + s.dir + ".");
+  $("#campo-dir").hidden = servicio !== "delivery";
+  if(servicio !== "delivery") $("#err-dir").hidden = true;
+}
+
+$$(".serv").forEach(b => {
+  b.addEventListener("click", () => {
+    if(b.getAttribute("aria-disabled") === "true"){
+      if(actual) avisoServicio = b.dataset.serv === "delivery"
+        ? sinDeliveryTexto(actual)
+        : actual.corto + " no tiene salón: podés pedir take away" + (actual.delivery === "no" ? "." : " o delivery.");
+      pintarServicio();
+      return;
+    }
+    servicio = b.dataset.serv;
+    avisoServicio = "";
+    pintarServicio();
+    pintarEnvio();
+  });
+});
+$("#segs").addEventListener("keydown", e => {
+  const paso = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+  if(!paso) return;
+  e.preventDefault();
+  const bs = $$(".serv").filter(b => b.getAttribute("aria-disabled") !== "true");
+  let i = bs.indexOf(document.activeElement);
+  if(i < 0) i = 0;
+  const b = bs[(i + paso + bs.length) % bs.length];
+  b.click();
+  b.focus();
+});
+
+function pintarEnvio(){
+  const env = $("#enviar");
+  const numero = actual ? numeroWa(actual) : "";
+  const sinWa = !!actual && !numero;
+  env.hidden = sinWa;
+  $("#letra-chica").hidden = sinWa;
+  const aviso = $("#sin-wa");
+  aviso.hidden = !sinWa;
+  aviso.innerHTML = "";
+  if(sinWa){
+    aviso.append(actual.corto + " todavía no toma pedidos por WhatsApp. Copiá el pedido y ");
+    if(actual.tel){
+      const a = nodo("a", "", "llamá al " + actual.tel);
+      a.href = telHref(actual.tel);
+      aviso.append(a, ".");
+    }else{
+      aviso.append("llamá a la sucursal (los teléfonos están en Contacto).");
+    }
+  }
+  env.href = actual && numero && pedido.size ? waLink(actual, mensajePedido()) : "#";
+  $("#enviar-txt").textContent = actual ? "Enviar a " + actual.corto : "Enviar por WhatsApp";
+  env.setAttribute("aria-label", actual ? "Enviar a " + actual.corto + " por WhatsApp" : "Enviar por WhatsApp");
+  /* si está a la vista la caja para copiar a mano, que no quede vieja */
+  const manual = $("#copia-manual");
+  if(!manual.hidden && actual && pedido.size) manual.value = mensajePedido();
+}
+
+function pintarHoja(){
+  const s = actual;
+  $("#hp-placa").textContent = s ? s.dir : "Sin sucursal";
+
+  /* la lista, recordando qué botón tenía el foco */
+  const listaEl = $("#hp-lista");
+  const foco = document.activeElement;
+  let volver = null;
+  if(listaEl.contains(foco)){
+    const f = foco.closest("[data-n]");
+    volver = f ? { n: f.dataset.n, rol: foco.dataset.rol } : null;
+  }
+  listaEl.innerHTML = "";
+  pedido.forEach((v, k) => {
+    const it = ITEMS.get(k);
+    const row = nodo("div", "hp-fila");
+    row.dataset.n = k;
+    row.append(nodo("span", "hp-nom", k));
+    const acc = nodo("div");
+    row.append(acc, nodo("span", "hp-sub", plata(v.precio * v.cant)));
+    listaEl.append(row);
+    controlCantidad(it, acc);
+  });
+  if(volver && pedido.size){
+    const row = $$(".hp-fila", listaEl).find(r => r.dataset.n === volver.n);
+    const b = row && ($('[data-rol="' + volver.rol + '"]', row) || $("button", row));
+    if(b) b.focus();
+    else $("#hp-tit").focus();
+  }
+
+  $("#hp-total").textContent = plata(total());
+  const wa = $("#hp-wa");
+  wa.innerHTML = "";
+  if(s) wa.append(waNodo(s));
+  pintarServicio();
+  pintarEnvio();
+
+  /* si el pedido quedó vacío, la hoja se cierra sola y el foco va a la
+     carta (el botón que la abrió desaparece con la barra) */
+  if(!pedido.size && hojaPedido.open){
+    cerrarDialogo(hojaPedido);
+    const h = $("#carta .h2");
+    if(h){ h.tabIndex = -1; h.focus({ preventScroll: true }); }
+  }
+}
+
+["#f-nombre", "#f-dir", "#f-acl"].forEach(id => $(id).addEventListener("input", () => {
+  if(id === "#f-dir" && $("#f-dir").value.trim()) $("#err-dir").hidden = true;
+  pintarEnvio();
+}));
+
+/* delivery sin dirección: no deja mandar ni copiar */
+function faltaDireccion(){
+  if(servicio === "delivery" && !$("#f-dir").value.trim()){
+    $("#err-dir").hidden = false;
+    $("#f-dir").focus();
+    return true;
+  }
+  return false;
+}
+$("#enviar").addEventListener("click", e => {
+  if(!actual){ e.preventDefault(); abrirSelector("pedido"); return; }
+  if(!pedido.size || !numeroWa(actual)){ e.preventDefault(); return; }
+  if(faltaDireccion()){ e.preventDefault(); return; }
+  pintarEnvio();   /* el link sale con el mensaje recién armado */
+});
+
+let copiadoT = 0;
+$("#copiar").addEventListener("click", () => {
+  if(!actual || !pedido.size || faltaDireccion()) return;
+  const txt = mensajePedido();
+  const aviso = $("#copiado");
+  const manual = $("#copia-manual");
+  const ok = () => {
+    manual.hidden = true;
+    aviso.textContent = "Pedido copiado. Pegalo en el chat de la sucursal.";
+    clearTimeout(copiadoT);
+    copiadoT = setTimeout(() => { aviso.textContent = ""; }, 3500);
+  };
+  const aMano = () => {
+    manual.value = txt;
+    manual.hidden = false;
+    manual.focus();
+    manual.select();
+    aviso.textContent = "Seleccionamos el pedido: copialo desde acá.";
+  };
+  try{
+    navigator.clipboard.writeText(txt).then(ok, aMano);
+  }catch(e){ aMano(); }
+});
+
+/* vaciar: pide confirmación con un segundo toque (no hay confirm() en el Artifact) */
+let vaciarT = 0;
+$("#hp-vaciar").addEventListener("click", () => {
+  const b = $("#hp-vaciar");
+  if(!b.dataset.seguro){
+    b.dataset.seguro = "1";
+    b.textContent = "¿Seguro? Tocá de nuevo para vaciar";
+    clearTimeout(vaciarT);
+    vaciarT = setTimeout(() => { delete b.dataset.seguro; b.textContent = "Vaciar pedido"; }, 3500);
+    return;
+  }
+  clearTimeout(vaciarT);
+  delete b.dataset.seguro;
+  b.textContent = "Vaciar pedido";
+  const nombres = [...pedido.keys()];
+  pedido.clear();
+  nombres.forEach(pintarAccion);
+  pintarBarra();
+  pintarHoja();
+  anunciar("Pedido vacío");
+});
+
+/* ---------- abrir y cerrar las hojas ---------- */
+function abrirDialogo(d){
+  if(d.open) return;
+  if(typeof d.showModal === "function"){
+    try{ d.showModal(); return; }catch(e){}
+  }
+  d.setAttribute("open", "");
+}
+function cerrarDialogo(d){
+  if(!d.open) return;
+  if(typeof d.close === "function") d.close();
+  else d.removeAttribute("open");
+}
+$$("dialog.hoja").forEach(d => {
+  /* se cierra al tocar afuera, pero sólo si el toque EMPEZÓ afuera: así
+     no se cierra al seleccionar texto arrastrando hasta el fondo */
+  let abajo = null;
+  d.addEventListener("pointerdown", e => { abajo = e.target; });
+  d.addEventListener("click", e => { if(e.target === d && abajo === d) cerrarDialogo(d); });
+  $$("[data-cerrar]", d).forEach(b => b.addEventListener("click", () => cerrarDialogo(d)));
+});
+hojaSuc.addEventListener("close", () => {
+  pendiente = null;
+  /* si el botón que la abrió ya no existe (la tarjeta de contacto se
+     rearma al cambiar de sucursal), el foco va a su reemplazo */
+  const a = abridor;
+  abridor = null;
+  setTimeout(() => {
+    if(a && !a.isConnected && (!document.activeElement || document.activeElement === document.body)){
+      const c = $("#tu-suc-llena .js-cambiar");
+      if(c) c.focus();
+    }
+  }, 0);
+});
+
+function abrirSelector(accion){
+  pendiente = accion || null;
+  abridor = document.activeElement;
+  $("#hs-sub").textContent =
+      accion === "pedido"   ? "Elegí a qué sucursal va tu pedido."
+    : accion === "consulta" ? "¿A qué sucursal le escribís? Después tocá de nuevo el botón de WhatsApp."
+    : "El pedido, el teléfono y el cómo llegar se ajustan a la que elijas.";
+  pintarGrupos();
+  abrirDialogo(hojaSuc);
+  const b = $('#hs-flechas [aria-checked="true"]') || $("#hs-flechas .flecha");
+  if(b) b.focus();
+}
+function abrirPedido(){
+  if(!actual){ abrirSelector("pedido"); return; }
+  pintarHoja();
+  abrirDialogo(hojaPedido);
+}
+$("#ver-enviar").onclick = abrirPedido;
+$("#barra-suc").onclick = () => abrirSelector();
+$("#hp-cambiar").onclick = () => abrirSelector();
+$("#suc-boton").onclick = () => abrirSelector();
+
+/* ---------- pintar todo lo que depende de la sucursal ---------- */
+function pintarSucursal(){
+  const s = actual;
+  pintarGrupos();
+
+  const nb = $("#suc-boton");
+  nb.classList.toggle("vacia", !s);
+  $("#sb-small").textContent = s ? "Pedís a" : "Elegí";
+  $("#sb-txt").textContent = s ? s.corto : "Sucursal";
+  nb.setAttribute("aria-label", s ? "Pedís a " + s.corto + ", cambiar sucursal" : "Elegí sucursal");
+
+  $$(".sede").forEach(card => {
+    const on = !!s && card.dataset.id === s.id;
+    card.classList.toggle("activa", on);
+    $(".sede-pedir", card).hidden = on;
+    $(".tag-tuya", card).hidden = !on;
+  });
+
+  pintarContacto();
+  pintarBarra();
+  pintarHoja();
+}
+
+/* ---------- menú de secciones (celular y tablet) ---------- */
+const panel = $("#secc-panel");
+const seccBtn = $("#secc-btn");
+function cerrarPanel(){ panel.hidden = true; seccBtn.setAttribute("aria-expanded", "false"); }
+seccBtn.onclick = () => {
+  const abrir = panel.hidden;
+  panel.hidden = !abrir;
+  seccBtn.setAttribute("aria-expanded", abrir ? "true" : "false");
+};
+document.addEventListener("keydown", e => { if(e.key === "Escape" && !panel.hidden){ cerrarPanel(); seccBtn.focus(); } });
+document.addEventListener("click", e => {
+  if(!panel.hidden && !panel.contains(e.target) && !seccBtn.contains(e.target)) cerrarPanel();
+});
+
+/* ---------- links internos ----------
+   Los atajos del pie (y "Ver los Marcianitos en la carta") abren la pestaña.
+   El scroll se hace con scrollIntoView para no tocar la dirección de la
+   página (dentro del Artifact el #hash no siempre se comporta igual). */
+document.addEventListener("click", e => {
+  const a = e.target.closest('a[href^="#"]');
+  if(!a) return;
+  const h = a.getAttribute("href");
+  if(h.length < 2) return;
+  const dest = document.getElementById(h.slice(1));
+  if(!dest) return;
+  e.preventDefault();
+  if(a.dataset.tab) irATab(a.dataset.tab);
+  cerrarPanel();
+  const suave = !window.matchMedia || window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+  dest.scrollIntoView({ behavior: suave ? "smooth" : "auto", block: "start" });
+});
+
+/* Ojo: el IntersectionObserver se usa SÓLO para marcar el link activo de
+   la navegación. Nada de la página arranca invisible esperando el scroll:
+   abierta con doble clic, sin doctype, el navegador entra en modo quirks
+   y ahí revelar contenido con un observer no es confiable. */
+const enlacesNav = $$("#anclas a");
+if("IntersectionObserver" in window){
+  const obs = new IntersectionObserver(entradas => {
+    entradas.forEach(en => {
+      if(!en.isIntersecting) return;
+      const id = "#" + en.target.id;
+      enlacesNav.forEach(a => {
+        const on = a.getAttribute("href") === id;
+        a.classList.toggle("act", on);
+        if(on) a.setAttribute("aria-current", "location"); else a.removeAttribute("aria-current");
+      });
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  $$("main section[id]").forEach(s => obs.observe(s));
+}
+
+/* ---------- arranque ----------
+   Cada paso por separado: si un dato mal cargado rompe uno, el resto de
+   la página se arma igual (y el problema queda avisado en la consola). */
+function paso(f){ try{ f(); }catch(e){ avisar(e && e.message ? e.message : String(e)); } }
+paso(() => grupoRadios($("#hero-flechas"), flecha));
+paso(() => grupoRadios($("#segm"), segmento));
+paso(() => grupoRadios($("#hs-flechas"), flecha, () => {
+  const seguir = pendiente;
+  cerrarDialogo(hojaSuc);
+  if(seguir === "pedido") abrirPedido();
+}));
+paso(() => grupoRadios($("#contacto-flechas"), flecha, () => {
+  /* la tarjeta vacía desaparece al elegir: el foco va a la tarjeta nueva */
+  const b = $("#tu-suc-llena .js-wa:not([hidden])") || $("#tu-suc-llena .js-cambiar");
+  if(b) b.focus();
+}));
+paso(construirSedes);
+paso(pintarTelefonos);
+paso(pintarFaq);
+paso(recuperarPedido);
+paso(pintarPlatos);
+paso(pintarCarta);
+paso(() => {
+  actual = recuperarSucursal();
+  if(actual){ try{ localStorage.setItem(CLAVE_SUC, actual.id); }catch(e){} }
+});
+paso(pintarSucursal);
+
+/* con el horario cargado, el "Abierto ahora" se actualiza solo cada minuto */
+if(SUCURSALES.some(s => s.horario.length)){
+  setInterval(() => {
+    $$("[data-hor]").forEach(dd => {
+      const s = porId(dd.dataset.hor);
+      if(!s) return;
+      dd.innerHTML = "";
+      dd.append(horarioNodo(s));
+    });
+  }, 60000);
+}
+</script>
+
+</body></html>
