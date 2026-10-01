@@ -166,15 +166,15 @@ Contacto y material
 Los valores, en pesos argentinos, formateados como moneda:
 
 Opción recomendada
-- Armado, pago único: $750.000. Se abona mitad al comenzar y mitad al publicar.
+- Armado, pago único: $650.000. Se abona mitad al comenzar y mitad al publicar.
   Incluye el sitio completo, el sistema de reservas, las cuentas de jugador, el
   panel del club con un usuario por persona del equipo, la carga de los datos
   reales, el dominio configurado y la publicación.
-- Servicio mensual: $75.000. Incluye servidor, dominio, copias de seguridad
+- Servicio mensual: $90.000. Incluye servidor, dominio, copias de seguridad
   diarias, altas y bajas del personal del panel, actualización de horarios y
   tarifas, cambios menores y soporte. Sin permanencia mínima. Se actualiza cada
   tres meses.
-- Total primer año: $1.650.000 (calculalo con fórmula, no a mano).
+- Total primer año: $1.730.000 (calculalo con fórmula, no a mano).
 
 Alternativa, para arrancar con menos desembolso
 - Armado: $350.000 · Servicio mensual: $125.000 · Permanencia mínima 12 meses.
@@ -203,7 +203,7 @@ con los datos reales del club durante la reunión:
 Abajo, calculado con fórmulas que se actualicen solas al cambiar las entradas:
 - Costo mensual con plataforma por comisión: turnos × el menor entre
   (precio × comisión) y el tope. Usá MIN().
-- Costo mensual con este sistema: 75.000, fijo.
+- Costo mensual con este sistema: 90.000, fijo.
 - Diferencia por mes y diferencia por año.
 
 Y una línea honesta, que quiero que esté sí o sí: las plataformas grandes traen
