@@ -55,7 +55,8 @@ Un sitio web propio con sistema de turnos. Cinco partes:
 
 1. Sitio público: presentación del club, las canchas, la escuela, ubicación,
    horarios, y disponibilidad en vivo en la portada.
-2. Reserva online: el jugador elige día, duración (60 o 90 minutos) y horario;
+2. Reserva online: el jugador elige día y horario —todos los turnos de cancha
+   son de 90 minutos, así que no hay nada que elegir ahí—;
    ve en tiempo real qué canchas quedan libres; puede elegir cancha (incluida la
    central, que aparece marcada "con gradas") o dejar que el sistema le asigne
    una. Deja nombre y teléfono y recibe un código de reserva (formato LN-XXXXX).
@@ -134,8 +135,8 @@ Las filas, agrupadas por tema:
 
 Horarios y tarifas
 - Hora de apertura, día por día
-- Precio del turno de 60 minutos
-- Precio del turno de 90 minutos
+- Precio del turno de 90 minutos (todos los turnos de cancha son de 90)
+- Precio de la clase de 60 minutos con profesor
 - Si el precio cambia según el día o la franja horaria
 - Feriados o fechas en que no abren
 

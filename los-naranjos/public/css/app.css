@@ -146,6 +146,10 @@
 .segmentado input:checked + label { background: var(--papel-2); color: var(--tinta); box-shadow: var(--sombra-sm); }
 .segmentado input:focus-visible + label { outline: 2px solid var(--naranja); outline-offset: 2px; }
 
+/* Duración única: se ve como un dato, no como algo para tocar. */
+.segmentado--fijo { cursor: default; }
+.segmentado--fijo label { cursor: default; }
+
 /* ── Grilla de horarios ───────────────────────────────────────────────────── */
 .franja { display: grid; gap: .8rem; }
 .franja + .franja { margin-top: 1.5rem; }

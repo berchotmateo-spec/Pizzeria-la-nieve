@@ -156,13 +156,13 @@ test('se detecta el solapamiento parcial de turnos', async () => {
   });
   // 11:00 cae dentro del turno de 10:00–11:30.
   const choque = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '11:00', duracionMin: 60, canchaId: 'padel-3', telefono: '2235550004' }),
+    body: reservaBase({ hora: '11:00', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550004' }),
   });
   assert.equal(choque.ok, false);
   assert.equal(choque.status, 409);
   // 11:30 arranca justo cuando el otro termina: tiene que entrar.
   const pegado = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '11:30', duracionMin: 60, canchaId: 'padel-3', telefono: '2235550005' }),
+    body: reservaBase({ hora: '11:30', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550005' }),
   });
   assert.equal(pegado.ok, true);
 });
@@ -177,6 +177,7 @@ test('se rechazan los datos incompletos o fuera de rango', async () => {
     [{ hora: '03:00' }, 'fuera del horario de atención'],
     [{ hora: '20:15' }, 'fuera de la grilla de 30 minutos'],
     [{ duracionMin: 45 }, 'duración no permitida'],
+    [{ duracionMin: 60 }, 'los turnos de 60 son clases, no se reservan online'],
     [{ disciplina: 'tenis' }, 'disciplina inexistente'],
   ];
   for (const [extra, motivo] of casos) {
@@ -190,12 +191,12 @@ test('se limita la cantidad de turnos activos por teléfono', async () => {
   const tel = '2235558888';
   for (let i = 0; i < RESERVAS.maxPorTelefono; i++) {
     const r = await llamar('POST /api/reservas', {
-      body: reservaBase({ hora: `${14 + i}:00`, duracionMin: 60, telefono: tel }),
+      body: reservaBase({ hora: `${14 + i}:00`, duracionMin: 90, telefono: tel }),
     });
     assert.ok(r.ok, `la reserva ${i + 1} debería entrar`);
   }
   const extra = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '18:00', duracionMin: 60, telefono: tel }),
+    body: reservaBase({ hora: '18:00', duracionMin: 90, telefono: tel }),
   });
   assert.equal(extra.ok, false);
   assert.match(extra.error, /turnos activos/);
@@ -204,7 +205,7 @@ test('se limita la cantidad de turnos activos por teléfono', async () => {
 test('consulta y cancelación por parte del socio', async () => {
   const tel = '2235557777';
   const { datos } = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '09:00', duracionMin: 60, telefono: tel }),
+    body: reservaBase({ hora: '09:00', duracionMin: 90, telefono: tel }),
   });
   const codigo = datos.reserva.codigo;
 
@@ -228,10 +229,10 @@ test('consulta y cancelación por parte del socio', async () => {
 
 test('cancelar libera el horario para otra persona', async () => {
   const { datos } = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556666' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556666' }),
   });
   const ocupado = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556665' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556665' }),
   });
   assert.equal(ocupado.status, 409);
 
@@ -239,7 +240,7 @@ test('cancelar libera el horario para otra persona', async () => {
     body: { codigo: datos.reserva.codigo, telefono: '2235556666' },
   });
   const libre = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '08:00', duracionMin: 60, canchaId: 'padel-4', telefono: '2235556665' }),
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556665' }),
   });
   assert.ok(libre.ok, 'el horario quedó liberado');
 });
@@ -260,20 +261,22 @@ test('el panel de administración exige la clave correcta', async () => {
 test('el administrador puede bloquear una cancha y eso saca el turno de la grilla', async () => {
   const bloqueo = await llamar('POST /api/admin/bloqueos', {
     req: admin,
-    body: { canchaId: 'padel-2', fecha: PROXIMO_MIERCOLES, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
+    // Una cancha que no toca ningún otro test: con turnos de 90 minutos, los
+    // de más arriba se desparraman por las primeras canchas al asignarse solas.
+    body: { canchaId: 'padel-6', fecha: PROXIMO_MIERCOLES, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
   });
-  assert.ok(bloqueo.ok);
+  assert.ok(bloqueo.ok, bloqueo.error);
   assert.equal(bloqueo.datos.reserva.tipo, 'bloqueo');
 
   const choque = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '17:00', duracionMin: 60, canchaId: 'padel-2', telefono: '2235554444' }),
+    body: reservaBase({ hora: '17:00', duracionMin: 90, canchaId: 'padel-6', telefono: '2235554444' }),
   });
   assert.equal(choque.status, 409, 'no se puede reservar sobre un bloqueo');
 });
 
 test('el administrador puede cancelar cualquier turno', async () => {
   const { datos } = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '12:30', duracionMin: 60, telefono: '2235553333' }),
+    body: reservaBase({ hora: '12:30', duracionMin: 90, telefono: '2235553333' }),
   });
   const r = await llamar('POST /api/admin/cancelar', { req: admin, body: { codigo: datos.reserva.codigo } });
   assert.equal(r.datos.reserva.estado, 'cancelada');
@@ -290,7 +293,7 @@ test('se frena la avalancha de reservas desde una misma IP', async () => {
       ip,
       body: reservaBase({
         hora: T.aHora(7 * 60 + 30 + i * RESERVAS.slotMinutos),
-        duracionMin: 60,
+        duracionMin: 90,
         telefono: `22355${String(i).padStart(5, '0')}`,
       }),
     });
@@ -303,7 +306,7 @@ test('crear la cuenta abre la sesión y se queda con los turnos previos', async 
   const tel = '2235557001';
   // Primero reserva como visitante, sin cuenta.
   const previa = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '09:00', duracionMin: 60, telefono: tel, nombre: 'Ana Invitada' }),
+    body: reservaBase({ hora: '09:00', duracionMin: 90, telefono: tel, nombre: 'Ana Invitada' }),
   });
   assert.ok(previa.ok);
 
@@ -398,7 +401,7 @@ test('con la sesión abierta el turno sale a nombre de la cuenta', async () => {
 
   // El cuerpo miente a propósito: la cuenta manda.
   const r = await nav.llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '10:00', duracionMin: 60, nombre: 'Otro Nombre', telefono: '2239999999' }),
+    body: reservaBase({ hora: '10:00', duracionMin: 90, nombre: 'Otro Nombre', telefono: '2239999999' }),
   });
   assert.ok(r.ok, r.error);
   assert.equal(r.datos.reserva.nombre, 'Lucía Socia');
@@ -514,7 +517,7 @@ test('queda registrado quién canceló cada turno', async () => {
   await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
 
   const turno = await llamar('POST /api/reservas', {
-    body: reservaBase({ hora: '14:00', duracionMin: 60, telefono: '2235550077' }),
+    body: reservaBase({ hora: '14:00', duracionMin: 90, telefono: '2235550077' }),
   });
   assert.ok(turno.ok, turno.error);
 

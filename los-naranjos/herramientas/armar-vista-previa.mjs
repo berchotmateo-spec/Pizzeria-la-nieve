@@ -267,6 +267,9 @@ const NOMBRES = [
 ];
 const NOTAS = [null, null, null, null, 'Alquilan paletas', 'Vienen con chicos', null, 'Juegan siempre los martes'];
 
+/* En el club todos los turnos de cancha son de 90 minutos. */
+const DURACION_TURNO = CONFIG.disciplinas[0].duraciones[0];
+
 const cacheSimulada = new Map();
 
 /**
@@ -288,7 +291,7 @@ function reservasSimuladas(fecha) {
         const hora = m / 60;
         const demanda = hora < 12 ? 0.14 : hora < 16 ? 0.24 : hora < 19 ? 0.42 : hora < 22.5 ? 0.6 : 0.28;
         if (azar() < demanda) {
-          const dur = azar() < 0.6 ? 90 : 60;
+          const dur = DURACION_TURNO;
           if (m + dur <= cierra) {
             const i = Math.floor(azar() * NOMBRES.length);
             const esBloqueo = azar() < 0.04;

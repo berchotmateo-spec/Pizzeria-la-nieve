@@ -52,12 +52,18 @@ export const CLUB = {
  * el complejo, NO la hora del último turno. El sistema ofrece un turno sólo si
  * termina antes del cierre.
  *
- * Con el cierre a las 23:30 que está puesto acá:
- *   · el último turno de 90 minutos arranca a las 22:00
- *   · el último turno de 60 minutos arranca a las 22:30
+ * Con el cierre a las 23:30 que está puesto acá, el último turno —de 90
+ * minutos, como son todos— arranca a las 22:00.
  *
- * Las dos cosas coinciden con lo que el club publica en Instagram, así que
- * 23:30 es la mejor hipótesis disponible.
+ * ⚠️ OJO, HAY UNA CUENTA QUE NO CIERRA. En Instagram se les vieron turnos
+ * arrancando a las 22:00 y a las 22:30. Cuando pensábamos que había turnos de
+ * 60 minutos, los dos encajaban con un cierre a las 23:30. Ahora que sabemos
+ * que todos los turnos son de 90, un turno que arranca 22:30 termina a las
+ * 00:00, así que o el club cierra más tarde de lo que supusimos, o ese 22:30
+ * era una clase. Queda en 23:30 porque es la opción prudente —vender un turno
+ * que termina con el club cerrado es peor que no venderlo—, pero es de las
+ * primeras cosas para preguntar: si cierran a las 00:00, hoy estamos tirando
+ * el último turno del día, que además es de los más buscados.
  *
  * ⚠️ VERIFICAR igual: el club no publica su horario, esto es una deducción a
  * partir de los turnos que ofrece. Confirmar sobre todo la hora de APERTURA,
@@ -81,13 +87,17 @@ export const FERIADOS = {
 /**
  * Disciplinas reservables. El `slug` se usa en la URL y en la base de datos.
  * `duraciones` en minutos — la primera es la que viene preseleccionada.
+ * En Los Naranjos los turnos de cancha son todos de 90 minutos. Los de 60 son
+ * clases con profesor, que no se reservan por acá: se arreglan con el club.
+ * Si algún día abren turnos de 60, se agregan a `duraciones` y el paso de
+ * duración vuelve a aparecer solo en el formulario.
  */
 export const DISCIPLINAS = [
   {
     slug: 'padel',
     nombre: 'Pádel',
     icono: 'padel',
-    duraciones: [60, 90],
+    duraciones: [90],
     duracionPorDefecto: 90,
     jugadores: '4 jugadores',
     descripcion:
@@ -178,8 +188,8 @@ export const PROGRAMAS = [
     titulo: 'Clases particulares',
     // "Particular" acá no quiere decir uno a uno: el club las da de a uno,
     // en dupla o hasta de a cuatro, que es la cancha entera.
-    nivel: 'De 1 a 4 jugadores',
-    texto: 'Entrenamiento personalizado, solo, en dupla o con tu grupo de hasta cuatro.',
+    nivel: 'De 1 a 4 jugadores · 60 minutos',
+    texto: 'Una hora con profesor: solo, en dupla o con tu grupo de hasta cuatro.',
   },
   {
     titulo: 'Torneos y americanos',

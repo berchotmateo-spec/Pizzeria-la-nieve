@@ -285,8 +285,13 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
       `null` y el sitio no muestra ninguno: es preferible un dato de menos que
       uno inventado.
 - [x] ~~**Instagram** del club~~ → `@losnaranjos_mdq`, ya cargado.
-- [ ] **Hora de apertura**: es el dato que falta. El cierre a las 23:30 se deduce
-      de los turnos que ofrecen; la apertura (7:30) sale de directorios de terceros.
+- [ ] **Hora de apertura y de cierre.** La apertura (7:30) sale de directorios
+      de terceros. Y el cierre tiene una cuenta que ya no cierra: se les vieron
+      turnos arrancando a las 22:00 y a las 22:30, y ahora que sabemos que todos
+      los turnos son de 90 minutos, el de las 22:30 terminaría a las 00:00. O
+      cierran más tarde de lo que supusimos, o ese 22:30 era una clase. Está
+      puesto 23:30, que es lo prudente; si cierran a las 00:00, hoy estamos
+      tirando el último turno del día.
 - [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
 - [ ] **Coordenadas** exactas del predio, para el mapa.
 
@@ -295,6 +300,8 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 - [x] ~~**Cuántas canchas de pádel** hay~~ → 7, todas techadas, ya cargadas.
 - [x] ~~**¿Dan clases y arman torneos?**~~ → sí, las dos cosas. Falta cargar
       días, niveles y cupos de la escuela.
+- [x] ~~**Cuánto dura un turno**~~ → 90 minutos, todos. Los de 60 son clases con
+      profesor y no se reservan online: se arreglan con el club.
 - [ ] **Cuál de las siete es la central.** Tienen una cancha principal con
       gradas; hoy está marcada la número 1 (`CANCHA_CENTRAL` en `config.js`)
       porque es lo más común, pero hay que confirmarlo.

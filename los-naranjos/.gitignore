@@ -1,4 +1,6 @@
-node_modules/
+# Sin slash, para que también tape el enlace simbólico que se usa cuando hay
+# que correr Playwright desde la instalación global.
+node_modules
 data/*.db
 data/*.db-journal
 data/*.db-wal

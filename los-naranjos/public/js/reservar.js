@@ -122,6 +122,27 @@ function pintarDias() {
 function pintarDuraciones() {
   const d = disciplinaActual();
   const cont = $('#segmentado-duracion');
+
+  /* Cuando el club ofrece una sola duración —en Los Naranjos, 90 minutos— el
+     paso deja de ser una pregunta y pasa a ser un dato: se muestra, no se
+     elige. El bloque se queda igual para no romper la numeración y porque
+     saber cuánto dura el turno antes de elegir la hora sirve. */
+  if (d.duraciones.length === 1) {
+    const min = d.duraciones[0];
+    estado.duracionMin = min;
+    $('[data-titulo-duracion]').textContent = 'Cuánto dura';
+    cont.innerHTML = `
+      <div>
+        <input type="radio" name="duracion" id="dur-${min}" value="${min}" checked>
+        <label for="dur-${min}">${duracionTexto(min)}</label>
+      </div>`;
+    cont.classList.add('segmentado--fijo');
+    cont.setAttribute('aria-label', `Todos los turnos son de ${duracionTexto(min)}`);
+    return;
+  }
+
+  $('[data-titulo-duracion]').textContent = '¿Cuánto tiempo?';
+  cont.classList.remove('segmentado--fijo');
   cont.innerHTML = d.duraciones.map((min) => `
     <div>
       <input type="radio" name="duracion" id="dur-${min}" value="${min}" ${min === estado.duracionMin ? 'checked' : ''}>
