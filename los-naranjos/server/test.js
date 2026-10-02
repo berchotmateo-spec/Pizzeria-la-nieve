@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { rmSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { createHmac } from 'node:crypto';
 
 const RUTA_DB = join(tmpdir(), `naranjos-test-${process.pid}.db`);
 process.env.DB_PATH = RUTA_DB;
@@ -17,7 +19,8 @@ process.env.PORT = String(3100 + (process.pid % 400));
 const { rutas } = await import('./api.js');
 const { cuentas } = await import('./db.js');
 const T = await import('./tiempo.js');
-const { RESERVAS, CUENTAS } = await import('./config.js');
+const { RESERVAS, CUENTAS, PAGOS, DISCIPLINAS } = await import('./config.js');
+const { db } = await import('./db.js');
 const { usuarioDeLaSolicitud, reiniciarIntentos } = await import('./cuentas.js');
 
 /**
@@ -606,6 +609,560 @@ test('nadie puede sacarse a sí mismo del panel', async () => {
   assert.match(intento.error, /a vos mismo/);
 });
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pagos
+   Van contra otro miércoles, con la grilla limpia: así no chocan con los
+   turnos que sacan las pruebas de arriba.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const OTRO_MIERCOLES = T.sumarDias(PROXIMO_MIERCOLES, 7);
+const SEÑA = 10000;
+const PRECIO = 40000;
+const ENV_PAGOS = ['PAGOS_SIMULADOS', 'MP_ACCESS_TOKEN', 'MP_API_URL', 'MP_WEBHOOK_SECRET', 'URL_PUBLICA'];
+
+/**
+ * Prende los pagos con montos de prueba mientras dura `fn` y después deja
+ * todo como estaba: el resto de las pruebas corre con los pagos apagados.
+ */
+async function conPagos(fn, { pasarela = 'simulado', seña = SEÑA, precio = PRECIO, env = {} } = {}) {
+  const antes = {
+    seña: PAGOS.seña,
+    precio: DISCIPLINAS[0].precios[90],
+    env: Object.fromEntries(ENV_PAGOS.map((k) => [k, process.env[k]])),
+  };
+  PAGOS.seña = { tipo: 'fijo', valor: seña };
+  DISCIPLINAS[0].precios[90] = precio;
+  for (const k of ENV_PAGOS) delete process.env[k];
+  if (pasarela === 'simulado') process.env.PAGOS_SIMULADOS = 'si';
+  Object.assign(process.env, env);
+  try {
+    return await fn();
+  } finally {
+    PAGOS.seña = antes.seña;
+    DISCIPLINAS[0].precios[90] = antes.precio;
+    for (const [k, v] of Object.entries(antes.env)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
+
+const reservaPaga = (extra = {}) => reservaBase({ fecha: OTRO_MIERCOLES, ...extra });
+const refDe = (url) => new URL(url, 'http://x').searchParams.get('ref');
+const libresA = async (hora) => {
+  const d = await llamar('GET /api/disponibilidad', {
+    query: params({ fecha: OTRO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
+  });
+  return d.datos.horarios.find((h) => h.hora === hora).libres;
+};
+const vencer = (codigo) =>
+  db.prepare('UPDATE reservas SET vence_en = ? WHERE codigo = ?')
+    .run(new Date(Date.now() - 60_000).toISOString(), codigo);
+
+/** Un Mercado Pago de mentira: guarda preferencias, pagos y devoluciones. */
+async function mercadoPagoFalso() {
+  const estado = { preferencias: [], pagos: new Map(), devoluciones: [], pedidos: [] };
+  const servidor = createServer(async (req, res) => {
+    let texto = '';
+    for await (const trozo of req) texto += trozo;
+    const cuerpo = texto ? JSON.parse(texto) : null;
+    estado.pedidos.push({ metodo: req.method, ruta: req.url, cabeceras: req.headers, cuerpo });
+    const responder = (status, datos) => {
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(datos));
+    };
+    if (req.headers.authorization !== 'Bearer TOKEN-DE-PRUEBA') return responder(401, { message: 'invalid token' });
+
+    if (req.method === 'POST' && req.url === '/checkout/preferences') {
+      const id = `PREF-${estado.preferencias.length + 1}`;
+      estado.preferencias.push({ id, ...cuerpo });
+      return responder(201, { id, init_point: `https://mp.falso/checkout/${id}` });
+    }
+    const pago = req.url.match(/^\/v1\/payments\/([^/]+)$/);
+    if (req.method === 'GET' && pago) {
+      const p = estado.pagos.get(pago[1]);
+      return p ? responder(200, p) : responder(404, { message: 'Payment not found' });
+    }
+    const devolucion = req.url.match(/^\/v1\/payments\/([^/]+)\/refunds$/);
+    if (req.method === 'POST' && devolucion) {
+      estado.devoluciones.push({ id: devolucion[1], clave: req.headers['x-idempotency-key'] });
+      const p = estado.pagos.get(devolucion[1]);
+      if (p) p.status = 'refunded';
+      return responder(201, { id: 1, status: 'approved' });
+    }
+    return responder(404, { message: 'not found' });
+  });
+  await new Promise((r) => servidor.listen(0, '127.0.0.1', r));
+  return {
+    estado,
+    url: `http://127.0.0.1:${servidor.address().port}`,
+    ultimaPreferencia: () => estado.preferencias.at(-1),
+    /** Lo que pasaría si alguien paga en el checkout. */
+    pagar(preferencia, { id, status = 'approved', monto, detalle = 'accredited', moneda = 'ARS' }) {
+      estado.pagos.set(String(id), {
+        id: Number(id),
+        status,
+        status_detail: detalle,
+        transaction_amount: monto ?? preferencia.items[0].unit_price,
+        currency_id: moneda,
+        external_reference: preferencia.external_reference,
+      });
+    },
+    cerrar: () => new Promise((r) => { servidor.closeAllConnections(); servidor.close(r); }),
+  };
+}
+
+const SECRETO = 'secreto-de-prueba';
+const conMercadoPago = (mp) => ({
+  pasarela: 'mercadopago',
+  env: {
+    MP_ACCESS_TOKEN: 'TOKEN-DE-PRUEBA',
+    MP_API_URL: mp.url,
+    MP_WEBHOOK_SECRET: SECRETO,
+    URL_PUBLICA: 'https://losnaranjos.test',
+  },
+});
+
+/** El aviso que manda Mercado Pago cuando cambia un pago, firmado como lo firma él. */
+function aviso(idPago, { secreto = SECRETO, requestId = 'req-1' } = {}) {
+  const ts = String(Date.now());
+  const v1 = createHmac('sha256', secreto).update(`id:${idPago};request-id:${requestId};ts:${ts};`).digest('hex');
+  return {
+    query: params({ 'data.id': String(idPago), type: 'payment' }),
+    body: { action: 'payment.updated', type: 'payment', data: { id: String(idPago) } },
+    req: { headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': requestId } },
+  };
+}
+
+test('sin montos cargados no se cobra nada y el turno se confirma como siempre', async () => {
+  await conPagos(async () => {
+    const config = await llamar('GET /api/config');
+    assert.equal(config.datos.pagos.activos, false);
+    assert.equal(config.datos.pagos.montosCargados, false);
+
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '07:30', telefono: '2236000001' }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'confirmada');
+    assert.equal(r.datos.pago, undefined);
+  }, { seña: null, precio: null });
+});
+
+test('pagar la seña aparta la cancha y el pago la confirma', async () => {
+  await conPagos(async () => {
+    const config = await llamar('GET /api/config');
+    assert.equal(config.datos.pagos.activos, true);
+    assert.deepEqual(config.datos.pagos.montos.padel[90], { seña: SEÑA, total: PRECIO, precio: PRECIO });
+
+    const r = await llamar('POST /api/reservas', {
+      // El monto lo pone el servidor: lo que mande el navegador no cuenta.
+      body: reservaPaga({ hora: '09:00', canchaId: 'padel-1', telefono: '2236000002', cobro: 'seña', monto: 1 }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'pendiente');
+    assert.equal(r.datos.reserva.aPagar, SEÑA);
+    assert.match(r.datos.pago.url, /^\/pago-simulado\?ref=SIM-/);
+    assert.ok(!(await libresA('09:00')).includes('padel-1'), 'la cancha queda apartada mientras paga');
+
+    const ref = refDe(r.datos.pago.url);
+    const checkout = await llamar('GET /api/pagos/simulado', { query: params({ ref }) });
+    assert.equal(checkout.datos.monto, SEÑA);
+    assert.equal(checkout.datos.vigente, true);
+
+    const pagado = await llamar('POST /api/pagos/simulado', { body: { ref, resultado: 'aprobado' } });
+    assert.match(pagado.datos.volver, /payment_id=SIMP-/);
+
+    const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+    assert.equal(estado.datos.reserva.estado, 'confirmada');
+    assert.equal(estado.datos.reserva.cobro, 'seña');
+    assert.equal(estado.datos.reserva.pagado, SEÑA);
+    assert.equal(estado.datos.reserva.saldo, PRECIO - SEÑA);
+    assert.equal(estado.datos.reserva.telefono, undefined, 'con el código solo no se ve el teléfono');
+  });
+});
+
+test('un pago rechazado deja el turno apartado y se puede reintentar con el turno entero', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '10:30', canchaId: 'padel-1', telefono: '2236000003', cobro: 'seña' }),
+    });
+    const codigo = r.datos.reserva.codigo;
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'rechazado' } });
+
+    const rechazado = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(rechazado.datos.reserva.estado, 'pendiente');
+    assert.equal(rechazado.datos.pago.estado, 'rechazado');
+    assert.ok(rechazado.datos.pago.mensaje);
+    assert.deepEqual(rechazado.datos.opciones.map((o) => o.cobro), ['seña', 'total']);
+
+    const otra = await llamar('POST /api/pagos/reintentar', { body: { codigo, cobro: 'total' } });
+    assert.ok(otra.ok, otra.error);
+    assert.notEqual(refDe(otra.datos.url), refDe(r.datos.pago.url), 'cada intento es un cobro nuevo');
+    const checkout = await llamar('GET /api/pagos/simulado', { query: params({ ref: refDe(otra.datos.url) }) });
+    assert.equal(checkout.datos.monto, PRECIO);
+
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(otra.datos.url), resultado: 'aprobado' } });
+    const final = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(final.datos.reserva.estado, 'confirmada');
+    assert.equal(final.datos.reserva.cobro, 'total');
+    assert.equal(final.datos.reserva.pagado, PRECIO);
+    assert.equal(final.datos.reserva.saldo, 0);
+  });
+});
+
+test('si nadie paga a tiempo, la cancha se libera para otro', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '12:00', canchaId: 'padel-2', telefono: '2236000004', cobro: 'seña' }),
+    });
+    const codigo = r.datos.reserva.codigo;
+    assert.ok(!(await libresA('12:00')).includes('padel-2'));
+
+    vencer(codigo);
+    assert.ok((await libresA('12:00')).includes('padel-2'), 'el apartado vencido ya no ocupa la cancha');
+
+    const otro = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '12:00', canchaId: 'padel-2', telefono: '2236000005', cobro: 'seña' }),
+    });
+    assert.ok(otro.ok, otro.error);
+
+    const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(estado.datos.reserva.estado, 'vencida');
+    const tarde = await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'aprobado' } });
+    assert.equal(tarde.status, 410, 'el link de pago vencido ya no cobra');
+  });
+});
+
+test('un jugador no puede saltearse el pago', async () => {
+  await conPagos(async () => {
+    for (const cobro of [undefined, 'club', 'gratis']) {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '13:30', canchaId: 'padel-3', telefono: '2236000006', cobro }),
+      });
+      assert.equal(r.ok, false, `cobro ${cobro}`);
+      assert.match(r.error, /seña|turno/);
+    }
+    assert.ok((await libresA('13:30')).includes('padel-3'), 'no quedó nada apartado');
+  });
+});
+
+test('los turnos esperando el pago cuentan para el tope por teléfono', async () => {
+  await conPagos(async () => {
+    const tel = '2236000007';
+    for (let i = 0; i < RESERVAS.maxPorTelefono; i++) {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: T.aHora(15 * 60 + i * 90), canchaId: 'padel-4', telefono: tel, cobro: 'seña' }),
+      });
+      assert.ok(r.ok, r.error);
+    }
+    const otra = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '19:30', canchaId: 'padel-4', telefono: tel, cobro: 'seña' }),
+    });
+    assert.equal(otra.ok, false);
+    assert.match(otra.error, /turnos activos/);
+  });
+});
+
+test('el personal del club reserva para un cliente sin pago online', async () => {
+  await conPagos(async () => {
+    const alta = await llamar('POST /api/admin/personal', {
+      req: admin,
+      body: { nombre: 'Vale Recepción', telefono: '2236000010', clave: 'mostrador-2026' },
+    });
+    assert.ok(alta.ok, alta.error);
+    const mostrador = navegador();
+    await mostrador.llamar('POST /api/cuenta/ingreso', { body: { telefono: '2236000010', clave: 'mostrador-2026' } });
+
+    const r = await mostrador.llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '08:00', canchaId: 'padel-5', nombre: 'Cliente por WhatsApp', telefono: '2236000011' }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'confirmada');
+    assert.equal(r.datos.reserva.cobro, 'club');
+    assert.equal(r.datos.reserva.nombre, 'Cliente por WhatsApp', 'sale a nombre del cliente, no de quien atiende');
+
+    const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+    assert.ok(datos.movimientos.some((m) => m.accion === 'reserva para un cliente' && m.quien === 'Vale Recepción'));
+  });
+});
+
+test('Mercado Pago: el cobro sale con el monto, la referencia y los avisos correctos', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '09:30', canchaId: 'padel-6', telefono: '2236000020', cobro: 'seña', email: 'ana@ejemplo.com' }),
+      });
+      assert.ok(r.ok, r.error);
+      assert.equal(r.datos.pago.url, 'https://mp.falso/checkout/PREF-1');
+
+      const pedido = mp.estado.pedidos.at(-1);
+      assert.ok(pedido.cabeceras['x-idempotency-key'], 'las escrituras llevan clave de idempotencia');
+      const pref = mp.ultimaPreferencia();
+      const codigo = r.datos.reserva.codigo;
+      assert.equal(pref.items[0].unit_price, SEÑA);
+      assert.equal(pref.items[0].currency_id, 'ARS');
+      assert.equal(pref.external_reference, codigo);
+      assert.equal(pref.notification_url, 'https://losnaranjos.test/api/pagos/aviso');
+      assert.equal(pref.back_urls.success, `https://losnaranjos.test/reservar?pago=${codigo}`);
+      assert.equal(pref.auto_return, 'approved');
+      assert.equal(pref.binary_mode, true);
+      assert.deepEqual(pref.payment_methods.excluded_payment_types.map((x) => x.id).sort(), ['atm', 'ticket']);
+      assert.equal(pref.expires, true);
+      assert.match(pref.expiration_date_to, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$/);
+      assert.equal(pref.payer.email, 'ana@ejemplo.com');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('sin URL_PUBLICA, Mercado Pago vuelve a la dirección por la que entró el jugador', async () => {
+  const mp = await mercadoPagoFalso();
+  const { URL_PUBLICA, ...sinUrl } = conMercadoPago(mp).env;
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        req: { headers: { host: 'naranjos.up.railway.app', 'x-forwarded-proto': 'https' } },
+        body: reservaPaga({ hora: '07:30', canchaId: 'padel-6', telefono: '2236000031', cobro: 'seña' }),
+      });
+      assert.ok(r.ok, r.error);
+      const pref = mp.ultimaPreferencia();
+      assert.equal(pref.back_urls.success, `https://naranjos.up.railway.app/reservar?pago=${r.datos.reserva.codigo}`);
+      assert.equal(pref.notification_url, 'https://naranjos.up.railway.app/api/pagos/aviso');
+
+      // En una máquina local no hay https adonde avisar: queda la confirmación a la vuelta.
+      const local = await llamar('POST /api/reservas', {
+        req: { headers: { host: 'localhost:3000' } },
+        body: reservaPaga({ hora: '17:00', canchaId: 'padel-6', telefono: '2236000032', cobro: 'seña' }),
+      });
+      assert.ok(local.ok, local.error);
+      assert.equal(mp.ultimaPreferencia().back_urls.success, `http://localhost:3000/reservar?pago=${local.datos.reserva.codigo}`);
+      assert.equal(mp.ultimaPreferencia().notification_url, undefined);
+    }, { pasarela: 'mercadopago', env: sinUrl });
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('el aviso de Mercado Pago confirma el turno una sola vez aunque llegue repetido', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '11:00', canchaId: 'padel-6', telefono: '2236000021', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5001 });
+
+      const primero = await llamar('POST /api/pagos/aviso', aviso(5001));
+      assert.ok(primero.ok, primero.error);
+      assert.equal(primero.datos.resultado, 'confirmada');
+
+      const repetido = await llamar('POST /api/pagos/aviso', aviso(5001, { requestId: 'req-2' }));
+      assert.equal(repetido.datos.resultado, 'sin-cambios');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'confirmada');
+      assert.equal(estado.datos.reserva.pagado, SEÑA, 'el mismo pago no se cuenta dos veces');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('un aviso con la firma mal no toca nada', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '12:30', canchaId: 'padel-6', telefono: '2236000022', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5002 });
+
+      const trucho = await llamar('POST /api/pagos/aviso', aviso(5002, { secreto: 'otro-secreto' }));
+      assert.equal(trucho.status, 401);
+      assert.equal(trucho.code, 'FIRMA');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'pendiente');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('un pago por menos de lo pedido no confirma el turno', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '14:00', canchaId: 'padel-6', telefono: '2236000023', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5003, monto: SEÑA / 2 });
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5003));
+      assert.equal(hecho.datos.resultado, 'a-devolver');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'pendiente');
+      assert.equal(estado.datos.aDevolver, true);
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('al volver de Mercado Pago se confirma aunque el aviso no haya llegado', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '15:30', canchaId: 'padel-6', telefono: '2236000024', cobro: 'total' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5004 });
+      const estado = await llamar('GET /api/pagos/estado', {
+        query: params({ codigo: r.datos.reserva.codigo, pago_id: '5004' }),
+      });
+      assert.equal(estado.datos.reserva.estado, 'confirmada');
+      assert.equal(estado.datos.reserva.pagado, PRECIO);
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('si paga tarde y la cancha sigue libre, el turno es suyo', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '17:00', canchaId: 'padel-7', telefono: '2236000025', cobro: 'seña' }),
+      });
+      vencer(r.datos.reserva.codigo);
+      mp.pagar(mp.ultimaPreferencia(), { id: 5005 });
+
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5005));
+      assert.equal(hecho.datos.resultado, 'recuperada');
+      assert.ok(!(await libresA('17:00')).includes('padel-7'), 'la cancha vuelve a estar tomada');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('si paga tarde y la cancha ya era de otro, la plata queda para devolver', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '18:30', canchaId: 'padel-7', telefono: '2236000026', cobro: 'seña' }),
+      });
+      const pref = mp.ultimaPreferencia();
+      vencer(r.datos.reserva.codigo);
+      const otro = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '18:30', canchaId: 'padel-7', telefono: '2236000027', cobro: 'seña' }),
+      });
+      assert.ok(otro.ok, otro.error);
+
+      mp.pagar(pref, { id: 5006 });
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5006));
+      assert.equal(hecho.datos.resultado, 'a-devolver');
+
+      const lista = await llamar('GET /api/admin/pagos', { req: admin });
+      const item = lista.datos.aRevisar.find((p) => p.externoId === '5006');
+      assert.ok(item, 'aparece en "Pagos para revisar"');
+      assert.match(item.motivo, /lo tomó otra persona/);
+
+      const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+      assert.ok(datos.movimientos.some((m) => m.quien === 'Sistema' && m.accion === 'pago para devolver'));
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('cancelar un turno pagado deja la plata para devolver y el club la devuelve una vez', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const tel = '2236000028';
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '20:00', canchaId: 'padel-7', telefono: tel, cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5007 });
+      await llamar('POST /api/pagos/aviso', aviso(5007));
+
+      const cancelada = await llamar('POST /api/reservas/cancelar', {
+        body: { codigo: r.datos.reserva.codigo, telefono: tel },
+      });
+      assert.ok(cancelada.ok, cancelada.error);
+      assert.equal(cancelada.datos.reserva.pagado, 0, 'lo pagado ya no cuenta para el turno');
+
+      const lista = await llamar('GET /api/admin/pagos', { req: admin });
+      const item = lista.datos.aRevisar.find((p) => p.externoId === '5007');
+      assert.equal(item.motivo, 'Turno cancelado');
+
+      const devuelto = await llamar('POST /api/admin/pagos/devolver', { req: admin, body: { id: item.id } });
+      assert.ok(devuelto.ok, devuelto.error);
+      assert.deepEqual(mp.estado.devoluciones, [{ id: '5007', clave: 'devolucion-mercadopago-5007' }]);
+
+      const otraVez = await llamar('POST /api/admin/pagos/devolver', { req: admin, body: { id: item.id } });
+      assert.equal(otraVez.status, 409, 'no se devuelve dos veces');
+      assert.equal(mp.estado.devoluciones.length, 1);
+
+      const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+      assert.ok(datos.movimientos.some((m) => m.accion === 'devolución'));
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('el club puede dar por resuelto un pago sin devolverlo', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '21:30', canchaId: 'padel-7', telefono: '2236000029', cobro: 'seña' }),
+    });
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'aprobado' } });
+    await llamar('POST /api/admin/cancelar', { req: admin, body: { codigo: r.datos.reserva.codigo } });
+
+    const lista = await llamar('GET /api/admin/pagos', { req: admin });
+    const item = lista.datos.aRevisar.find((p) => p.reserva.codigo === r.datos.reserva.codigo);
+    const resuelto = await llamar('POST /api/admin/pagos/resolver', { req: admin, body: { id: item.id } });
+    assert.ok(resuelto.ok, resuelto.error);
+
+    const despues = await llamar('GET /api/admin/pagos', { req: admin });
+    assert.ok(!despues.datos.aRevisar.some((p) => p.id === item.id));
+  });
+});
+
+test('los reintentos de pago desde una misma IP tienen tope', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '19:00', canchaId: 'padel-5', telefono: '2236000033', cobro: 'seña' }),
+    });
+    const ip = '198.51.100.9';
+    let frenados = 0;
+    for (let i = 0; i < 23; i++) {
+      const intento = await llamar('POST /api/pagos/reintentar', { ip, body: { codigo: r.datos.reserva.codigo } });
+      if (intento.status === 429) frenados++;
+    }
+    assert.equal(frenados, 3, 'pasados los 20 intentos en 10 minutos, se frena');
+  });
+});
+
+test('si Mercado Pago no responde, el turno no queda apartado', async () => {
+  // Un puerto donde no escucha nadie.
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '16:00', canchaId: 'padel-5', telefono: '2236000030', cobro: 'seña' }),
+    });
+    assert.equal(r.status, 502);
+    assert.equal(r.code, 'PASARELA');
+    assert.ok((await libresA('16:00')).includes('padel-5'), 'la cancha sigue libre');
+  }, { pasarela: 'mercadopago', env: { MP_ACCESS_TOKEN: 'TOKEN-DE-PRUEBA', MP_API_URL: 'http://127.0.0.1:9' } });
+});
+
 test('el servidor HTTP sirve el sitio y el API', async () => {
   const { servidor } = await import('./index.js');
   await new Promise((r) => (servidor.listening ? r() : servidor.once('listening', r)));
@@ -631,6 +1188,15 @@ test('el servidor HTTP sirve el sitio y el API', async () => {
 
     const metodo = await fetch(base + '/', { method: 'DELETE' });
     assert.equal(metodo.status, 405);
+
+    const simulado = await fetch(base + '/pago-simulado');
+    assert.equal(simulado.status, 200, 'existe la pantalla del pago de prueba');
+
+    // Un aviso que no es JSON no se rechaza: si no, Mercado Pago lo reintentaría para siempre.
+    const avisoRaro = await fetch(base + '/api/pagos/aviso?topic=merchant_order&id=1', {
+      method: 'POST', body: 'esto no es json',
+    });
+    assert.equal(avisoRaro.status, 200);
   } finally {
     // fetch mantiene la conexión viva: hay que cortarlas para que cierre.
     servidor.closeAllConnections();

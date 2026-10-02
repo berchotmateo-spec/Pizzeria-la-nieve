@@ -77,8 +77,9 @@ function mostrarError(mensaje) {
 
 function pintar(reservas) {
   const cont = $('#turnos');
-  const activas = reservas.filter((r) => r.estado === 'confirmada');
-  const canceladas = reservas.filter((r) => r.estado !== 'confirmada');
+  const vigente = (r) => r.estado === 'confirmada' || r.estado === 'pendiente';
+  const activas = reservas.filter(vigente);
+  const canceladas = reservas.filter((r) => !vigente(r));
   const ordenadas = [...activas, ...canceladas];
 
   if (!ordenadas.length) {
@@ -98,6 +99,7 @@ $('#turnos').addEventListener('click', (e) => {
   turnoAcancelar = boton.dataset.cancelar;
   const turno = boton.closest('.turno');
   $('#detalle-cancelacion').textContent = turno.querySelector('.turno__fecha').textContent;
+  $('#modal-cancelar').querySelector('[data-aviso-pago]').hidden = turno.dataset.pagado !== 'si';
   $('#error-cancelacion').hidden = true;
   $('#modal-cancelar').showModal();
 });

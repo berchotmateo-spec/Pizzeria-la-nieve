@@ -26,6 +26,36 @@ export function ahoraISO() {
   return new Date().toISOString();
 }
 
+/** Una marca ISO dentro de `minutos` minutos (o hace, si es negativo). */
+export function dentroDeMinutosISO(minutos) {
+  return new Date(Date.now() + minutos * 60_000).toISOString();
+}
+
+const fmtPartes = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+});
+
+/** '2026-10-02T19:42:00.000Z' → '16:42', en la hora del club. */
+export function horaDeISO(iso) {
+  return fmtHora.format(new Date(iso));
+}
+
+/**
+ * Fecha ISO con la zona del club escrita como desfase —'2026-10-02T16:42:00.000-03:00'—,
+ * que es el formato que piden las fechas de vencimiento de Mercado Pago.
+ */
+export function isoConZona(fecha = new Date()) {
+  const p = Object.fromEntries(fmtPartes.formatToParts(fecha).map((x) => [x.type, x.value]));
+  const local = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+  const desfase = Math.round((local - Math.floor(fecha.getTime() / 1000) * 1000) / 60_000);
+  const signo = desfase < 0 ? '-' : '+';
+  const abs = Math.abs(desfase);
+  const ms = String(fecha.getMilliseconds()).padStart(3, '0');
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}.${ms}` +
+    `${signo}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+}
+
 /** Día de la semana (0 = domingo) de una fecha 'YYYY-MM-DD'. */
 export function diaSemana(fecha) {
   const [a, m, d] = fecha.split('-').map(Number);

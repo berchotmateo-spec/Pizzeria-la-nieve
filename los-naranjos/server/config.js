@@ -103,7 +103,9 @@ export const DISCIPLINAS = [
     descripcion:
       'Canchas de blindex con piso de césped sintético y luz LED, ' +
       'todas techadas. Alquiler de paletas y venta de pelotas en recepción.',
-    precios: { 60: null, 90: null }, // ⚠️ COMPLETAR con tarifas reales
+    // ⚠️ COMPLETAR: precio del turno, por duración. Además de mostrarse en el
+    // sitio, es lo que se cobra cuando alguien paga el turno entero.
+    precios: { 90: null },
     destacada: true,
   },
 ];
@@ -163,6 +165,41 @@ export const RESERVAS = {
  * WhatsApp, en lugar de publicar números equivocados.
  */
 export const PRECIOS_PUBLICADOS = false;
+
+/**
+ * Pagos online, con Mercado Pago.
+ * El club trabaja con seña: un turno sacado por la web queda firme cuando el
+ * jugador paga la seña o el turno entero. La plata va directo a la cuenta de
+ * Mercado Pago del club; el sistema no la toca nunca.
+ *
+ * Los montos salen de acá y del precio de cada disciplina (`DISCIPLINAS`),
+ * nunca de lo que mande el navegador. Mientras un monto esté en null, esa
+ * opción no se ofrece; si no queda ninguna, la reserva funciona como antes,
+ * sin pago.
+ *
+ * Las credenciales de Mercado Pago NO van acá: se cargan como variables de
+ * entorno en el servidor (MP_ACCESS_TOKEN y compañía, ver README).
+ */
+export const PAGOS = {
+  /** Qué se le ofrece al jugador, en este orden. */
+  opciones: ['seña', 'total'],
+  /**
+   * ⚠️ VERIFICAR — el club confirma el monto.
+   * Un monto fijo en pesos — { tipo: 'fijo', valor: 10000 } — o un porcentaje
+   * del precio del turno — { tipo: 'porcentaje', valor: 50 }.
+   */
+  seña: { tipo: 'fijo', valor: null },
+  /**
+   * Si es true, por la web no se puede reservar sin pagar al menos la seña.
+   * El personal del club, con su cuenta, sí puede: es como carga los turnos
+   * que le piden por WhatsApp o por teléfono, que cobra en el mostrador.
+   */
+  obligatorio: true,
+  /** Minutos que el turno queda apartado mientras el jugador paga. */
+  minutosParaPagar: 15,
+  /** Lo que aparece en el resumen de la tarjeta del jugador (hasta 22 letras). */
+  descriptor: 'LOS NARANJOS',
+};
 
 /**
  * Servicios e instalaciones que se muestran en la home.

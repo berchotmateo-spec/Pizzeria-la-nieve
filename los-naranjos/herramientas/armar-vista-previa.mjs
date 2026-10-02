@@ -35,6 +35,7 @@ const reservar = leer('public/reservar.html');
 const turnos = leer('public/mis-turnos.html');
 const cuenta = leer('public/cuenta.html');
 const admin = leer('public/admin.html');
+const pagoSimulado = leer('public/pago-simulado.html');
 
 const sprite = entre(indice, '<svg xmlns="http://www.w3.org/2000/svg" style="display:none"', '</svg>', 'sprite');
 const cabecera = entre(indice, '<header class="cabecera">', '</header>', 'cabecera');
@@ -137,6 +138,12 @@ vistaAdmin = vistaAdmin.replace(
         <div class="aviso aviso--error" id="error-acceso" hidden><span></span></div>`
 );
 
+/* La pantalla de pago de prueba: en el sitio real reemplaza a Mercado Pago
+   cuando el servidor corre en modo de prueba; acá, siempre. */
+const vistaPagoSimulado = entre(
+  pagoSimulado, '<main id="contenido" class="pago-prueba-fondo">', '</main>', 'main del pago de prueba'
+);
+
 // ── CSS ────────────────────────────────────────────────────────────────────
 const css = ['public/css/base.css', 'public/css/site.css', 'public/css/app.css']
   .map(leer).join('\n\n');
@@ -151,7 +158,18 @@ const jsInicio = sinImport(
     .replace('<script type="module">', '')
     .replace('</script>', '')
 );
-const jsReservar = sinImport(leer('public/js/reservar.js'));
+/* Para pagar, el sitio real sale de la página —a Mercado Pago o a la pantalla
+   de prueba— y vuelve. Acá no hay adónde salir: se navega dentro del archivo. */
+const unaVez = (texto, viejo, nuevo, etiqueta) => {
+  if (!texto.includes(viejo)) throw new Error(`No encontré ${etiqueta}`);
+  return texto.replace(viejo, nuevo);
+};
+const jsReservar = unaVez(
+  sinImport(leer('public/js/reservar.js')), 'location.assign(url);', 'irA(url);', 'la salida al pago en reservar.js'
+);
+const jsPagoSimulado = unaVez(
+  sinImport(leer('public/js/pago-simulado.js')), 'location.assign(url);', 'irA(url);', 'la vuelta del pago de prueba'
+);
 const jsCuenta = renombrarEnCuenta(sinImport(leer('public/js/cuenta.js')));
 const jsAdmin = renombrarEnAdmin(sinImport(leer('public/js/admin.js')));
 const jsTurnos = sinImport(leer('public/js/mis-turnos.js'))
@@ -162,8 +180,26 @@ const jsTurnos = sinImport(leer('public/js/mis-turnos.js'))
 // Se usa una base temporal para que armar la vista previa no toque los datos.
 const dbTemporal = join(tmpdir(), `naranjos-vista-previa-${process.pid}.db`);
 process.env.DB_PATH = dbTemporal;
+// En la vista previa los pagos son siempre de prueba: no hay Mercado Pago adonde ir.
+process.env.PAGOS_SIMULADOS = 'si';
 const { configPublica } = await import(new URL('../server/api.js', import.meta.url));
 const config = configPublica();
+
+/* Si el club todavía no confirmó la seña ni el precio, la vista previa usa
+   montos de ejemplo —y la pantalla de reserva lo aclara—, para poder mostrar
+   cómo se paga. Con los montos reales cargados en la config, usa esos. */
+const MONTOS_DE_EJEMPLO = { seña: 10000, total: 40000, precio: 40000 };
+if (!config.pagos.activos) {
+  config.pagos = {
+    ...config.pagos,
+    activos: true,
+    montosCargados: true,
+    ejemplo: true,
+    montos: Object.fromEntries(config.disciplinas.map((d) => [
+      d.slug, Object.fromEntries(d.duraciones.map((dur) => [dur, { ...MONTOS_DE_EJEMPLO }])),
+    ])),
+  };
+}
 for (const sufijo of ['', '-wal', '-shm']) rmSync(dbTemporal + sufijo, { force: true });
 
 delete config.calendario; // el calendario y la fecha se recalculan en el
@@ -199,7 +235,8 @@ ${css}
 
 <div class="cinta-demo">
   <b>Vista previa.</b> Se puede navegar y reservar de verdad, pero los turnos
-  quedan sólo en este navegador: no llegan al club.
+  quedan sólo en este navegador: no llegan al club. Los pagos pasan por una
+  pantalla de prueba y no se cobra nada.
 </div>
 
 ${sprite}
@@ -211,6 +248,7 @@ ${cabecera}
 <div class="vista" id="vista-turnos" hidden>${vistaTurnos}</div>
 <div class="vista" id="vista-cuenta" hidden>${vistaCuenta}</div>
 <div class="vista" id="vista-admin" hidden>${vistaAdmin}</div>
+<div class="vista" id="vista-pago-simulado" hidden>${vistaPagoSimulado}</div>
 
 ${pie}
 ${flotante}
@@ -296,6 +334,10 @@ function reservasSimuladas(fecha) {
           if (m + dur <= cierra) {
             const i = Math.floor(azar() * NOMBRES.length);
             const esBloqueo = azar() < 0.04;
+            const montos = montosDe(cancha.disciplina, dur);
+            const tirada = azar();
+            const cobro = esBloqueo || !CONFIG.pagos?.activos ? null
+              : tirada < 0.55 ? 'seña' : tirada < 0.85 ? 'total' : 'club';
             reservas.push({
               codigo: 'LN-' + (fecha + cancha.id + m).slice(-5).toUpperCase().replace(/[^A-Z0-9]/g, 'X'),
               tipo: esBloqueo ? 'bloqueo' : 'reserva',
@@ -309,6 +351,9 @@ function reservasSimuladas(fecha) {
               email: null,
               notas: esBloqueo ? null : NOTAS[Math.floor(azar() * NOTAS.length)],
               estado: 'confirmada',
+              cobro,
+              precio: esBloqueo ? null : montos.precio ?? null,
+              pagado: cobro === 'seña' ? montos.seña || 0 : cobro === 'total' ? montos.total || 0 : 0,
               simulada: true,
             });
             m += dur;
@@ -339,7 +384,7 @@ const guardarReservas = (r) => { try { localStorage.setItem(GUARDADO, JSON.strin
 function ocupacionTotal(fecha) {
   const ocupado = new Set(ocupacionSimulada(fecha));
   for (const r of leerReservas()) {
-    if (r.fecha !== fecha || r.estado !== 'confirmada') continue;
+    if (r.fecha !== fecha || !ocupaCancha(r)) continue;
     const inicio = aMin(r.hora);
     for (let m = inicio; m < inicio + r.duracionMin; m += SLOT) ocupado.add(r.canchaId + ':' + m / SLOT);
   }
@@ -380,13 +425,16 @@ function disponibilidad(fecha, slug, duracionMin) {
 const ALFABETO = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const nuevoCodigo = () => 'LN-' + Array.from(crypto.getRandomValues(new Uint8Array(5)), (b) => ALFABETO[b % 32]).join('');
 
-const serializar = (r) => ({
+const serializar = ({ pagoRef, pagos, ...r }) => ({
   ...r,
   disciplinaNombre: disciplinaDe(r.disciplina)?.nombre || r.disciplina,
   canchaNombre: CONFIG.canchas.find((c) => c.id === r.canchaId)?.nombre || r.canchaId,
   fechaLarga: fechaLarga(r.fecha),
   fin: aHora(aMin(r.hora) + r.duracionMin),
   cancelable: cancelable(r),
+  pagado: r.pagado || 0,
+  saldo: r.precio != null ? Math.max(r.precio - (r.pagado || 0), 0) : null,
+  venceHora: r.estado === 'pendiente' && r.venceEn ? horaDe(finDelCheckout(r)) : null,
 });
 
 function cancelable(r) {
@@ -397,6 +445,153 @@ function cancelable(r) {
 }
 
 const fallo = (mensaje, status = 400, code) => ({ status, datos: { error: mensaje, code } });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pagos, versión vista previa.
+   Lo mismo que hace el servidor con la pasarela de prueba: el turno queda
+   apartado mientras se "paga" en la pantalla de prueba, y aprobar o rechazar
+   lo deja firme o apartado para volver a intentar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const GRACIA_MIN = 5;
+const LLAVE_REVISAR = 'naranjos:vista-previa-pagos-revisar';
+
+const montosDe = (slug, dur) => CONFIG.pagos?.montos?.[slug]?.[dur] || {};
+function opcionesDe(slug, dur) {
+  if (!CONFIG.pagos?.activos) return [];
+  const m = montosDe(slug, dur);
+  return (CONFIG.pagos.opciones || ['seña', 'total']).filter((o) => m[o]).map((o) => ({ cobro: o, monto: m[o] }));
+}
+const nuevaRef = () => 'SIM-' + Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+const finDelCheckout = (r) => Date.parse(r.venceEn) - GRACIA_MIN * 60000;
+const horaDe = (ms) => fmtHora.format(new Date(ms));
+/* Un turno ocupa la cancha si está firme o si alguien lo está pagando a tiempo. */
+const ocupaCancha = (r) => r.estado === 'confirmada' || (r.estado === 'pendiente' && Date.parse(r.venceEn) > Date.now());
+
+/** Los apartados que nadie pagó a tiempo se sueltan. */
+function vencerPendientes() {
+  const todas = leerReservas();
+  let cambio = false;
+  for (const r of todas) {
+    if (r.estado === 'pendiente' && Date.parse(r.venceEn) <= Date.now()) { r.estado = 'vencida'; cambio = true; }
+  }
+  if (cambio) guardarReservas(todas);
+}
+
+function cobroDeLaReserva(slug, dur, d) {
+  const precio = montosDe(slug, dur).precio ?? null;
+  if (d.delClub) return { cobro: 'club', precio, pagado: 0 };
+  const opciones = opcionesDe(slug, dur);
+  if (!opciones.length) return { cobro: null, precio, pagado: 0 };
+  const elegida = opciones.find((o) => o.cobro === d.cobro);
+  if (!elegida) {
+    return { error: opciones.length > 1 ? 'Elegí si pagás la seña o el turno entero.' : 'Para reservar online hay que pagar la seña.' };
+  }
+  return {
+    estado: 'pendiente', cobro: elegida.cobro, precio, aPagar: elegida.monto, pagado: 0,
+    venceEn: new Date(Date.now() + (CONFIG.pagos.minutosParaPagar + GRACIA_MIN) * 60000).toISOString(),
+    pagoRef: nuevaRef(),
+  };
+}
+
+const leerRevisar = () => { try { return JSON.parse(localStorage.getItem(LLAVE_REVISAR) || '[]'); } catch { return []; } };
+const guardarRevisar = (l) => { try { localStorage.setItem(LLAVE_REVISAR, JSON.stringify(l)); } catch { /* sin almacenamiento */ } };
+
+/** Plata pagada de un turno que se canceló: queda en "Pagos para revisar". */
+function paraDevolver(reserva, motivo) {
+  if (!(reserva.pagado > 0)) return;
+  const lista = leerRevisar();
+  lista.unshift({
+    id: Date.now(), monto: reserva.pagado, motivo, creadoEn: new Date().toISOString(),
+    reserva: { ...reserva, estado: 'cancelada' },
+  });
+  guardarRevisar(lista);
+}
+
+function tituloDelCobro(r) {
+  const cancha = CONFIG.canchas.find((c) => c.id === r.canchaId)?.nombre || r.canchaId;
+  return \`\${r.cobro === 'seña' ? 'Seña' : 'Turno'} · \${disciplinaDe(r.disciplina)?.nombre || r.disciplina} · \${fechaLarga(r.fecha)} \${r.hora} · \${cancha}\`;
+}
+
+function manejarPagos(ruta, metodo, cuerpo, q) {
+  const todas = leerReservas();
+  const porCodigo = (c) => todas.find((r) => r.codigo === String(c || '').trim().toUpperCase());
+
+  if (ruta === '/api/pagos/estado') {
+    const r = porCodigo(q.get('codigo'));
+    if (!r) return fallo('No encontramos esa reserva.', 404, 'NO_ENCONTRADO');
+    const ultimo = (r.pagos || []).at(-1) || null;
+    const { telefono, email, ...publica } = serializar(r);
+    return {
+      status: 200,
+      datos: {
+        reserva: publica,
+        pago: ultimo && {
+          estado: ultimo.estado, monto: ultimo.monto, motivo: null,
+          mensaje: ultimo.estado === 'aprobado' ? 'Pago aprobado.' : 'El pago no se aprobó.',
+        },
+        aDevolver: false,
+        venceEn: r.estado === 'pendiente' ? new Date(finDelCheckout(r)).toISOString() : null,
+        opciones: r.estado === 'pendiente' ? opcionesDe(r.disciplina, r.duracionMin) : [],
+      },
+    };
+  }
+
+  if (ruta === '/api/pagos/reintentar') {
+    const r = porCodigo(cuerpo.codigo);
+    if (!r) return fallo('No encontramos esa reserva.', 404, 'NO_ENCONTRADO');
+    if (r.estado === 'confirmada') return fallo('Ese turno ya está pagado y confirmado.', 409, 'YA_PAGADO');
+    if (r.estado !== 'pendiente' || finDelCheckout(r) - Date.now() < 60000) {
+      return fallo('Se terminó el tiempo para pagar y el turno se liberó. Elegilo de nuevo.', 410, 'VENCIDO');
+    }
+    const opcion = opcionesDe(r.disciplina, r.duracionMin).find((o) => o.cobro === (cuerpo.cobro || r.cobro));
+    if (!opcion) return fallo('Esa forma de pago no está disponible.');
+    r.cobro = opcion.cobro;
+    r.aPagar = opcion.monto;
+    r.pagoRef = nuevaRef();
+    guardarReservas(todas);
+    return { status: 200, datos: { url: '/pago-simulado?ref=' + r.pagoRef, venceEn: new Date(finDelCheckout(r)).toISOString() } };
+  }
+
+  if (ruta === '/api/pagos/abandonar') {
+    const r = porCodigo(cuerpo.codigo);
+    if (!r) return fallo('No encontramos esa reserva.', 404, 'NO_ENCONTRADO');
+    if (r.estado === 'pendiente') { r.estado = 'vencida'; guardarReservas(todas); }
+    const { telefono, email, ...publica } = serializar(r);
+    return { status: 200, datos: { ok: true, reserva: publica } };
+  }
+
+  if (ruta === '/api/pagos/simulado') {
+    const ref = metodo === 'GET' ? q.get('ref') : cuerpo.ref;
+    const r = todas.find((x) => x.pagoRef === ref);
+    if (!r) return fallo('Ese pago no existe.', 404, 'NO_ENCONTRADO');
+    const vigente = r.estado === 'pendiente' && finDelCheckout(r) > Date.now();
+    const volver = '/reservar?pago=' + encodeURIComponent(r.codigo);
+    if (metodo === 'GET') {
+      return {
+        status: 200,
+        datos: {
+          codigo: r.codigo, titulo: tituloDelCobro(r), cobro: r.cobro, monto: r.aPagar, vigente,
+          venceEn: new Date(finDelCheckout(r)).toISOString(), volver,
+        },
+      };
+    }
+    if (!vigente) return fallo('Este link de pago venció.', 410, 'VENCIDO');
+    const aprobado = cuerpo.resultado === 'aprobado';
+    const id = 'SIMP-' + nuevaRef().slice(4);
+    r.pagos = [...(r.pagos || []), { id, estado: aprobado ? 'aprobado' : 'rechazado', monto: r.aPagar }];
+    if (aprobado) {
+      r.estado = 'confirmada';
+      r.pagado = r.aPagar;
+      r.cobro = r.precio && r.aPagar >= r.precio ? 'total' : 'seña';
+      delete r.venceEn;
+    }
+    guardarReservas(todas);
+    return { status: 200, datos: { volver: volver + '&payment_id=' + id + '&status=' + (aprobado ? 'approved' : 'rejected') } };
+  }
+
+  return fallo('Ese endpoint no existe.', 404);
+}
+
 
 function crearReserva(d) {
   const disciplina = disciplinaDe(d.disciplina);
@@ -425,8 +620,8 @@ function crearReserva(d) {
   const email = String(d.email || '').trim();
   if (email && !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$/.test(email)) return fallo('El correo no parece válido.');
 
-  const activas = leerReservas().filter((r) => r.telefono === telefono && r.estado === 'confirmada' && r.fecha >= hoy());
-  if (activas.length >= CONFIG.reglas.maxPorTelefono) {
+  const activas = leerReservas().filter((r) => r.telefono === telefono && ocupaCancha(r) && r.fecha >= hoy());
+  if (!d.delClub && activas.length >= CONFIG.reglas.maxPorTelefono) {
     return fallo(\`Ya tenés \${CONFIG.reglas.maxPorTelefono} turnos activos con este teléfono. Cancelá uno o escribinos por WhatsApp.\`);
   }
 
@@ -443,21 +638,31 @@ function crearReserva(d) {
     if (!cancha) return fallo('No quedan canchas libres en ese horario.', 409, 'OCUPADO');
   }
 
+  // Igual que en el servidor: el monto sale de la config, no del formulario.
+  const cobro = cobroDeLaReserva(disciplina.slug, duracionMin, d);
+  if (cobro.error) return fallo(cobro.error);
+
   const reserva = {
     codigo: nuevoCodigo(), tipo: 'reserva', disciplina: disciplina.slug, canchaId: cancha.id,
     fecha: d.fecha, hora: d.hora, duracionMin, nombre, telefono,
     email: email || null, notas: String(d.notas || '').trim().slice(0, 300) || null,
     estado: 'confirmada', creadaEn: new Date().toISOString(),
+    ...cobro,
   };
   const todas = leerReservas();
   todas.push(reserva);
   guardarReservas(todas);
-  return { status: 200, datos: { ok: true, reserva: serializar(reserva) } };
+  const datos = { ok: true, reserva: serializar(reserva) };
+  if (reserva.estado === 'pendiente') {
+    datos.pago = { url: '/pago-simulado?ref=' + reserva.pagoRef, venceEn: new Date(finDelCheckout(reserva)).toISOString() };
+  }
+  return { status: 200, datos };
 }
 
 function manejar(url, metodo, cuerpo) {
   const ruta = url.pathname;
   const q = url.searchParams;
+  vencerPendientes();
 
   if (ruta === '/api/config') {
     return { status: 200, datos: { ...CONFIG, calendario: calendario(), hoy: hoy() } };
@@ -472,6 +677,14 @@ function manejar(url, metodo, cuerpo) {
 
   if (ruta === '/api/reservas' && metodo === 'POST') {
     const dueño = usuarioActual();
+    // El personal del club reserva para un cliente: sus datos, y lo cobra el mostrador.
+    if (dueño?.rol === 'club') {
+      const r = crearReserva({ ...cuerpo, delClub: true });
+      if (r.status === 200) {
+        anotar(dueño.nombre, 'reserva para un cliente', \`\${r.datos.reserva.codigo} · \${cuerpo.fecha} \${cuerpo.hora} · \${r.datos.reserva.nombre} · lo cobra el club\`);
+      }
+      return r;
+    }
     return crearReserva(dueño ? { ...cuerpo, nombre: dueño.nombre, telefono: dueño.telefono } : cuerpo);
   }
 
@@ -490,7 +703,7 @@ function manejar(url, metodo, cuerpo) {
     if (!dueño && leerCuentas().some((u) => u.telefono === tel)) {
       return fallo('Ese teléfono tiene cuenta. Ingresá para ver tus turnos.', 401, 'NECESITA_SESION');
     }
-    const mias = todas.filter((r) => r.telefono === tel && r.fecha >= hoy());
+    const mias = todas.filter((r) => r.telefono === tel && r.fecha >= hoy() && r.estado !== 'vencida');
     return { status: 200, datos: { reservas: mias.map(serializar) } };
   }
 
@@ -506,10 +719,12 @@ function manejar(url, metodo, cuerpo) {
     }
     if (!cancelable(r)) return fallo(\`Las cancelaciones online se aceptan hasta \${CONFIG.reglas.horasCancelacion} horas antes. Llamanos al \${CONFIG.club.telefono}.\`);
     r.estado = 'cancelada';
+    if (r.pagado > 0) { paraDevolver(r, 'Turno cancelado'); r.pagado = 0; }
     guardarReservas(todas);
     return { status: 200, datos: { ok: true, reserva: serializar(r) } };
   }
 
+  if (ruta.startsWith('/api/pagos')) return manejarPagos(ruta, metodo, cuerpo, q);
   if (ruta.startsWith('/api/cuenta')) return manejarCuenta(ruta, metodo, cuerpo);
   if (ruta.startsWith('/api/admin')) return manejarPanel(ruta, metodo, cuerpo, url);
 
@@ -572,7 +787,7 @@ function quienEntra(cabeceras) {
 function turnosDelDia(fecha) {
   const canceladas = leerCanceladas();
   const simulados = reservasSimuladas(fecha).filter((r) => !canceladas.includes(r.codigo));
-  const propias = leerReservas().filter((r) => r.fecha === fecha && r.estado === 'confirmada');
+  const propias = leerReservas().filter((r) => r.fecha === fecha && ocupaCancha(r));
   return [...simulados, ...propias].sort((a, b) => aMin(a.hora) - aMin(b.hora));
 }
 
@@ -591,6 +806,7 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
         conClaveMaestra: entrada.conClaveMaestra,
         avisoTokenPorDefecto: false,
         sinPersonal: !leerCuentas().some((u) => u.rol === 'club'),
+        pagos: { pasarela: 'simulado', activos: !!CONFIG.pagos?.activos, montosCargados: !!CONFIG.pagos?.activos },
       },
     };
   }
@@ -599,7 +815,8 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
     const fecha = url.searchParams.get('fecha') || hoy();
     const horario = horarioDe(fecha);
     const reservas = horario ? turnosDelDia(fecha).map(serializar) : [];
-    const minutos = reservas.filter((r) => r.tipo === 'reserva').reduce((a, r) => a + r.duracionMin, 0);
+    const firmes = reservas.filter((r) => r.tipo === 'reserva' && r.estado === 'confirmada');
+    const minutos = firmes.reduce((a, r) => a + r.duracionMin, 0);
     return {
       status: 200,
       datos: {
@@ -609,9 +826,11 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
         canchas: CONFIG.canchas,
         reservas,
         resumen: {
-          turnos: reservas.filter((r) => r.tipo === 'reserva').length,
+          turnos: firmes.length,
           bloqueos: reservas.filter((r) => r.tipo === 'bloqueo').length,
           horasVendidas: +(minutos / 60).toFixed(1),
+          cobradoOnline: firmes.reduce((a, r) => a + (r.pagado || 0), 0),
+          esperandoPago: reservas.filter((r) => r.estado === 'pendiente').length,
         },
       },
     };
@@ -656,6 +875,7 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
     const propia = todas.find((r) => r.codigo === codigo);
     if (propia) {
       propia.estado = 'cancelada';
+      if (propia.pagado > 0) { paraDevolver(propia, 'Turno cancelado'); propia.pagado = 0; }
       guardarReservas(todas);
       anotar(entrada.quien, 'cancelación', \`\${codigo} · \${propia.fecha} \${propia.hora} · \${propia.nombre || 'sin nombre'}\`);
       return { status: 200, datos: { ok: true, reserva: serializar(propia) } };
@@ -664,6 +884,7 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
       const r = reservasSimuladas(f).find((x) => x.codigo === codigo);
       if (r) {
         cancelarSimulada(codigo);
+        if (r.pagado > 0) paraDevolver(r, 'Turno cancelado');
         anotar(entrada.quien, 'cancelación', \`\${codigo} · \${r.fecha} \${r.hora} · \${r.nombre}\`);
         return { status: 200, datos: { ok: true, reserva: serializar({ ...r, estado: 'cancelada' }) } };
       }
@@ -733,6 +954,21 @@ function manejarPanel(ruta, metodo, cuerpo, url) {
     return { status: 200, datos: { ok: true, usuario: { nombre: objetivo.nombre, telefono: objetivo.telefono, rol: 'jugador' } } };
   }
 
+  if (ruta === '/api/admin/pagos' && metodo === 'GET') {
+    return { status: 200, datos: { aRevisar: leerRevisar().map((p) => ({ ...p, reserva: serializar(p.reserva) })) } };
+  }
+
+  if (ruta === '/api/admin/pagos/devolver' || ruta === '/api/admin/pagos/resolver') {
+    const lista = leerRevisar();
+    const pago = lista.find((x) => x.id === Number(cuerpo.id));
+    if (!pago) return fallo('Ese pago ya está resuelto.', 409);
+    guardarRevisar(lista.filter((x) => x !== pago));
+    const devuelto = ruta.endsWith('devolver');
+    anotar(entrada.quien, devuelto ? 'devolución' : 'pago resuelto sin devolver',
+      \`\${pago.reserva.codigo} · \${pesos(pago.monto)}\${devuelto ? ' devueltos por el pago de prueba' : ''}\`);
+    return { status: 200, datos: { ok: true } };
+  }
+
   if (ruta === '/api/admin/movimientos') {
     const limite = Math.min(Number(url.searchParams.get('limite')) || 40, 200);
     return { status: 200, datos: { movimientos: leerBitacora().slice(-limite).reverse() } };
@@ -765,14 +1001,14 @@ const abrirSesion = (tel) => { try { localStorage.setItem(LLAVE_SESION, tel); } 
 const cerrarSesion = () => { try { localStorage.removeItem(LLAVE_SESION); } catch { /* sin almacenamiento */ } };
 
 const usuarioActual = () => leerCuentas().find((u) => u.telefono === telefonoEnSesion()) || null;
-const perfilPublico = (u) => ({ nombre: u.nombre, telefono: u.telefono, email: u.email || null });
+const perfilPublico = (u) => ({ nombre: u.nombre, telefono: u.telefono, email: u.email || null, rol: u.rol || 'jugador' });
 
 function manejarCuenta(ruta, metodo, cuerpo) {
   const usuario = usuarioActual();
 
   if (ruta === '/api/cuenta' && metodo === 'GET') {
     if (!usuario) return { status: 200, datos: { usuario: null } };
-    const suyas = leerReservas().filter((r) => r.telefono === usuario.telefono);
+    const suyas = leerReservas().filter((r) => r.telefono === usuario.telefono && r.estado !== 'vencida');
     return {
       status: 200,
       datos: {
@@ -884,6 +1120,7 @@ const VISTAS = {
   '/mis-turnos': 'vista-turnos',
   '/cuenta': 'vista-cuenta',
   '/admin': 'vista-admin',
+  '/pago-simulado': 'vista-pago-simulado',
 };
 
 function mostrarVista(ruta) {
@@ -919,10 +1156,24 @@ async function irA(href) {
     if (destino) requestAnimationFrame(() => destino.scrollIntoView({ behavior: 'smooth' }));
   }
 
+  if (url.pathname === '/pago-simulado') {
+    document.dispatchEvent(new CustomEvent('naranjos:pago-simulado', { detail: { ref: url.searchParams.get('ref') } }));
+    return;
+  }
   if (url.pathname !== '/reservar') return;
   // Si venimos de confirmar un turno, la pantalla arranca limpia.
   document.dispatchEvent(new CustomEvent('naranjos:reiniciar-reserva'));
+  // La sesión pudo cambiar en otra pantalla —entrar al panel, por ejemplo—: el formulario se entera.
+  olvidarSesion();
+  traerSesion({ refrescar: true }).then(pintarSesion);
   const p = url.searchParams;
+  // La vuelta del pago de prueba, como la de Mercado Pago en el sitio real.
+  if (p.get('pago')) {
+    document.dispatchEvent(new CustomEvent('naranjos:volver-del-pago', {
+      detail: { codigo: p.get('pago'), pagoId: p.get('payment_id') },
+    }));
+    return;
+  }
   if (p.get('disciplina')) await marcar(\`#opciones-disciplina input[value="\${CSS.escape(p.get('disciplina'))}"]\`);
   if (p.get('duracion')) await marcar(\`#segmentado-duracion input[value="\${CSS.escape(p.get('duracion'))}"]\`);
   if (p.get('fecha')) await marcar(\`#tira-dias input[value="\${CSS.escape(p.get('fecha'))}"]\`);
@@ -957,6 +1208,9 @@ ${jsCuenta}
 }
 {
 ${jsAdmin}
+}
+{
+${jsPagoSimulado}
 }
 </script>
 `;

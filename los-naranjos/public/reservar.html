@@ -84,6 +84,9 @@
   <symbol id="i-salir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14"/><path d="M17 8.5 20.5 12 17 15.5M20 12H10"/>
   </symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/>
+  </symbol>
   <symbol id="i-candado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <rect x="4.5" y="10" width="15" height="10.5" rx="2.2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10"/><circle cx="12" cy="15.2" r="1.1" fill="currentColor" stroke="none"/>
   </symbol>
@@ -222,6 +225,12 @@
             <a class="enlace-linea" href="/cuenta">¿No sos vos?</a>
           </p>
 
+          <!-- El personal del club carga los turnos que le piden por WhatsApp o por teléfono. -->
+          <p class="reservando-como" id="reservando-para" hidden>
+            <svg><use href="#i-usuario"/></svg>
+            <span>Estás reservando <b>para un cliente</b>: el turno sale a su nombre y se cobra en el club.</span>
+          </p>
+
           <div class="datos-grilla">
             <div class="campo">
               <label for="nombre">Nombre y apellido</label>
@@ -246,6 +255,17 @@
           </div>
         </section>
 
+        <!-- 6 · Pago (sólo si el club cobra online) -->
+        <section class="bloque" data-bloque="pago" data-inactivo="true" hidden>
+          <div class="bloque__titulo">
+            <span class="bloque__numero" data-numero>6</span>
+            <h2>¿Cómo pagás?</h2>
+            <span class="bloque__nota" id="nota-pago"></span>
+          </div>
+          <div class="opciones opciones--pago" id="opciones-pago" role="radiogroup" aria-label="Cómo pagás el turno"></div>
+          <p class="ayuda-pago" id="ayuda-pago"></p>
+        </section>
+
         <div class="aviso aviso--error" id="error-envio" hidden>
           <svg width="20" height="20" style="flex:none"><use href="#i-reloj"/></svg>
           <span data-texto-error></span>
@@ -261,6 +281,7 @@
           <div class="resumen__fila"><span class="resumen__clave">Horario</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="hora">A elegir</span></div>
           <div class="resumen__fila"><span class="resumen__clave">Duración</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="duracion">A elegir</span></div>
           <div class="resumen__fila"><span class="resumen__clave">Cancha</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="cancha">La asignamos</span></div>
+          <div class="resumen__fila" data-fila-resumen-pago hidden><span class="resumen__clave">Pago</span><span class="resumen__valor resumen__valor--pendiente" data-resumen="pago">A elegir</span></div>
         </div>
         <button class="boton boton--ancho" type="submit" form="formulario" id="boton-confirmar" disabled>
           <span data-texto-boton>Confirmar reserva</span>
@@ -298,6 +319,7 @@
           <div class="ticket__fila"><span>Horario</span><span data-ticket="hora"></span></div>
           <div class="ticket__fila"><span>Cancha</span><span data-ticket="cancha"></span></div>
           <div class="ticket__fila"><span>A nombre de</span><span data-ticket="nombre"></span></div>
+          <div class="ticket__fila" data-fila-pago hidden><span>Pago</span><span data-ticket="pago"></span></div>
         </div>
       </div>
 
@@ -314,6 +336,9 @@
 
       <p class="plomo" style="font-size:.86rem" id="aviso-confirmacion"></p>
     </section>
+
+    <!-- Vuelta desde Mercado Pago: lo arma reservar.js según cómo salió el pago. -->
+    <section class="estado-pago" id="estado-pago" hidden aria-live="polite"></section>
 
   </div>
 </main>

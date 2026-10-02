@@ -6,7 +6,8 @@ import {
 import * as N from './turnos.js';
 import * as T from './tiempo.js';
 import * as C from './cuentas.js';
-import { cuentas, personal, bitacora } from './db.js';
+import * as Pg from './pagos.js';
+import { cuentas, personal, bitacora, descartarPendiente } from './db.js';
 
 /** Payload público: todo lo que el navegador necesita, nada más. */
 export function configPublica() {
@@ -34,6 +35,7 @@ export function configPublica() {
     servicios: SERVICIOS,
     programas: PROGRAMAS,
     preciosPublicados: PRECIOS_PUBLICADOS,
+    pagos: Pg.configPublicaDePagos(),
     calendario: N.calendario(),
     hoy: T.hoy(),
   };
@@ -106,9 +108,32 @@ export const rutas = {
     return N.disponibilidad(fecha, disciplina, duracion);
   },
 
-  'POST /api/reservas': ({ body, ip, usuario }) => {
+  'POST /api/reservas': async ({ body, ip, usuario, req }) => {
     const r = N.reservar(body, ip, usuario);
-    return { ok: true, reserva: N.serializar(r) };
+    if (C.esDelClub(usuario)) {
+      anotar(
+        { quien: usuario.nombre, usuarioId: usuario.id },
+        'reserva para un cliente',
+        `${r.codigo} · ${r.fecha} ${T.aHora(r.inicio_min)} · ${r.nombre} · lo cobra el club`,
+        ip
+      );
+    }
+    if (r.estado !== 'pendiente') return { ok: true, reserva: N.serializar(r) };
+
+    // Se paga online: hay que abrir el cobro. Sin link de pago, el apartado no sirve.
+    try {
+      const pago = await Pg.iniciarCobro(r, req);
+      return { ok: true, reserva: N.serializar(r), pago };
+    } catch (err) {
+      descartarPendiente(r.id);
+      console.error('No se pudo abrir el cobro:', err.message);
+      const e = new Error(
+        'No pudimos conectarnos con Mercado Pago. Probá de nuevo en un rato o reservá por WhatsApp.'
+      );
+      e.status = 502;
+      e.code = 'PASARELA';
+      throw e;
+    }
   },
 
   'GET /api/reservas': ({ query, usuario }) => {
@@ -149,6 +174,30 @@ export const rutas = {
     return { ok: true, reserva: N.serializar(r) };
   },
 
+  // ── Pagos ─────────────────────────────────────────────────────────────────
+  /* La pantalla a la que vuelve el jugador desde Mercado Pago. Con el código
+     alcanza para ver el estado, así que no devuelve teléfono ni correo. */
+  'GET /api/pagos/estado': async ({ query, ip }) => {
+    const e = await Pg.estadoDelPago(query.get('codigo'), query.get('pago_id'), ip);
+    return { ...e, reserva: N.serializarPublico(e.reserva) };
+  },
+
+  'POST /api/pagos/reintentar': ({ body, req, ip }) => Pg.reintentarCobro(body.codigo, body.cobro, req, ip),
+
+  'POST /api/pagos/abandonar': ({ body }) => {
+    const r = Pg.abandonarCobro(body.codigo);
+    return { ok: true, reserva: N.serializarPublico(r) };
+  },
+
+  /* El aviso de Mercado Pago. Si falla la consulta a la API, se responde con
+     error a propósito: Mercado Pago reintenta los avisos que no salieron bien. */
+  'POST /api/pagos/aviso': ({ query, body, req, ip }) =>
+    Pg.avisoDePago({ query, body, headers: req.headers || {}, ip }),
+
+  // La pasarela simulada (sólo con PAGOS_SIMULADOS=si).
+  'GET /api/pagos/simulado': ({ query }) => Pg.checkoutSimulado(query.get('ref')),
+  'POST /api/pagos/simulado': ({ body }) => Pg.pagarSimulado(body.ref, body.resultado),
+
   // ── Cuentas de los jugadores ──────────────────────────────────────────────
   'POST /api/cuenta/registro': ({ body, req, res }) => C.registrar(body, req, res),
 
@@ -184,11 +233,14 @@ export const rutas = {
   'POST /api/admin/sesion': (ctx) => {
     const quien = exigirClub(ctx);
     anotar(quien, 'ingreso', null, ctx.ip);
+    const pagos = Pg.configPublicaDePagos();
     return {
       ok: true,
       quien: quien.quien,
       conClaveMaestra: quien.conClaveMaestra,
       avisoTokenPorDefecto: ADMIN.tokenPorDefecto,
+      // Para que el panel avise si los pagos están en prueba o cargados sin pasarela.
+      pagos: { pasarela: pagos.pasarela, activos: pagos.activos, montosCargados: pagos.montosCargados },
       /* Si todavía no hay nadie del club cargado, el panel lo dice: es el
          primer paso para dejar de depender de una clave compartida. */
       sinPersonal: personal.listar().length === 0,
@@ -202,9 +254,8 @@ export const rutas = {
     if (!T.esFechaValida(fecha)) { const e = new Error('Fecha inválida.'); e.status = 400; throw e; }
     const horario = N.horarioDe(fecha);
     const reservas = N.consultas.delDia(fecha).map(N.serializar);
-    const ocupadosMin = reservas
-      .filter((r) => r.tipo === 'reserva')
-      .reduce((a, r) => a + r.duracionMin, 0);
+    const firmes = reservas.filter((r) => r.tipo === 'reserva' && r.estado === 'confirmada');
+    const ocupadosMin = firmes.reduce((a, r) => a + r.duracionMin, 0);
     return {
       fecha,
       fechaLarga: T.fechaLarga(fecha),
@@ -212,9 +263,11 @@ export const rutas = {
       canchas: CANCHAS,
       reservas,
       resumen: {
-        turnos: reservas.filter((r) => r.tipo === 'reserva').length,
+        turnos: firmes.length,
         bloqueos: reservas.filter((r) => r.tipo === 'bloqueo').length,
         horasVendidas: +(ocupadosMin / 60).toFixed(1),
+        cobradoOnline: firmes.reduce((a, r) => a + r.pagado, 0),
+        esperandoPago: reservas.filter((r) => r.estado === 'pendiente').length,
       },
     };
   },
@@ -242,8 +295,41 @@ export const rutas = {
     const r = N.consultas.porCodigo(String(ctx.body.codigo || '').trim().toUpperCase());
     if (!r) { const e = new Error('No existe esa reserva.'); e.status = 404; throw e; }
     if (r.estado === 'cancelada') { const e = new Error('Ya estaba cancelada.'); e.status = 400; throw e; }
-    anotar(quien, 'cancelación', `${r.codigo} · ${r.fecha} ${T.aHora(r.inicio_min)} · ${r.nombre || 'sin nombre'}`, ctx.ip);
+    const plata = r.pagado ? ` · ${Pg.pesos(r.pagado)} pagados quedan para devolver` : '';
+    anotar(quien, 'cancelación', `${r.codigo} · ${r.fecha} ${T.aHora(r.inicio_min)} · ${r.nombre || 'sin nombre'}${plata}`, ctx.ip);
     return { ok: true, reserva: N.serializar(N.cancelarReserva(r.id)) };
+  },
+
+  // ── Pagos para revisar ────────────────────────────────────────────────────
+  'GET /api/admin/pagos': (ctx) => {
+    exigirClub(ctx);
+    return {
+      aRevisar: Pg.pagosARevisar().map(({ pago, reserva }) => ({
+        id: pago.id,
+        monto: pago.monto,
+        proveedor: pago.proveedor,
+        externoId: pago.externo_id,
+        motivo: pago.motivo,
+        creadoEn: pago.creado_en,
+        reserva: N.serializar(reserva),
+      })),
+    };
+  },
+
+  'POST /api/admin/pagos/devolver': async (ctx) => {
+    const quien = exigirClub(ctx);
+    const p = await Pg.devolver(ctx.body.id);
+    const r = N.consultas.porId(p.reserva_id);
+    anotar(quien, 'devolución', `${r.codigo} · ${Pg.pesos(p.monto)} devueltos por ${p.proveedor === 'simulado' ? 'el pago de prueba' : 'Mercado Pago'}`, ctx.ip);
+    return { ok: true };
+  },
+
+  'POST /api/admin/pagos/resolver': (ctx) => {
+    const quien = exigirClub(ctx);
+    const p = Pg.resolverSinDevolver(ctx.body.id);
+    const r = N.consultas.porId(p.reserva_id);
+    anotar(quien, 'pago resuelto sin devolver', `${r.codigo} · ${Pg.pesos(p.monto)}`, ctx.ip);
+    return { ok: true };
   },
 
   // ── Personal del club ─────────────────────────────────────────────────────

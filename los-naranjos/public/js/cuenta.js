@@ -110,7 +110,7 @@ function pintarPerfil({ usuario, turnos = [], historial = [] }) {
   $('#perfil-email').value = usuario.email || '';
 
   const horas = config?.reglas?.horasCancelacion ?? 6;
-  const proximos = turnos.filter((t) => t.estado === 'confirmada');
+  const proximos = turnos.filter((t) => t.estado === 'confirmada' || t.estado === 'pendiente');
   $('#turnos').innerHTML = proximos.map((t) => tarjetaTurno(t, horas)).join('');
   $('#sin-turnos').hidden = proximos.length > 0;
 
@@ -190,8 +190,9 @@ $('#turnos').addEventListener('click', (e) => {
   const boton = e.target.closest('[data-cancelar]');
   if (!boton) return;
   turnoAcancelar = boton.dataset.cancelar;
-  $('#detalle-cancelacion').textContent =
-    boton.closest('.turno').querySelector('.turno__fecha').textContent;
+  const turno = boton.closest('.turno');
+  $('#detalle-cancelacion').textContent = turno.querySelector('.turno__fecha').textContent;
+  $('#modal-cancelar').querySelector('[data-aviso-pago]').hidden = turno.dataset.pagado !== 'si';
   $('#error-cancelacion').hidden = true;
   $('#modal-cancelar').showModal();
 });

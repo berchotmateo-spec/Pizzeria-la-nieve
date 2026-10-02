@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { SERVIDOR, CLUB, ADMIN } from './config.js';
 import { rutas } from './api.js';
 import { usuarioDeLaSolicitud } from './cuentas.js';
+import { configPublicaDePagos, vencerCadaMinuto, urlPublica } from './pagos.js';
 
 const RAIZ_PUBLICA = fileURLToPath(new URL('../public/', import.meta.url));
 const LIMITE_CUERPO = 32 * 1024; // 32 kB alcanza y sobra para un formulario
@@ -40,7 +41,12 @@ function json(res, status, datos) {
   res.end(cuerpo);
 }
 
-function leerCuerpo(req) {
+/**
+ * Lee el cuerpo JSON de un pedido. `tolerante` es para los avisos de Mercado
+ * Pago: si llegara algo que no es JSON, el aviso igual sirve por lo que trae
+ * en la URL, y rechazarlo sólo haría que lo reintente para siempre.
+ */
+function leerCuerpo(req, { tolerante = false } = {}) {
   return new Promise((resolve, reject) => {
     let total = 0;
     const partes = [];
@@ -59,6 +65,7 @@ function leerCuerpo(req) {
       try {
         resolve(JSON.parse(texto));
       } catch {
+        if (tolerante) return resolve({});
         reject(Object.assign(new Error('El cuerpo no es JSON válido.'), { status: 400 }));
       }
     });
@@ -128,7 +135,9 @@ const servidor = createServer(async (req, res) => {
     const handler = rutas[clave];
     if (!handler) return json(res, 404, { error: 'Ese endpoint no existe.' });
     try {
-      const body = req.method === 'POST' ? await leerCuerpo(req) : {};
+      const body = req.method === 'POST'
+        ? await leerCuerpo(req, { tolerante: url.pathname === '/api/pagos/aviso' })
+        : {};
       const usuario = usuarioDeLaSolicitud(req);
       const datos = await handler({
         req, res, body, usuario, query: url.searchParams, ip: ipDe(req),
@@ -147,12 +156,30 @@ const servidor = createServer(async (req, res) => {
   servirEstatico(req, res, url.pathname);
 });
 
+// Los turnos que nadie pagó a tiempo se liberan solos, aunque nadie entre al sitio.
+vencerCadaMinuto();
+
 servidor.listen(SERVIDOR.puerto, SERVIDOR.host, () => {
   const url = `http://localhost:${SERVIDOR.puerto}`;
   console.log(`\n  \x1b[38;5;208m●\x1b[0m  ${CLUB.nombre} — ${CLUB.direccion}, ${CLUB.ciudad}`);
   console.log(`     Sitio      ${url}`);
   console.log(`     Reservas   ${url}/reservar`);
   console.log(`     Admin      ${url}/admin`);
+  const pagos = configPublicaDePagos();
+  if (pagos.pasarela === 'mercadopago') {
+    console.log(`     Pagos      Mercado Pago${pagos.activos ? '' : ' (sin montos cargados: apagados)'}` +
+      (process.env.URL_PUBLICA ? ` · avisos en ${urlPublica()}/api/pagos/aviso` : ' · definí URL_PUBLICA para los avisos'));
+  } else if (pagos.pasarela === 'simulado') {
+    console.log(
+      `\n  \x1b[33m▲  Pagos SIMULADOS: nadie paga de verdad.\x1b[0m` +
+      `\n     Sirve para probar y mostrar. No lo dejes así con el sitio publicado.`
+    );
+  } else if (pagos.montosCargados) {
+    console.log(
+      `\n  \x1b[33m▲  Hay montos de seña o de turno cargados, pero falta MP_ACCESS_TOKEN.\x1b[0m` +
+      `\n     Hasta que esté, los turnos se reservan sin pago online.`
+    );
+  }
   if (ADMIN.tokenPorDefecto) {
     console.log(
       `\n  \x1b[33m▲  Estás usando la clave de administrador por defecto.\x1b[0m` +

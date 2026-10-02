@@ -1,13 +1,16 @@
 /** Flujo de reserva de turnos. */
 import { pedir, traerConfig, iniciarCabecera, iniciarAnio, pintarDatosDelClub,
-         traerSesion, pintarSesion,
-         esc, duracionTexto, linkWhatsapp, DIAS_CORTOS, MESES_CORTOS } from './comun.js';
+         traerSesion, pintarSesion, pagoEnPalabras,
+         esc, pesos, duracionTexto, linkWhatsapp, DIAS_CORTOS, MESES_CORTOS } from './comun.js';
 
 const $  = (sel, raiz = document) => raiz.querySelector(sel);
 const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
 
 const ICONOS = { padel: 'i-padel', pickleball: 'i-pickleball', futbol: 'i-futbol' };
 const RECUERDO = 'naranjos:datos-jugador';
+/* El turno que se está pagando en esta pestaña: si el jugador vuelve sin
+   pagar (con el botón de atrás, por ejemplo), se le ofrece seguir o soltarlo. */
+const PAGO_EN_CURSO = 'naranjos:pago-en-curso';
 
 const estado = {
   config: null,
@@ -17,7 +20,10 @@ const estado = {
   hora: null,
   canchaId: null,
   disponibilidad: null,
+  cobro: null,          // 'seña' | 'total' | 'club'
+  delClub: false,       // quien reserva es del personal del club
   enviando: false,
+  yendoAPagar: false,
 };
 
 iniciarCabecera();
@@ -39,8 +45,11 @@ async function arrancar() {
   pintarDatosDelClub(config);
 
   $('#nota-anticipacion').textContent = `Hasta ${config.reglas.diasAnticipacion} días para adelante`;
+  // Con pagos online, "sin cargo" depende de la política de devoluciones del club: no se promete.
   $('#aviso-cancelacion').textContent =
-    `Podés cancelar sin cargo hasta ${config.reglas.horasCancelacion} horas antes del turno. ` +
+    (config.pagos?.activos
+      ? `Podés cancelar desde “Mis turnos” hasta ${config.reglas.horasCancelacion} horas antes del turno. `
+      : `Podés cancelar sin cargo hasta ${config.reglas.horasCancelacion} horas antes del turno. `) +
     `Los turnos de hoy se toman con ${config.reglas.minutosAntelacion} minutos de anticipación.`;
   $('#aviso-confirmacion').textContent =
     `Guardá el código: con él y tu teléfono podés consultar o cancelar el turno desde “Mis turnos”.`;
@@ -51,6 +60,7 @@ async function arrancar() {
   usarDatosDeLaCuenta();
   aplicarParametrosDeUrl();
   actualizar();
+  retomarPagoSiCorresponde();
 
   $('#formulario').addEventListener('submit', enviar);
   $$('#formulario input, #formulario textarea').forEach((campo) => {
@@ -258,6 +268,78 @@ $('#lista-canchas').addEventListener('change', (e) => {
   actualizar({ sinRecargarHorarios: true });
 });
 
+/* ── Paso 6 · pago ────────────────────────────────────────────────────────── */
+
+/**
+ * Las formas de pagar este turno. Las online salen de la config del club; el
+ * personal del club, en cambio, reserva sin pago online: lo cobra el mostrador.
+ */
+function opcionesDePago() {
+  if (estado.delClub) {
+    return [{ cobro: 'club', titulo: 'Lo cobra el club', detalle: 'Sin pago online: se paga en el mostrador.' }];
+  }
+  const pagos = estado.config?.pagos;
+  if (!pagos?.activos || !estado.disciplina || !estado.duracionMin) return [];
+  const m = pagos.montos?.[estado.disciplina]?.[estado.duracionMin] || {};
+  const textos = {
+    seña: {
+      titulo: 'Pagar la seña',
+      detalle: m.precio ? `El resto, ${pesos(m.precio - m.seña)}, lo pagás en el club.` : 'El resto lo pagás en el club.',
+    },
+    total: { titulo: 'Pagar el turno entero', detalle: 'No pagás nada más en el club.' },
+  };
+  const lista = (pagos.opciones || ['seña', 'total'])
+    .filter((o) => m[o])
+    .map((o) => ({ cobro: o, monto: m[o], ...textos[o] }));
+  if (lista.length && !pagos.obligatorio) {
+    lista.push({ cobro: 'club', titulo: 'Pagar en el club', detalle: 'Sin pago online.' });
+  }
+  return lista;
+}
+
+let ultimasOpcionesDePago = '';
+
+function pintarPago() {
+  const opciones = opcionesDePago();
+  const bloque = $('[data-bloque="pago"]');
+  bloque.hidden = !opciones.length;
+
+  // Si la opción elegida ya no corre (cambió la duración, entró alguien del club), se vuelve a elegir.
+  if (!opciones.some((o) => o.cobro === estado.cobro)) {
+    estado.cobro = opciones.length === 1 ? opciones[0].cobro : null;
+  }
+
+  const clave = JSON.stringify(opciones);
+  if (clave === ultimasOpcionesDePago) return;
+  ultimasOpcionesDePago = clave;
+
+  $('#opciones-pago').innerHTML = opciones.map((o) => `
+    <label class="opcion">
+      <input type="radio" name="cobro" value="${esc(o.cobro)}" ${o.cobro === estado.cobro ? 'checked' : ''}>
+      <span class="opcion__cara">
+        <span class="opcion__icono"><svg><use href="#${o.cobro === 'club' ? 'i-usuario' : 'i-tarjeta'}"/></svg></span>
+        <span class="opcion__nombre">${esc(o.titulo)}</span>
+        ${o.monto ? `<span class="opcion__monto numeros">${esc(pesos(o.monto))}</span>` : ''}
+        <span class="opcion__dato">${esc(o.detalle)}</span>
+      </span>
+    </label>`).join('');
+
+  const pagos = estado.config.pagos;
+  $('#nota-pago').textContent = estado.delClub ? '' : 'Con Mercado Pago';
+  $('#ayuda-pago').textContent = estado.delClub ? '' :
+    `Te llevamos a Mercado Pago para pagar. Tenés ${pagos.minutosParaPagar} minutos: mientras tanto ` +
+    'el turno queda apartado para vos, y si no se paga, se libera.' +
+    (pagos.ejemplo ? ' Los montos son de ejemplo: el club todavía no confirmó la seña ni el precio.' : '');
+}
+
+$('#opciones-pago').addEventListener('change', (e) => {
+  if (e.target.name !== 'cobro') return;
+  estado.cobro = e.target.value;
+  actualizar({ sinRecargarHorarios: true });
+});
+
+const opcionElegida = () => opcionesDePago().find((o) => o.cobro === estado.cobro) || null;
+
 /* ── Sincronización de la interfaz ────────────────────────────────────────── */
 let ultimaConsulta = '';
 
@@ -267,6 +349,8 @@ function actualizar({ sinRecargarHorarios = false } = {}) {
   marcarBloque('duracion', !!estado.duracionMin, !estado.fecha);
   marcarBloque('hora', !!estado.hora, !(estado.fecha && estado.duracionMin));
   marcarBloque('datos', false, !estado.hora);
+  pintarPago();
+  marcarBloque('pago', !!estado.cobro, !estado.hora);
 
   const listoParaConsultar = estado.disciplina && estado.fecha && estado.duracionMin;
   const clave = `${estado.disciplina}|${estado.fecha}|${estado.duracionMin}`;
@@ -304,7 +388,17 @@ function pintarResumen() {
     hora: estado.hora ? `${estado.hora} a ${finDelTurno()}` : null,
     duracion: estado.duracionMin ? duracionTexto(estado.duracionMin) : null,
     cancha: cancha || (estado.hora ? 'La asignamos nosotros' : null),
+    pago: null,
   };
+
+  const opciones = opcionesDePago();
+  $('[data-fila-resumen-pago]').hidden = !opciones.length;
+  const elegida = opcionElegida();
+  if (elegida) {
+    valores.pago = elegida.monto
+      ? `${elegida.cobro === 'seña' ? 'Seña' : 'Turno entero'} · ${pesos(elegida.monto)}`
+      : elegida.titulo;
+  }
 
   for (const [clave, valor] of Object.entries(valores)) {
     const el = $(`[data-resumen="${clave}"]`);
@@ -334,10 +428,18 @@ function limpiarError(campo) {
 }
 
 function actualizarBoton() {
+  const falta = opcionesDePago().length > 0 && !estado.cobro;
   const completo = estado.disciplina && estado.fecha && estado.duracionMin && estado.hora &&
     $('#nombre').value.trim().length >= 2 &&
-    $('#telefono').value.replace(/\D/g, '').length >= 8;
-  $('#boton-confirmar').disabled = !completo || estado.enviando;
+    $('#telefono').value.replace(/\D/g, '').length >= 8 && !falta;
+  $('#boton-confirmar').disabled = !completo || estado.enviando || estado.yendoAPagar;
+  if (!estado.enviando && !estado.yendoAPagar) $('[data-texto-boton]').textContent = textoDelBoton();
+}
+
+/** "Reservar y pagar $10.000" cuando hay que pagar online; si no, "Confirmar reserva". */
+function textoDelBoton() {
+  const elegida = opcionElegida();
+  return elegida?.monto ? `Reservar y pagar ${pesos(elegida.monto)}` : 'Confirmar reserva';
 }
 
 /* ── Envío ────────────────────────────────────────────────────────────────── */
@@ -355,6 +457,7 @@ async function enviar(e) {
     telefono: $('#telefono').value.trim(),
     email: $('#email').value.trim(),
     notas: $('#notas').value.trim(),
+    cobro: estado.cobro || undefined,
   };
 
   estado.enviando = true;
@@ -363,8 +466,16 @@ async function enviar(e) {
   $('[data-texto-boton]').innerHTML = '<span class="cargando"></span> Confirmando…';
 
   try {
-    const { reserva } = await pedir('/api/reservas', { method: 'POST', body: cuerpo });
-    guardarDatos(cuerpo);
+    const { reserva, pago } = await pedir('/api/reservas', { method: 'POST', body: cuerpo });
+    // Lo que carga el personal es de un cliente: no tiene que quedar como "mis datos".
+    if (!estado.delClub) guardarDatos(cuerpo);
+    if (pago?.url) {
+      estado.yendoAPagar = true;
+      recordarPagoEnCurso(reserva.codigo);
+      $('[data-texto-boton]').innerHTML = '<span class="cargando"></span> Yendo a Mercado Pago…';
+      irAlPago(pago.url);
+      return;
+    }
     mostrarConfirmacion(reserva);
   } catch (err) {
     const caja = $('#error-envio');
@@ -380,9 +491,13 @@ async function enviar(e) {
     }
   } finally {
     estado.enviando = false;
-    $('[data-texto-boton]').textContent = 'Confirmar reserva';
     actualizarBoton();
   }
+}
+
+/** Manda al jugador a pagar. La vista previa, que no puede salir de la página, la reemplaza. */
+function irAlPago(url) {
+  location.assign(url);
 }
 
 /**
@@ -393,8 +508,10 @@ async function enviar(e) {
 function reiniciarReserva() {
   estado.hora = null;
   estado.canchaId = null;
+  estado.yendoAPagar = false;
   ultimaConsulta = '';
   $('#confirmacion').hidden = true;
+  $('#estado-pago').hidden = true;
   $('#panel-reserva').hidden = false;
   $('#error-envio').hidden = true;
   $('#notas').value = '';
@@ -407,11 +524,12 @@ function reiniciarReserva() {
 
 $('#otro-turno').addEventListener('click', reiniciarReserva);
 document.addEventListener('naranjos:reiniciar-reserva', () => {
-  if (!$('#confirmacion').hidden) reiniciarReserva();
+  if (!$('#confirmacion').hidden || !$('#estado-pago').hidden || estado.yendoAPagar) reiniciarReserva();
 });
 
 function mostrarConfirmacion(reserva) {
   $('#panel-reserva').hidden = true;
+  $('#estado-pago').hidden = true;
   const panel = $('#confirmacion');
   panel.hidden = false;
 
@@ -426,6 +544,9 @@ function mostrarConfirmacion(reserva) {
   for (const [clave, valor] of Object.entries(textos)) {
     $(`[data-ticket="${clave}"]`).textContent = valor;
   }
+  const pago = pagoEnPalabras(reserva);
+  $('[data-fila-pago]').hidden = !pago;
+  $('[data-ticket="pago"]').textContent = pago ? pago.texto : '';
 
   const club = estado.config.club;
   const mensaje =
@@ -492,19 +613,34 @@ async function usarDatosDeLaCuenta() {
   aplicarSesionAlFormulario(sesion);
 }
 
-/** Acomoda el paso "Tus datos" según haya o no alguien con la sesión abierta. */
+/**
+ * Acomoda el paso "Tus datos" según haya o no alguien con la sesión abierta.
+ * El personal del club es un caso aparte: reserva para otra persona, así que
+ * los datos se escriben a mano y el pago queda para el mostrador.
+ */
 function aplicarSesionAlFormulario({ usuario } = {}) {
-  if (usuario) {
-    $('#nombre').value = usuario.nombre;
-    $('#telefono').value = usuario.telefono;
-    if (usuario.email && !$('#email').value) $('#email').value = usuario.email;
+  const delClub = usuario?.rol === 'club';
+  const cuenta = usuario && !delClub ? usuario : null;
+
+  if (delClub && !estado.delClub) {
+    // Lo que quedó guardado en este navegador no es del cliente.
+    for (const id of ['#nombre', '#telefono', '#email']) $(id).value = '';
+  }
+  estado.delClub = delClub;
+
+  if (cuenta) {
+    $('#nombre').value = cuenta.nombre;
+    $('#telefono').value = cuenta.telefono;
+    if (cuenta.email && !$('#email').value) $('#email').value = cuenta.email;
   }
   for (const id of ['#nombre', '#telefono']) {
-    $(id).readOnly = !!usuario;
-    $(id).closest('.campo').hidden = !!usuario;
+    $(id).readOnly = !!cuenta;
+    $(id).closest('.campo').hidden = !!cuenta;
   }
-  $('#reservando-como').hidden = !usuario;
-  actualizarBoton();
+  $('#reservando-como').hidden = !cuenta;
+  $('#reservando-para').hidden = !delClub;
+  $('[data-bloque="datos"] h2').textContent = delClub ? 'Datos del cliente' : 'Tus datos';
+  if (estado.config) actualizar({ sinRecargarHorarios: true });
 }
 
 /* Si alguien entra o sale mientras esta pantalla está abierta, el formulario se
@@ -550,3 +686,222 @@ function aplicarParametrosDeUrl() {
   const hora = p.get('hora');
   if (hora && /^\d{2}:\d{2}$/.test(hora)) estado.hora = hora;
 }
+
+/* ── Vuelta desde Mercado Pago ────────────────────────────────────────────── */
+
+const recordarPagoEnCurso = (codigo) => {
+  try { sessionStorage.setItem(PAGO_EN_CURSO, codigo); } catch { /* sin almacenamiento */ }
+};
+const pagoEnCurso = () => {
+  try { return sessionStorage.getItem(PAGO_EN_CURSO); } catch { return null; }
+};
+const olvidarPagoEnCurso = () => {
+  try { sessionStorage.removeItem(PAGO_EN_CURSO); } catch { /* sin almacenamiento */ }
+};
+
+/**
+ * Al abrir la página: ¿volvemos de pagar (Mercado Pago agrega ?pago=… a la
+ * vuelta), o quedó un turno apartado en esta pestaña esperando el pago?
+ */
+function retomarPagoSiCorresponde() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('pago')) {
+    retomarPago({ codigo: p.get('pago'), pagoId: p.get('payment_id') || p.get('collection_id') });
+    return;
+  }
+  const codigo = pagoEnCurso();
+  if (codigo) retomarPago({ codigo, silencioso: true });
+}
+
+// El botón "atrás" desde Mercado Pago puede devolver la página tal como quedó.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted && estado.config) {
+    estado.yendoAPagar = false;
+    actualizarBoton();
+    retomarPagoSiCorresponde();
+  }
+});
+
+// En la vista previa la vuelta del pago llega por acá, sin recargar la página.
+document.addEventListener('naranjos:volver-del-pago', (e) => retomarPago(e.detail));
+
+let esperandoConfirmacion = 0;
+
+/**
+ * Muestra cómo quedó un turno que se estaba pagando. Lo que diga la URL a la
+ * vuelta (status=approved) no cuenta: se le pregunta al servidor, que a su vez
+ * le pregunta a Mercado Pago.
+ */
+async function retomarPago({ codigo, pagoId, silencioso = false }) {
+  if (!silencioso) {
+    pintarEstadoPago({ icono: 'i-reloj', titulo: 'Estamos viendo cómo salió el pago…', cargando: true });
+  }
+  let datos;
+  try {
+    const consulta = new URLSearchParams({ codigo });
+    if (pagoId) consulta.set('pago_id', pagoId);
+    datos = await pedir(`/api/pagos/estado?${consulta}`);
+  } catch (err) {
+    olvidarPagoEnCurso();
+    if (silencioso) return;
+    pintarEstadoPago({
+      icono: 'i-reloj', titulo: 'No pudimos ver el estado del pago', texto: err.message,
+      acciones: [{ accion: 'otro-turno', texto: 'Volver a reservar' }],
+    });
+    return;
+  }
+  limpiarUrl();
+
+  const { reserva, pago, aDevolver, venceEn, opciones } = datos;
+  const turno = `${reserva.disciplinaNombre} · ${reserva.fechaLarga} · ${reserva.hora} a ${reserva.fin} · ${reserva.canchaNombre}`;
+
+  if (reserva.estado === 'confirmada') {
+    olvidarPagoEnCurso();
+    mostrarConfirmacion(reserva);
+    return;
+  }
+
+  if (reserva.estado === 'pendiente') {
+    recordarPagoEnCurso(reserva.codigo);
+    if (pago?.estado === 'pendiente' && esperandoConfirmacion < 12) {
+      esperandoConfirmacion++;
+      pintarEstadoPago({
+        icono: 'i-reloj', titulo: 'Mercado Pago está procesando tu pago',
+        texto: 'Apenas lo confirme, el turno queda firme. No hace falta que hagas nada.', turno, cargando: true,
+      });
+      setTimeout(() => retomarPago({ codigo: reserva.codigo }), 4000);
+      return;
+    }
+    esperandoConfirmacion = 0;
+    // La hora la da el servidor, en la hora del club: no depende del reloj del teléfono.
+    const hasta = reserva.venceHora || (venceEn ? horaLocal(venceEn) : '');
+    const rechazado = pago?.estado === 'rechazado';
+    pintarEstadoPago({
+      icono: rechazado ? 'i-tarjeta' : 'i-reloj',
+      tono: rechazado ? 'error' : 'alerta',
+      titulo: rechazado ? 'El pago no salió' : 'Tu turno te está esperando',
+      texto: rechazado
+        ? `${pago.motivo ? `${pago.motivo} ` : ''}Podés probar de nuevo, con otra tarjeta o con la otra opción. ` +
+          `El turno sigue apartado para vos hasta las ${hasta}.`
+        : `Todavía no está pago. Lo tenemos apartado para vos hasta las ${hasta}; después se libera.`,
+      turno,
+      codigo: reserva.codigo,
+      opciones,
+      elegida: reserva.cobro,
+      acciones: [
+        { accion: 'pagar', texto: rechazado ? 'Probar de nuevo' : 'Pagar ahora', principal: true },
+        { accion: 'soltar', texto: 'Soltar el turno' },
+      ],
+    });
+    return;
+  }
+
+  olvidarPagoEnCurso();
+  if (silencioso && !aDevolver) return;
+
+  if (reserva.estado === 'vencida') {
+    pintarEstadoPago({
+      icono: 'i-reloj', tono: aDevolver ? 'error' : 'alerta',
+      titulo: aDevolver ? 'Recibimos tu pago, pero el turno ya era de otra persona' : 'Se terminó el tiempo para pagar',
+      texto: aDevolver
+        ? 'Pagaste cuando el turno ya se había liberado y otra persona lo reservó. El club ve tu pago en su panel y se comunica con vos para devolvértelo.'
+        : 'El turno no se pagó a tiempo y volvió a quedar libre. Si sigue disponible, podés reservarlo de nuevo.',
+      turno,
+      acciones: [{ accion: 'otro-turno', texto: 'Elegir un turno', principal: true }],
+    });
+    return;
+  }
+
+  pintarEstadoPago({
+    icono: 'i-reloj', tono: 'alerta', titulo: 'Esta reserva está cancelada', turno,
+    texto: aDevolver ? 'Tenía un pago hecho: el club lo ve en su panel y se comunica con vos.' : '',
+    acciones: [{ accion: 'otro-turno', texto: 'Elegir un turno', principal: true }],
+  });
+}
+
+const horaLocal = (iso) =>
+  new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+/** Saca ?pago=… de la barra, para que recargar no vuelva a abrir este cartel. */
+function limpiarUrl() {
+  if (!new URLSearchParams(location.search).get('pago')) return;
+  try { history.replaceState(null, '', location.pathname); } catch { /* la vista previa no deja */ }
+}
+
+/** Arma el cartel de cómo salió el pago, con las opciones para seguir. */
+function pintarEstadoPago({
+  icono, tono = 'neutro', titulo, texto = '', turno, codigo, opciones = [], elegida = null, acciones = [], cargando = false,
+}) {
+  $('#panel-reserva').hidden = true;
+  $('#confirmacion').hidden = true;
+  const caja = $('#estado-pago');
+  caja.hidden = false;
+  caja.dataset.codigo = codigo || '';
+  caja.innerHTML = `
+    <span class="estado-pago__icono estado-pago__icono--${esc(tono)}">
+      ${cargando ? '<span class="cargando"></span>' : `<svg><use href="#${esc(icono)}"/></svg>`}
+    </span>
+    <div>
+      <h2 class="display-md">${esc(titulo)}</h2>
+      ${texto ? `<p class="bajada">${esc(texto)}</p>` : ''}
+    </div>
+    ${turno ? `<p class="estado-pago__turno">${esc(turno)}</p>` : ''}
+    ${opciones.length > 1 ? `
+      <div class="opciones opciones--pago estado-pago__opciones" role="radiogroup" aria-label="Cómo pagás">
+        ${opciones.map((o, i) => `
+          <label class="opcion">
+            <input type="radio" name="cobro-reintento" value="${esc(o.cobro)}" ${
+              (opciones.some((x) => x.cobro === elegida) ? o.cobro === elegida : i === 0) ? 'checked' : ''}>
+            <span class="opcion__cara">
+              <span class="opcion__nombre">${o.cobro === 'seña' ? 'La seña' : 'El turno entero'}</span>
+              <span class="opcion__monto numeros">${esc(pesos(o.monto))}</span>
+            </span>
+          </label>`).join('')}
+      </div>` : ''}
+    <div class="aviso aviso--error" data-error-pago hidden><span></span></div>
+    ${acciones.length ? `
+      <div class="acciones-confirmacion">
+        ${acciones.map((a) => `<button type="button" class="boton ${a.principal ? '' : 'boton--fantasma'}" data-accion="${esc(a.accion)}">${esc(a.texto)}</button>`).join('')}
+      </div>` : ''}`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('#estado-pago').addEventListener('click', async (e) => {
+  const boton = e.target.closest('[data-accion]');
+  if (!boton) return;
+  const caja = $('#estado-pago');
+  const codigo = caja.dataset.codigo;
+  const error = caja.querySelector('[data-error-pago]');
+  error.hidden = true;
+
+  if (boton.dataset.accion === 'otro-turno') {
+    olvidarPagoEnCurso();
+    reiniciarReserva();
+    return;
+  }
+
+  boton.disabled = true;
+  const textoOriginal = boton.textContent;
+  boton.innerHTML = '<span class="cargando"></span>';
+  try {
+    if (boton.dataset.accion === 'pagar') {
+      const cobro = caja.querySelector('input[name="cobro-reintento"]:checked')?.value;
+      const { url } = await pedir('/api/pagos/reintentar', { method: 'POST', body: { codigo, cobro } });
+      boton.innerHTML = '<span class="cargando"></span> Yendo a Mercado Pago…';
+      irAlPago(url);
+      return;
+    }
+    if (boton.dataset.accion === 'soltar') {
+      await pedir('/api/pagos/abandonar', { method: 'POST', body: { codigo } });
+      olvidarPagoEnCurso();
+      reiniciarReserva();
+    }
+  } catch (err) {
+    error.hidden = false;
+    error.querySelector('span').textContent = err.message;
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+    // Si ya no hay nada que pagar, el cartel se actualiza con lo que pasó.
+    if (err.code === 'VENCIDO' || err.code === 'YA_PAGADO') retomarPago({ codigo });
+  }
+});

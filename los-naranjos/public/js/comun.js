@@ -80,22 +80,47 @@ export function linkWhatsapp(numero, mensaje) {
 }
 
 /**
+ * Cómo está el pago de un turno, en palabras: { texto, tono }, o null si el
+ * turno no tiene nada que ver con pagos. Lo usan las tarjetas de turno, el
+ * ticket y el panel del club, para que se diga igual en todos lados.
+ */
+export function pagoEnPalabras(r) {
+  if (!r || r.tipo === 'bloqueo') return null;
+  if (r.estado === 'pendiente') {
+    return { texto: r.venceHora ? `Falta pagar · hasta las ${r.venceHora}` : 'Falta pagar', tono: 'naranja' };
+  }
+  if (r.cobro === 'club') return { texto: 'Paga en el club', tono: 'gris' };
+  if (r.pagado > 0 && (r.cobro === 'total' || r.saldo === 0)) {
+    return { texto: `Pagado · ${pesos(r.pagado)}`, tono: 'verde' };
+  }
+  if (r.pagado > 0) {
+    return { texto: `Seña pagada · ${pesos(r.pagado)}${r.saldo ? ` · resta ${pesos(r.saldo)}` : ''}`, tono: 'verde' };
+  }
+  return null;
+}
+
+/**
  * Tarjeta de un turno. La usan "Mis turnos" y la página de la cuenta, así que
  * vive acá: si cambia el diseño de un turno, cambia en los dos lados.
  */
 export function tarjetaTurno(r, horasCancelacion = 6) {
   const [a, m, d] = r.fecha.split('-').map(Number);
   const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
-  const cancelada = r.estado !== 'confirmada';
+  const pendiente = r.estado === 'pendiente';
+  const cancelada = !pendiente && r.estado !== 'confirmada';
+  const pago = cancelada ? null : pagoEnPalabras(r);
 
-  const acciones = cancelada
-    ? '<span class="pildora pildora--gris">Cancelada</span>'
-    : r.cancelable
-      ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
-      : `<span class="pildora pildora--gris" title="Se cancela hasta ${horasCancelacion} h antes">Fuera de plazo</span>`;
+  // Un turno esperando el pago no se cancela: se paga, o se suelta solo.
+  const acciones = pendiente
+    ? `<a class="boton boton--chico" href="/reservar?pago=${encodeURIComponent(r.codigo)}">Pagar</a>`
+    : cancelada
+      ? '<span class="pildora pildora--gris">Cancelada</span>'
+      : r.cancelable
+        ? `<button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">Cancelar</button>`
+        : `<span class="pildora pildora--gris" title="Se cancela hasta ${horasCancelacion} h antes">Fuera de plazo</span>`;
 
   return `
-    <article class="turno" data-estado="${esc(r.estado)}">
+    <article class="turno" data-estado="${esc(r.estado)}" data-pagado="${r.pagado > 0 ? 'si' : 'no'}">
       <div class="turno__dia">
         <span>${DIAS_CORTOS[dow]}</span>
         <b class="numeros">${d}</b>
@@ -106,7 +131,8 @@ export function tarjetaTurno(r, horasCancelacion = 6) {
         <p class="turno__detalle">${esc(r.canchaNombre)} · ${esc(duracionTexto(r.duracionMin))} · a nombre de ${esc(r.nombre)}</p>
         <div class="turno__meta">
           <span class="pildora">Código ${esc(r.codigo)}</span>
-          ${!cancelada && r.cancelable ? '<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>' : ''}
+          ${!cancelada && !pendiente && r.cancelable ? '<span class="pildora pildora--verde"><span class="punto"></span> Confirmado</span>' : ''}
+          ${pago ? `<span class="pildora pildora--${pago.tono}">${esc(pago.texto)}</span>` : ''}
           ${r.notas ? `<span class="pildora">${esc(r.notas)}</span>` : ''}
         </div>
       </div>

@@ -382,7 +382,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <section class="seccion">
     <div class="seccion__cabeza">
       <p class="numero-seccion">02 — Qué incluye</p>
-      <h2>Cuatro piezas que trabajan juntas</h2>
+      <h2>Cinco piezas que trabajan juntas</h2>
     </div>
     <div class="tarjetas">
       <article class="tarjeta">
@@ -398,8 +398,8 @@ tbody tr:last-child td { border-bottom: 0; }
         <p class="tarjeta__marca">Para el jugador</p>
         <h3>Las reservas online</h3>
         <p>
-          Elige día, duración y horario sobre una grilla que muestra la
-          disponibilidad real. Recibe un código de reserva, puede avisarles a los
+          Elige día y horario sobre una grilla que muestra la disponibilidad
+          real, y paga la seña con Mercado Pago. Recibe un código de reserva, puede avisarles a los
           que juegan por WhatsApp y agendar el turno en su calendario.
         </p>
       </article>
@@ -423,6 +423,16 @@ tbody tr:last-child td { border-bottom: 0; }
           con su propia contraseña, y queda anotado quién hizo cada cosa.
         </p>
       </article>
+      <article class="tarjeta">
+        <p class="tarjeta__marca">Para el club</p>
+        <h3>La seña, cobrada sola</h3>
+        <p>
+          Al reservar, el jugador paga la seña —o el turno entero, si prefiere—
+          con Mercado Pago, y el turno queda firme recién cuando entra la plata.
+          La plata va directo a la cuenta de Mercado Pago del club. Los turnos
+          que piden por WhatsApp los sigue cargando el mostrador, sin pago online.
+        </p>
+      </article>
     </div>
   </section>
 
@@ -435,11 +445,11 @@ tbody tr:last-child td { border-bottom: 0; }
     <div class="pasos">
       <div class="paso">
         <div>
-          <h3>Elige qué, cuándo y cuánto</h3>
+          <h3>Elige el día y el horario</h3>
           <p>
-            El día, dentro de las próximas dos semanas, y si quiere una hora o
-            una hora y media. La grilla le muestra sólo los horarios que de verdad
-            están libres, con cuántas canchas quedan en cada uno.
+            El día, dentro de las próximas dos semanas, y el horario: todos los
+            turnos son de 90 minutos. La grilla le muestra sólo los horarios que de
+            verdad están libres, con cuántas canchas quedan en cada uno.
           </p>
         </div>
       </div>
@@ -450,6 +460,16 @@ tbody tr:last-child td { border-bottom: 0; }
             Nada más —y si tiene cuenta, ni eso: ya están cargados—. Puede dejar
             que el sistema le asigne la cancha o elegirla él, si quiere jugar en
             la central.
+          </p>
+        </div>
+      </div>
+      <div class="paso">
+        <div>
+          <h3>Paga la seña</h3>
+          <p>
+            O el turno entero, como prefiera, con tarjeta, débito o dinero en
+            cuenta de Mercado Pago. Mientras paga, el turno queda apartado para él;
+            si no lo paga en 15 minutos, la cancha se libera sola.
           </p>
         </div>
       </div>
@@ -524,6 +544,17 @@ tbody tr:last-child td { border-bottom: 0; }
       <li>
         <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
         <span>
+          <b>Ningún turno de la web queda firme sin la seña.</b>
+          <span>El turno que se saca por la web queda firme recién cuando Mercado
+          Pago confirma el pago, y el sistema se lo pregunta directamente a
+          Mercado Pago: no alcanza con que el jugador diga que pagó. Si cancela un
+          turno pagado o paga dos veces, el pago aparece en el panel para
+          devolverlo con un clic.</span>
+        </span>
+      </li>
+      <li>
+        <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
+        <span>
           <b>Los datos son del club.</b>
           <span>Toda la información vive en un único archivo del servidor del club.
           Se respalda copiándolo. No queda en manos de una plataforma que después
@@ -543,9 +574,9 @@ tbody tr:last-child td { border-bottom: 0; }
         <span class="tilde tilde--verde"><svg><use href="#tilde"/></svg></span>
         <span>
           <b>Está probado.</b>
-          <span>Hay quince pruebas automáticas que verifican las reglas críticas
-          —doble reserva, horarios de apertura, cancelaciones, permisos del panel—
-          y se corren cada vez que se toca algo.</span>
+          <span>Hay más de cuarenta pruebas automáticas que verifican las reglas
+          críticas —doble reserva, horarios de apertura, cancelaciones, pagos,
+          permisos del panel— y se corren cada vez que se toca algo.</span>
         </span>
       </li>
       <li>
@@ -581,6 +612,8 @@ tbody tr:last-child td { border-bottom: 0; }
             <tr><td>Ventana de cancelación</td><td>Hasta cuándo se puede cancelar online</td><td>6 h antes</td></tr>
             <tr><td>Turnos por teléfono</td><td>Cuántos turnos activos puede tener una persona</td><td>3</td></tr>
             <tr><td>Duración del turno</td><td>Cuánto dura un turno de cancha</td><td>90 min</td></tr>
+            <tr><td>Seña</td><td>Cuánto se paga al reservar (un monto fijo o un porcentaje del turno)</td><td>A confirmar</td></tr>
+            <tr><td>Tiempo para pagar</td><td>Cuánto queda apartado el turno mientras el jugador paga</td><td>15 min</td></tr>
             <tr><td>Horarios</td><td>Apertura y cierre, día por día</td><td>A confirmar</td></tr>
           </tbody>
         </table>
@@ -601,10 +634,6 @@ tbody tr:last-child td { border-bottom: 0; }
         el sistema ya andando y con jugadores reales usándolo.
       </p>
       <ul class="lista">
-        <li>
-          <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
-          <span><b>Cobro de seña online.</b> <span>Hoy se paga en el club. Si quieren cobrar al reservar, se integra Mercado Pago.</span></span>
-        </li>
         <li>
           <span class="tilde tilde--gris"><svg><use href="#mas"/></svg></span>
           <span><b>Avisos automáticos por WhatsApp o mail.</b> <span>El recordatorio del turno y la confirmación automática dependen de un servicio externo de envío.</span></span>
@@ -651,7 +680,8 @@ tbody tr:last-child td { border-bottom: 0; }
       <h3>Horarios y tarifas</h3>
       <ul class="pedidos">
         <li><span class="casilla"></span><span>Horario de apertura, día por día <small>Del cierre tenemos una buena hipótesis —23:30, deducida de los turnos que ofrecen—, pero de la apertura no hay ningún dato publicado.</small></span></li>
-        <li><span class="casilla"></span><span>Precio por deporte y por duración</span></li>
+        <li><span class="casilla"></span><span>Precio del turno <small>También es lo que se cobra cuando alguien paga el turno entero.</small></span></li>
+        <li><span class="casilla"></span><span>Monto de la seña <small>Un monto fijo o un porcentaje del turno.</small></span></li>
         <li><span class="casilla"></span><span>Si el precio cambia según el día o la franja horaria</span></li>
         <li><span class="casilla"></span><span>Valor de las clases, la escuela y la inscripción a torneos</span></li>
         <li><span class="casilla"></span><span>Días, niveles y cupos de la escuela</span></li>
@@ -675,7 +705,8 @@ tbody tr:last-child td { border-bottom: 0; }
       <ul class="pedidos">
         <li><span class="casilla"></span><span>Fotos del club: canchas, vestuarios, bar y la fachada <small>Es lo que más le falta al sitio: hoy la estética se resuelve con tipografía y trazados de cancha.</small></span></li>
         <li><span class="casilla"></span><span>Quiénes van a usar el panel del club</span></li>
-        <li><span class="casilla"></span><span>Si quieren cobrar seña al reservar</span></li>
+        <li><span class="casilla"></span><span>La cuenta de Mercado Pago del club <small>Para conectarla: la plata de las señas entra directo ahí.</small></span></li>
+        <li><span class="casilla"></span><span>Si devuelven la seña cuando alguien cancela a tiempo</span></li>
         <li><span class="casilla"></span><span>Con cuánta anticipación quieren permitir las reservas</span></li>
         <li><span class="casilla"></span><span>Hasta cuándo aceptan una cancelación sin cargo</span></li>
       </ul>
@@ -692,7 +723,7 @@ tbody tr:last-child td { border-bottom: 0; }
       <div class="paso">
         <div>
           <h3>Carga de datos reales</h3>
-          <p>Canchas, horarios, tarifas y contacto. Es el paso que depende del club: apenas llega la información, se carga.</p>
+          <p>Canchas, horarios, tarifas, seña y contacto, y la conexión con la cuenta de Mercado Pago del club. Es el paso que depende del club: apenas llega la información, se carga.</p>
         </div>
       </div>
       <div class="paso">

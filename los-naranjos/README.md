@@ -8,6 +8,9 @@ mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
 
 - **Sitio público** — presentación del club, instalaciones, tarifas y ubicación.
 - **Reservas online** — grilla en tiempo real, confirmación al instante y código de turno.
+- **Pagos online** — el jugador paga la seña o el turno entero con Mercado Pago,
+  y el turno queda firme cuando entra la plata. La plata va directo a la cuenta
+  del club.
 - **Cuentas de jugador** — se registran con el teléfono y reservan sin volver a
   escribir sus datos. Tener cuenta es opcional: quien no quiera sigue reservando
   como visitante.
@@ -17,7 +20,8 @@ mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
   se hace desde el panel queda anotado con nombre y hora.
 
 Está hecho **sin dependencias externas**: sólo Node 22 y su SQLite embebido.
-No hay `npm install`, ni build, ni servicios de terceros.
+No hay `npm install` ni build, y el único servicio de terceros es Mercado Pago,
+para cobrar.
 
 ---
 
@@ -33,6 +37,9 @@ consultarlo o cancelarlo. El sistema de turnos corre dentro del navegador y los
 datos quedan guardados en ese dispositivo, así que **no le llegan al club** —hay
 un cartel arriba que lo aclara—. También se puede subir a cualquier hosting
 estático o mandar por mail.
+
+La reserva pide la seña y se paga en una pantalla de prueba, con montos de
+ejemplo mientras el club no confirme los reales: no se cobra nada.
 
 Trae también el panel del club, con turnos y personal de demostración: se entra
 con el teléfono 223 555-1212 y la contraseña `demo1234` (o con `demo1234` como
@@ -70,6 +77,7 @@ npm start           # http://localhost:3000
 | --- | --- |
 | `npm start` | Levanta el sitio y el API en el puerto 3000. |
 | `npm run dev` | Igual, pero reinicia solo al guardar un archivo. |
+| `PAGOS_SIMULADOS=si npm run dev` | Igual, con la pantalla de pago de prueba en vez de Mercado Pago (ver [Pagos](#pagos)). |
 | `npm test` | Corre las pruebas del sistema de turnos. |
 | `node server/seed.js --limpiar` | Llena la base con turnos de ejemplo para ver el panel. |
 | `npm run vista-previa` | Regenera `vista-previa/index.html`, el sitio en un solo archivo. |
@@ -82,6 +90,10 @@ Variables de entorno:
 | `HOST` | Interfaz donde escucha | `0.0.0.0` |
 | `ADMIN_TOKEN` | **Clave del panel del club** | `naranjos-dev` |
 | `DB_PATH` | Ubicación de la base SQLite | `data/turnos.db` |
+| `MP_ACCESS_TOKEN` | **Access Token de Mercado Pago** del club: prende los pagos reales | — |
+| `MP_WEBHOOK_SECRET` | Clave secreta de los avisos de Mercado Pago | — |
+| `URL_PUBLICA` | Dirección pública del sitio, para la vuelta del pago y los avisos | la del pedido |
+| `PAGOS_SIMULADOS` | `si`: pagos con la pantalla de prueba. **Nunca con el sitio abierto al público** | — |
 
 > **Antes de publicar el sitio hay que definir `ADMIN_TOKEN`.** Con la clave por
 > defecto cualquiera entra al panel; el propio panel muestra un cartel de aviso
@@ -100,6 +112,7 @@ tanto al sistema de turnos como al sitio:
 | Horarios de apertura por día | `HORARIOS` |
 | Feriados y cierres puntuales | `FERIADOS` |
 | Deportes, duraciones y precios | `DISCIPLINAS` |
+| Seña, formas de pago y tiempo para pagar | `PAGOS` |
 | Cantidad y nombre de las canchas | `CANCHAS` |
 | Anticipación, cancelaciones, topes | `RESERVAS` |
 | Publicar precios en el sitio | `PRECIOS_PUBLICADOS` |
@@ -128,6 +141,8 @@ los-naranjos/
 │   ├── db.js         SQLite: esquema, transacciones y consultas
 │   ├── turnos.js     Disponibilidad, validaciones y alta de reservas
 │   ├── cuentas.js    Registro, ingreso, sesiones y claves
+│   ├── pagos.js      Cobro de turnos: montos, apartado, confirmación, devoluciones
+│   ├── pasarela.js   Lo único que habla con Mercado Pago (y la pasarela de prueba)
 │   ├── api.js        Endpoints JSON
 │   ├── index.js      Servidor HTTP y archivos estáticos
 │   ├── seed.js       Turnos de ejemplo
@@ -138,9 +153,10 @@ los-naranjos/
 │   ├── mis-turnos.html   Panel del socio
 │   ├── cuenta.html       Ingreso, registro y perfil del jugador
 │   ├── admin.html        Panel del club
+│   ├── pago-simulado.html  Pantalla de pago de prueba (sólo con PAGOS_SIMULADOS=si)
 │   ├── 404.html
 │   ├── css/{base,site,app}.css
-│   ├── js/{comun,reservar,mis-turnos,cuenta,admin}.js
+│   ├── js/{comun,reservar,mis-turnos,cuenta,admin,pago-simulado}.js
 │   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
 │                        vive en assets/iconos.svg y va incrustada en cada página)
 ├── herramientas/
@@ -211,6 +227,113 @@ primaria es `(cancha_id, fecha, slot)`. Dos personas no pueden tomar el mismo
 casillero de la misma cancha: la segunda reserva choca contra la base y recibe
 un `409`. El alta corre dentro de una transacción `BEGIN IMMEDIATE`, así que la
 regla se cumple aunque entren dos pedidos en el mismo instante.
+Los turnos que se están pagando ocupan la cancha igual, hasta que vencen.
+
+---
+
+<a id="pagos"></a>
+
+## Pagos con Mercado Pago
+
+El club trabaja con seña, así que un turno sacado por la web queda firme recién
+cuando el jugador paga: la seña o, si prefiere, el turno entero. La plata entra
+directo a la cuenta de Mercado Pago del club; el sistema no la toca nunca.
+
+### Cómo lo vive el jugador
+
+1. Elige día, horario y cancha y, en el último paso, cómo paga: la seña o el
+   turno entero, cada una con su monto.
+2. Va a Mercado Pago. Mientras paga, el turno queda **apartado** para él:
+   15 minutos, más 5 de changüí para el que toca "pagar" sobre la hora.
+3. Paga con tarjeta, débito o dinero en cuenta y vuelve al sitio con el turno
+   confirmado y su código.
+4. Si el pago no sale, vuelve igual: ve por qué y puede probar de nuevo —con la
+   misma opción o con la otra— o soltar el turno. Si no paga a tiempo, la cancha
+   se libera sola.
+
+Rapipago y Pago Fácil quedan afuera: se acreditan días después, y el turno capaz
+es hoy.
+
+### Cómo lo vive el club
+
+- En la grilla del panel, un turno apartado se ve rayado: alguien lo está
+  pagando. En la tabla del día, cada turno dice cómo está: "Seña pagada · resta
+  $…", "Pagado", "Paga en el club" o "Falta pagar".
+- El resumen del día suma lo **cobrado online**.
+- **Pagos para revisar**: plata que entró y no corresponde a un turno firme —un
+  turno pagado que se canceló, alguien que pagó dos veces o que pagó cuando el
+  turno ya era de otro—. "Devolver" le pide a Mercado Pago que devuelva el pago
+  entero; "Ya lo resolví" deja anotado que se arregló de otra forma. Las dos
+  cosas quedan en la bitácora, y lo que detecta el sistema solo, también.
+- **Los turnos que piden por WhatsApp o por teléfono** los carga el personal con
+  su cuenta, desde "Reservar para un cliente": salen a nombre del cliente, sin
+  pago online, y se cobran en el mostrador.
+
+### Por qué es seguro
+
+- El monto lo pone el servidor, desde la config. Lo que mande el navegador no
+  cuenta.
+- Un turno se confirma sólo cuando **la API de Mercado Pago, consultada con la
+  credencial del club**, dice que el pago está aprobado, en pesos y por lo que
+  corresponde. Ni el aviso de Mercado Pago ni la vuelta del jugador
+  (`?status=approved`) alcanzan solos: los dos se pueden fraguar.
+- Con `MP_WEBHOOK_SECRET`, los avisos se validan con la firma `x-signature`
+  (HMAC-SHA256), igual que en los SDK oficiales.
+- Cada pago cuenta una sola vez aunque el aviso llegue repetido.
+- Los turnos esperando el pago cuentan para el tope de turnos por teléfono:
+  nadie puede apartar media grilla sin pagar.
+- Devolver usa siempre la misma clave de idempotencia por pago: si dos personas
+  tocan "Devolver" a la vez, se devuelve una vez.
+- Lo que hace que el servidor le pregunte algo a Mercado Pago desde afuera —la
+  vuelta del jugador, un nuevo intento, un aviso sin firma— tiene tope por IP:
+  nadie puede usar el sitio para gastar la cuota de la API del club.
+- El Access Token vive en una variable de entorno del servidor. No va al
+  navegador ni al repositorio.
+
+### Qué se configura
+
+| Qué | Dónde |
+| --- | --- |
+| Monto de la seña: fijo o porcentaje del turno | `PAGOS.seña` en `server/config.js` |
+| Precio del turno, que es también lo que se cobra entero | `precios` de cada disciplina en `DISCIPLINAS` |
+| Qué opciones se ofrecen y en qué orden | `PAGOS.opciones` |
+| Si se puede reservar por la web sin pagar | `PAGOS.obligatorio` |
+| Minutos para pagar | `PAGOS.minutosParaPagar` |
+| Lo que aparece en el resumen de la tarjeta | `PAGOS.descriptor` |
+
+Mientras falte un monto, esa opción no se ofrece; si no queda ninguna, se
+reserva como antes, sin pago.
+
+### Conectar la cuenta del club (se hace una vez)
+
+1. Con la cuenta de Mercado Pago del club, en **Mercado Pago Developers → Tus
+   integraciones**, crear una aplicación de pagos online (Checkout Pro).
+2. En sus **credenciales de producción**, copiar el **Access Token**. Es la llave
+   de la caja: va como `MP_ACCESS_TOKEN` en el servidor y no se manda por
+   WhatsApp ni se pega en el código.
+3. En **Webhooks**, cargar `https://<dominio>/api/pagos/aviso` con el evento de
+   pagos, y copiar su clave secreta a `MP_WEBHOOK_SECRET`.
+4. Definir `URL_PUBLICA` con la dirección del sitio.
+5. Hacer un pago real chico de punta a punta y devolverlo desde el panel.
+
+### Probar sin plata
+
+- **Pantalla de prueba:** con montos cargados en la config, `PAGOS_SIMULADOS=si
+  npm run dev`. El botón de pagar lleva a `/pago-simulado`, donde se aprueba o se
+  rechaza, y todo lo demás —vuelta, confirmación, panel, devoluciones— funciona
+  igual que con Mercado Pago.
+- **Mercado Pago de prueba:** con las credenciales de prueba de la aplicación y
+  sus tarjetas de prueba (con titular `APRO` el pago se aprueba, con `OTHE` se
+  rechaza). Para avisar, Mercado Pago necesita una dirección pública con https;
+  en una máquina local no la hay, y el turno se confirma igual cuando el jugador
+  vuelve al sitio.
+- `npm test` prueba los dos caminos contra un Mercado Pago de mentira.
+
+### Lo que cuesta
+
+Mercado Pago le cobra al club un porcentaje de cada pago, que baja cuanto más
+días acepte esperar para tener la plata disponible. Eso es entre el club y
+Mercado Pago: el sistema no cobra ninguna comisión.
 
 ---
 
@@ -242,11 +365,19 @@ de las cuentas viaja en la cookie `ln_sesion`.
 | `POST` | `/api/admin/personal` | Dar de alta a alguien del club |
 | `POST` | `/api/admin/personal/baja` | Sacarle el acceso al panel a alguien |
 | `GET` | `/api/admin/movimientos` | Últimos movimientos de la bitácora |
+| `GET` | `/api/pagos/estado?codigo=&pago_id=` | Cómo está el pago de un turno: lo pide la pantalla de vuelta de Mercado Pago |
+| `POST` | `/api/pagos/reintentar` | Otro intento de pago para un turno apartado |
+| `POST` | `/api/pagos/abandonar` | Soltar un turno apartado sin pagar |
+| `POST` | `/api/pagos/aviso` | Aviso (webhook) de Mercado Pago |
+| `GET` `POST` | `/api/pagos/simulado` | Pantalla de pago de prueba (sólo con `PAGOS_SIMULADOS=si`) |
+| `GET` | `/api/admin/pagos` | Pagos para revisar |
+| `POST` | `/api/admin/pagos/devolver` | Devolver un pago por Mercado Pago |
+| `POST` | `/api/admin/pagos/resolver` | Dar por resuelto un pago sin devolverlo |
 
 Reglas que aplica el servidor: horarios de apertura, anticipación mínima para
 turnos de hoy, tope de días para adelante, duraciones permitidas por disciplina,
-máximo de turnos activos por teléfono, límite de altas por IP y hora, y ventana
-de cancelación.
+máximo de turnos activos por teléfono, límite de altas por IP y hora, ventana
+de cancelación, montos a cobrar y vencimiento de los turnos sin pagar.
 
 ---
 
@@ -258,11 +389,14 @@ El proyecto es un servidor Node común: sirve en cualquier VPS, Railway, Render,
 Fly.io o una máquina propia.
 
 ```bash
-ADMIN_TOKEN='una-clave-larga-y-propia' PORT=3000 npm start
+ADMIN_TOKEN='una-clave-larga-y-propia' \
+MP_ACCESS_TOKEN='APP_USR-…' MP_WEBHOOK_SECRET='…' URL_PUBLICA='https://losnaranjos.com.ar' \
+PORT=3000 npm start
 ```
 
 Detrás de Nginx o Caddy conviene pasar `X-Forwarded-For` para que el límite por
-IP funcione bien. La base es un único archivo (`data/turnos.db`): para respaldar,
+IP funcione bien, y `X-Forwarded-Proto` para que la cookie de sesión y la vuelta
+de Mercado Pago usen https. La base es un único archivo (`data/turnos.db`): para respaldar,
 alcanza con copiarlo.
 
 **Sobre hosting compartido:** un plan de hosting web clásico (tipo Hostinger sin
@@ -291,6 +425,8 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
   son a las 22:00 y a las 22:30, lo que encaja con un cierre a las 23:30: ver la
   explicación en `HORARIOS` dentro de `server/config.js`. Falta la hora de
   apertura, para la que no hay ningún dato propio del club.
+- **Trabajan con seña.** Ya está hecho el cobro online con Mercado Pago; falta
+  el monto y conectar la cuenta del club.
 - **El club sólo ofrece pádel.** Nada de pickleball ni de fútbol: se sacó del
   sitio, de la configuración y de la propuesta. Son 7 canchas, todas techadas.
 
@@ -328,8 +464,15 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 
 - [ ] **Precios** por disciplina y duración, y si cambian según el horario o el día.
 - [ ] **Valor de las clases**, de la escuela y de la inscripción a torneos.
-- [ ] **Seña**: ¿se cobra al reservar? Si sí, hay que sumar un medio de pago
-      (Mercado Pago es lo más directo en Argentina).
+- [x] ~~**Seña**: ¿se cobra al reservar?~~ → sí. El cobro online ya está hecho
+      (ver [Pagos](#pagos)).
+- [ ] **Monto de la seña** —fijo o porcentaje— y **precio del turno**, que es
+      también lo que se cobra cuando alguien paga entero. Hasta tenerlos, el
+      sitio reserva sin pago.
+- [ ] **Si devuelven la seña** cuando alguien cancela a tiempo, para decirlo
+      claro en el sitio.
+- [ ] **Cuenta de Mercado Pago del club** y en cuántos días quieren la plata
+      disponible: de eso depende cuánto les cobra Mercado Pago.
 - [ ] **Política de cancelación** real (hoy está puesta en 6 horas antes).
 - [ ] **Anticipación** con la que se puede reservar (hoy, 14 días).
 
@@ -371,7 +514,7 @@ así que los dos sitios pueden convivir sin pisarse.
 > **Ojo con `cartilla/`.** Es la hoja de precios de trabajo: tiene el piso de
 > negociación y el margen. No va en ningún paquete que se le mande al club.
 
-### Los tres pasos siguientes
+### Los cuatro pasos siguientes
 
 1. **Completar los datos del club** en `server/config.js` (todo lo marcado con
    `⚠️ VERIFICAR`). Lo que más destraba: el horario exacto —sobre todo el
@@ -381,3 +524,5 @@ así que los dos sitios pueden convivir sin pisarse.
 3. **Elegir dónde publicarlo.** El sistema de turnos necesita un hosting con
    Node (Railway, Render, Fly.io o un VPS). Un hosting compartido común alcanza
    sólo para el sitio, sin reservas online.
+4. **Conectar Mercado Pago** con la cuenta del club y cargar el monto de la seña
+   y el precio del turno (ver [Pagos](#pagos)).

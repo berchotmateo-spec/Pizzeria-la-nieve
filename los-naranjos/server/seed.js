@@ -8,6 +8,10 @@ import { reservar, bloquear, canchasDe } from './turnos.js';
 import { DISCIPLINAS } from './config.js';
 import * as T from './tiempo.js';
 
+/* Se cargan como si los anotara el mostrador: con los pagos online prendidos,
+   un turno de la web nace esperando el pago, y estos son de mentira. */
+const MOSTRADOR = { rol: 'club', nombre: 'Datos de ejemplo' };
+
 if (process.argv.includes('--limpiar')) {
   db.exec('DELETE FROM ocupacion; DELETE FROM reservas;');
   console.log('Base vaciada.');
@@ -49,7 +53,7 @@ for (let d = 0; d < 3; d++) {
             duracionMin: azar(disciplina.duraciones),
             nombre: azar(NOMBRES),
             telefono: telefono(),
-          }, null);
+          }, null, MOSTRADOR);
           creadas++;
         } catch {
           choques++; // horario tomado o fuera de rango: es esperable

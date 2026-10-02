@@ -51,7 +51,7 @@ Qué tienen:
 
 === LO QUE LE CONSTRUÍ ===
 
-Un sitio web propio con sistema de turnos. Cinco partes:
+Un sitio web propio con sistema de turnos. Seis partes:
 
 1. Sitio público: presentación del club, las canchas, la escuela, ubicación,
    horarios, y disponibilidad en vivo en la portada.
@@ -59,8 +59,9 @@ Un sitio web propio con sistema de turnos. Cinco partes:
    son de 90 minutos, así que no hay nada que elegir ahí—;
    ve en tiempo real qué canchas quedan libres; puede elegir cancha (incluida la
    central, que aparece marcada "con gradas") o dejar que el sistema le asigne
-   una. Deja nombre y teléfono y recibe un código de reserva (formato LN-XXXXX).
-   Funciona las 24 horas, también de madrugada.
+   una. Deja nombre y teléfono, paga la seña o el turno entero con Mercado Pago
+   y recibe un código de reserva (formato LN-XXXXX). Funciona las 24 horas,
+   también de madrugada.
 3. Cuenta del jugador: quien quiera se registra con su teléfono y una
    contraseña, y desde entonces reserva sin escribir sus datos y ve sus turnos
    sin buscar nada. Registrarse es optativo: el que prefiere reservar como
@@ -74,12 +75,22 @@ Un sitio web propio con sistema de turnos. Cinco partes:
    vendidas del día. Cada persona que atiende entra con su teléfono y su
    contraseña —no hay una clave compartida que ande dando vueltas— y todo lo
    que se hace queda anotado con nombre y hora: quién canceló qué turno y
-   cuándo.
+   cuándo. Desde ahí el mostrador también carga los turnos que le piden por
+   WhatsApp, a nombre del cliente y para cobrar en el club.
+6. Pagos con Mercado Pago: al reservar por la web, el jugador paga la seña o el
+   turno entero, y el turno queda firme recién cuando entra la plata. Mientras
+   paga, el turno queda apartado 15 minutos; si no paga, la cancha se libera
+   sola. La plata va directo a la cuenta de Mercado Pago del club. Si alguien
+   cancela un turno pagado o paga dos veces, el pago aparece en el panel para
+   devolverlo con un clic.
 
 Características que importan y conviene que la planilla destaque:
 - Es imposible que dos personas reserven la misma cancha en el mismo horario:
   no es una validación que se puede escapar, lo garantiza la base de datos.
-- No hay comisión por reserva. Ni al club ni al jugador.
+- El sistema no cobra comisión por reserva, ni al club ni al jugador. Sobre los
+  pagos online, Mercado Pago cobra su tarifa, como en cualquier cobro con él.
+- La seña se cobra sola al reservar: se terminan los turnos que alguien pide y
+  después no aparece.
 - Las reservas y los datos de los jugadores quedan en poder del club.
 - El club decide quién entra al panel y puede sacarle el acceso a alguien en
   cualquier momento, sin perder su historial.
@@ -101,14 +112,14 @@ Portada. Título grande "Los Naranjos — Sitio web y sistema de turnos", debajo
 "Propuesta de servicio · Mateo Berchot · [fecha de hoy]".
 Un párrafo corto explicando qué es, escrito para el dueño de un club, no para un
 técnico. Debajo, cuatro celdas destacadas con los números que resumen todo:
-7 canchas · reservas 24 horas · 0 comisión por reserva · 1 minuto para reservar.
+7 canchas · reservas 24 horas · seña cobrada al reservar · 1 minuto para reservar.
 Cerrá con dos o tres líneas sobre el problema que resuelve: hoy cada turno pasa
 por una persona contestando WhatsApp, y lo que no se contesta a tiempo se pierde.
 
 --- Hoja 2: "Qué incluye" ---
 Tabla de tres columnas: Módulo | Qué hace | Estado.
-Filas agrupadas por las cinco partes del sistema (sitio público, reserva
-online, cuenta del jugador, panel del socio, panel del club), con las funciones
+Filas agrupadas por las seis partes del sistema (sitio público, reserva
+online, cuenta del jugador, panel del socio, panel del club, pagos), con las funciones
 de cada una en filas propias. La columna Estado dice "Listo" en todas, porque
 está construido. Usá subtítulos de grupo con fondo de color para separarlas.
 
@@ -135,7 +146,8 @@ Las filas, agrupadas por tema:
 
 Horarios y tarifas
 - Hora de apertura, día por día
-- Precio del turno de 90 minutos (todos los turnos de cancha son de 90)
+- Precio del turno de 90 minutos (todos los turnos de cancha son de 90; es
+  también lo que se cobra cuando alguien paga el turno entero)
 - Precio de la clase de 60 minutos con profesor
 - Si el precio cambia según el día o la franja horaria
 - Feriados o fechas en que no abren
@@ -153,7 +165,10 @@ Escuela y torneos
 Reglas del sistema
 - Con cuánta anticipación quieren permitir reservar (hoy: 14 días)
 - Hasta cuándo aceptan una cancelación sin cargo (hoy: 6 horas antes)
-- Si quieren cobrar seña al reservar
+- Monto de la seña: un monto fijo o un porcentaje del turno
+- Si devuelven la seña cuando alguien cancela a tiempo
+- La cuenta de Mercado Pago del club, para conectarla, y en cuántos días
+  quieren la plata disponible (de eso depende cuánto cobra Mercado Pago)
 - Quiénes del club van a usar el panel
 
 Contacto y material

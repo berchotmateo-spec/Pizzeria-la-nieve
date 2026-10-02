@@ -5,7 +5,7 @@ Deportivo Once Unidos**. Junta lo que se construyó y lo que se aprendió con
 **Los Naranjos**, el sistema anterior, que es la base de la que se arranca.
 
 Si al lado de este archivo está la carpeta **`base-los-naranjos/`**, ese es el
-código completo de Los Naranjos, con sus 29 pruebas pasando. La idea es copiarlo
+código completo de Los Naranjos, con sus 48 pruebas pasando. La idea es copiarlo
 y adaptarlo, no escribirlo de cero: el motor de turnos ya maneja varios
 deportes, que es justo lo que necesita un club deportivo.
 
@@ -21,8 +21,8 @@ deportes, que es justo lo que necesita un club deportivo.
   abono mensual**.
 - **Los Naranjos** —club de pádel en Dorrego 333, Mar del Plata— es mi segundo
   cliente. Al 2 de octubre de 2026 el club confirmó que hoy toma todos los turnos
-  por WhatsApp, me pasaron el contacto del encargado y falta la reunión para
-  mostrárselo. Once Unidos es el próximo.
+  por WhatsApp y que trabaja con seña; me pasaron el contacto del encargado y
+  falta la reunión para mostrárselo. Once Unidos es el próximo.
 - **Español rioplatense, de vos**, en todo: textos del sitio, comentarios,
   nombres de variables y funciones, mensajes de commit.
 - **Nada inventado.** Lo que el club no confirmó se marca con `⚠️ VERIFICAR` en
@@ -49,9 +49,13 @@ deportes, que es justo lo que necesita un club deportivo.
 4. **Mis turnos**: quien no tiene cuenta consulta y cancela con su teléfono y el
    código.
 5. **Panel del club**: grilla del día por cancha, turnos del día con resumen
-   (turnos, bloqueos, horas vendidas), bloqueo de canchas (mantenimiento, clases,
-   torneos), cancelación de cualquier turno, un usuario para cada persona del
-   club y una bitácora de quién hizo qué.
+   (turnos, horas vendidas, cobrado online, bloqueos), bloqueo de canchas
+   (mantenimiento, clases, torneos), cancelación de cualquier turno, un usuario
+   para cada persona del club, una bitácora de quién hizo qué, "Pagos para
+   revisar" y "Reservar para un cliente" (los turnos que piden por WhatsApp).
+6. **Pagos con Mercado Pago**: el jugador paga la seña o el turno entero al
+   reservar; el turno queda firme cuando entra la plata, que va directo a la
+   cuenta del club.
 
 ## 3. Cómo está hecho
 
@@ -70,11 +74,13 @@ server/tiempo.js     Fechas y horas en la zona horaria del club
 server/db.js         Esquema SQLite, transacciones y consultas
 server/turnos.js     Disponibilidad, validaciones, alta, bloqueos y cancelaciones
 server/cuentas.js    Registro, ingreso, sesiones, claves y personal del club
+server/pagos.js      Cobro de turnos: montos, apartado, confirmación, vencimiento, devoluciones
+server/pasarela.js   Lo único que habla con Mercado Pago (y la pasarela de prueba)
 server/api.js        Rutas JSON
 server/index.js      Servidor HTTP y archivos estáticos
 server/seed.js       Turnos de ejemplo para ver el panel lleno
 server/test.js       Pruebas (node:test)
-public/              index, reservar, mis-turnos, cuenta, admin y 404, más css/, js/ y assets/
+public/              index, reservar, mis-turnos, cuenta, admin, pago-simulado y 404, más css/, js/ y assets/
 herramientas/        armar-vista-previa.mjs (el sitio en un solo HTML) · armar-pdf.mjs (HTML → PDF)
 propuesta/           Propuesta para el club (HTML y PDF) y el prompt de la planilla de Cowork
 cartilla/            Cartilla de precios: documento INTERNO, no va al club
@@ -82,7 +88,8 @@ cartilla/            Cartilla de precios: documento INTERNO, no va al club
 
 Comandos: `npm start` (http://localhost:3000), `npm run dev` (se reinicia al
 guardar), `npm test`, `node server/seed.js --limpiar` y `npm run vista-previa`.
-Variables de entorno: `PORT`, `HOST`, `ADMIN_TOKEN` y `DB_PATH`.
+Variables de entorno: `PORT`, `HOST`, `ADMIN_TOKEN` y `DB_PATH`; para pagos,
+`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `URL_PUBLICA` y `PAGOS_SIMULADOS`.
 
 ### `server/config.js`, la única fuente de verdad
 
@@ -99,6 +106,7 @@ la grilla y el panel se acomodan solos.
 | `CANCHAS` | Cada cancha: id, nombre, disciplina, superficie, techada, gradas y orden |
 | `RESERVAS` | Casillero de 30 min, 14 días de anticipación, 60 min de antelación para turnos de hoy, cancelación hasta 6 h antes, 3 turnos activos por teléfono, 10 altas por IP por hora y asignación automática de cancha |
 | `PRECIOS_PUBLICADOS` | En `false` hasta tener tarifas reales: mientras tanto el sitio muestra "Consultar" |
+| `PAGOS` | Seña (fija o porcentaje), opciones (seña, turno entero), si el pago es obligatorio, minutos para pagar y lo que aparece en el resumen de la tarjeta |
 | `SERVICIOS`, `PROGRAMAS` | Lo que se muestra en la home. Sólo lo que es del club |
 | `CUENTAS` | Clave de 8 caracteres como mínimo, sesión de 30 días y freno a los 8 intentos fallidos en 15 min |
 | `ADMIN`, `SERVIDOR` | Llave maestra, puerto y ruta de la base, desde variables de entorno |
@@ -135,6 +143,35 @@ servidor puede estar en cualquier zona horaria.
   hay que entrar. Si no, cualquiera que lo conozca vería a qué hora juega.
 - Registrarse con un teléfono que ya tiene cuenta **no pisa la contraseña**.
 
+### Pagos con Mercado Pago
+
+- **Checkout Pro**, llamado con `fetch` contra la API REST (sin el SDK):
+  `POST /checkout/preferences`, `GET /v1/payments/{id}`,
+  `POST /v1/payments/{id}/refunds`. Con `binary_mode` (se aprueba o se rechaza
+  en el momento), sin Rapipago ni Pago Fácil, y con vencimiento.
+- Un turno que se paga nace **'pendiente'**: ocupa sus casilleros hasta
+  `vence_en` (15 minutos más 5 de changüí). Si el pago entra, pasa a
+  'confirmada'; si no, a 'vencida' y la cancha se libera. Los apartados vencidos
+  se sueltan dentro de la misma transacción que crea un turno nuevo, y además
+  cada minuto.
+- **Sólo la API de Mercado Pago confirma un pago**, consultada con la credencial
+  del club: el aviso (webhook) y la vuelta del jugador sólo dicen qué pago ir a
+  mirar. El aviso se valida con la firma `x-signature`: HMAC-SHA256 sobre
+  `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`, sacado del SDK oficial.
+- Tabla `pagos` con clave única (proveedor, id del pago): un aviso repetido
+  cuenta una vez. El monto sale de la config, nunca del navegador, y un pago por
+  menos de la seña no confirma nada.
+- Los casos raros quedan para el club en **"Pagos para revisar"**: pagó con el
+  apartado vencido y la cancha ya era de otro, pagó dos veces, canceló un turno
+  pagado. Si pagó tarde y la cancha sigue libre, el turno se recupera solo.
+- **Pasarela de prueba** con `PAGOS_SIMULADOS=si`: una pantalla propia
+  (`/pago-simulado`) para aprobar o rechazar sin plata. Nunca se prende por
+  descarte: con el sitio publicado, cualquiera confirmaría turnos sin pagar.
+- La dirección de vuelta y de los avisos sale de `URL_PUBLICA` o, si no está, de
+  la dirección por la que entró el jugador.
+- El personal del club reserva sin pago online ("lo cobra el club") y a nombre
+  del cliente: es como se cargan los turnos que piden por WhatsApp.
+
 ### Quién entra al panel del club
 
 - **Cada persona con su cuenta**: es la misma tabla `usuarios`, con `rol` en
@@ -165,6 +202,10 @@ servidor puede estar en cualquier zona horaria.
 | `POST /api/admin/bloqueos` · `POST /api/admin/cancelar` | Bloquear una cancha · cancelar cualquier turno |
 | `GET` y `POST /api/admin/personal` · `POST /api/admin/personal/baja` | Personal del club |
 | `GET /api/admin/movimientos` | Bitácora |
+| `GET /api/pagos/estado` · `POST /api/pagos/reintentar` · `POST /api/pagos/abandonar` | La vuelta de Mercado Pago: estado, otro intento, soltar el turno |
+| `POST /api/pagos/aviso` | Aviso (webhook) de Mercado Pago |
+| `GET` y `POST /api/pagos/simulado` | Pasarela de prueba |
+| `GET /api/admin/pagos` · `POST /api/admin/pagos/devolver` · `POST /api/admin/pagos/resolver` | Pagos para revisar |
 
 ### La vista previa offline
 
@@ -184,10 +225,12 @@ saca, por ejemplo, el botón de agendar en el calendario.
 
 ### Pruebas
 
-`npm test`: 29 pruebas con `node:test`, sobre una base temporal que no toca la
+`npm test`: 48 pruebas con `node:test`, sobre una base temporal que no toca la
 real. Cubren disponibilidad, doble reserva y solapamiento parcial, validaciones,
 topes por teléfono y por IP, cancelaciones, panel, cuentas, sesiones, fuerza
-bruta, privacidad, personal, bitácora y que el servidor HTTP levante. Reservan
+bruta, privacidad, personal, bitácora, pagos (contra un Mercado Pago de
+mentira que levanta la propia prueba: firma, avisos repetidos, montos, pagos
+tardíos, devoluciones) y que el servidor HTTP levante. Reservan
 contra el **próximo miércoles**, no contra "mañana", para no depender del día en
 que se corren.
 
@@ -239,8 +282,9 @@ Todavía no hablé de números con ellos.
 
 - El armado se cobra mitad al arrancar y mitad al publicar. El abono se cobra
   desde que el sistema sale al aire y se ajusta cada 3 meses.
-- Opcionales: seña con Mercado Pago $240.000, inscripción a escuela y torneos
-  $160.000, logo vectorial $120.000, media hora extra de capacitación $35.000.
+- Opcionales: seña con Mercado Pago $240.000 (ya está hecha: se prende
+  conectando la cuenta del club), inscripción a escuela y torneos $160.000, logo
+  vectorial $120.000, media hora extra de capacitación $35.000.
 - Mis costos: servidor ≈ $12.000/mes y dominio .com.ar $8.500/año. Me quedan
   ≈ $77.290 por mes por club.
 - Piso: $550.000 de armado y $75.000 de abono. Si aprietan, se sacan cosas; no
@@ -287,6 +331,8 @@ más gente usando el panel, hay que recalcularlos.
   que arranca a las 22:30 no entra en un cierre a las 23:30. O cierran más tarde,
   o el sistema está tirando el último turno del día.
 - El Instagram del club es la mejor fuente pública, y aun así hay que confirmar.
+- Preguntar desde el principio **cómo cobran**: Los Naranjos trabaja con seña, y
+  eso cambia el flujo de reserva entero.
 
 **Con el código**
 
@@ -309,6 +355,8 @@ más gente usando el panel, hay que recalcularlos.
   sus duraciones y sus precios. El paso "deporte" aparece solo cuando hay más de
   uno, y el de duración cuando un deporte tiene más de una.
 - Cantidad, nombre, superficie y techo de cada cancha; una "central" con gradas.
+- **Seña o turno entero con Mercado Pago**, con precio y seña por deporte y
+  duración: alcanza con cargar los montos y conectar la cuenta del club.
 - Horarios por día, feriados, anticipación, cancelación y topes.
 
 ### Lo que pide tocar código, si el club lo necesita
@@ -321,8 +369,7 @@ más gente usando el panel, hay que recalcularlos.
   club.
 - **Precio de socio y de no socio**: hoy hay un precio por deporte y duración.
 - **Turnos fijos semanales** para los grupos de siempre.
-- **Seña con Mercado Pago** y **avisos por WhatsApp o mail** (estos necesitan un
-  servicio de envío).
+- **Avisos por WhatsApp o mail** (necesitan un servicio de envío).
 - La **agenda** de varios días tiene ruta en el API pero no pantalla en el panel.
 
 ### Lo que dice "Los Naranjos" fuera de `config.js`
@@ -350,7 +397,9 @@ club se adapta tocando un solo archivo.
   (escuelas, clases, entrenamientos de las divisiones)?
 - ¿Qué horario tiene cada instalación, cada día? ¿Cambia en verano?
 - ¿Precios por deporte y por duración? ¿Distintos para socios? ¿Hay horario pico?
-- ¿Cobran seña? ¿Con cuánta anticipación se puede cancelar?
+- ¿Cobran seña? ¿De cuánto? ¿La devuelven si cancelan a tiempo? ¿Con cuánta
+  anticipación se puede cancelar?
+- ¿Tienen cuenta de Mercado Pago? ¿En cuántos días quieren la plata disponible?
 - ¿Cómo toman los turnos hoy y quién los toma? ¿Quiénes usarían el panel?
 - Dirección, teléfono, WhatsApp de reservas, mail, redes y dominio.
 - Escudo en vector, colores oficiales y fotos.

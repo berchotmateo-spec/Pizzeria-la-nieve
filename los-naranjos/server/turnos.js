@@ -1,6 +1,7 @@
 /** Lógica de negocio: disponibilidad, validación y alta de turnos. */
 import { CANCHAS, DISCIPLINAS, HORARIOS, FERIADOS, RESERVAS, CLUB } from './config.js';
-import { ocupacionDelDia, crearReserva, cancelarReserva, consultas } from './db.js';
+import { ocupacionDelDia, crearReserva, cancelarReserva, consultas, cuentas } from './db.js';
+import { cobroDeLaReserva, GRACIA_MINUTOS } from './pagos.js';
 import * as T from './tiempo.js';
 
 const SLOT = RESERVAS.slotMinutos;
@@ -122,6 +123,14 @@ export function normalizarTelefono(tel) {
  * Valida el pedido y crea la reserva. Devuelve la fila creada.
  * Si `usuario` viene, la reserva queda a su nombre y con su teléfono: el que
  * está con la sesión abierta no puede reservar a nombre de otro sin querer.
+ *
+ * La excepción es el personal del club: reserva para otra persona —los turnos
+ * que le piden por WhatsApp o por teléfono—, así que el nombre y el teléfono
+ * son los del formulario, no se le aplican los topes pensados para frenar
+ * abusos desde la web y el cobro queda en manos del mostrador.
+ *
+ * Si el turno se paga online, nace 'pendiente': el que llama tiene que abrir
+ * el cobro (ver pagos.js) y, si no puede, liberarlo.
  */
 export function reservar(datos, ip, usuario = null) {
   const disciplina = disciplinaPorSlug(datos.disciplina);
@@ -154,28 +163,31 @@ export function reservar(datos, ip, usuario = null) {
     throw errorCliente(`Los turnos de hoy se reservan con ${RESERVAS.minutosAntelacion} minutos de anticipación.`);
   }
 
-  const nombre = String((usuario ? usuario.nombre : datos.nombre) || '').trim();
+  const delClub = usuario?.rol === 'club';
+  const cuenta = usuario && !delClub ? usuario : null;
+
+  const nombre = String((cuenta ? cuenta.nombre : datos.nombre) || '').trim();
   if (nombre.length < 2) throw errorCliente('Escribí tu nombre y apellido.');
   if (nombre.length > 80) throw errorCliente('El nombre es demasiado largo.');
 
-  const telefono = normalizarTelefono(usuario ? usuario.telefono : datos.telefono);
+  const telefono = normalizarTelefono(cuenta ? cuenta.telefono : datos.telefono);
   if (telefono.length < 8) throw errorCliente('Escribí un teléfono de contacto válido.');
 
-  const email = String(datos.email || (usuario ? usuario.email : '') || '').trim();
+  const email = String(datos.email || (cuenta ? cuenta.email : '') || '').trim();
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
     throw errorCliente('El correo no parece válido.');
   }
 
   const notas = String(datos.notas || '').trim().slice(0, 300);
 
-  if (consultas.activasPorTelefono(telefono, T.hoy()) >= RESERVAS.maxPorTelefono) {
+  if (!delClub && consultas.activasPorTelefono(telefono, T.hoy()) >= RESERVAS.maxPorTelefono) {
     throw errorCliente(
       `Ya tenés ${RESERVAS.maxPorTelefono} turnos activos con este teléfono. ` +
       'Cancelá uno o escribinos por WhatsApp.'
     );
   }
 
-  if (ip) {
+  if (ip && !delClub) {
     const haceUnaHora = new Date(Date.now() - 3600_000).toISOString();
     if (consultas.desdeIpDesde(ip, haceUnaHora) >= RESERVAS.maxPorIpHora) {
       throw errorCliente('Demasiadas reservas seguidas. Probá de nuevo en un rato.', 'LIMITE');
@@ -204,6 +216,11 @@ export function reservar(datos, ip, usuario = null) {
     if (!cancha) throw errorCliente('No quedan canchas libres en ese horario.', 'OCUPADO');
   }
 
+  // Se decide antes de tocar la base: si falta elegir cómo pagar, no se aparta nada.
+  const cobro = cobroDeLaReserva({
+    slug: disciplina.slug, duracionMin, pedido: datos.cobro, delClub,
+  });
+
   return crearReserva(
     {
       disciplina: disciplina.slug,
@@ -216,7 +233,9 @@ export function reservar(datos, ip, usuario = null) {
       email: email || null,
       notas: notas || null,
       ip,
-      usuarioId: usuario ? usuario.id : null,
+      // Lo que carga el club para alguien con cuenta aparece también en su cuenta.
+      usuarioId: cuenta ? cuenta.id : (delClub ? cuentas.porTelefono(telefono)?.id ?? null : null),
+      ...cobro,
     },
     slots
   );
@@ -257,6 +276,7 @@ export function bloquear({ canchaId, fecha, hora, duracionMin, motivo }) {
 export function serializar(r) {
   const cancha = canchaPorId(r.cancha_id);
   const disciplina = disciplinaPorSlug(r.disciplina);
+  const pagado = r.pagado || 0;
   return {
     codigo: r.codigo,
     tipo: r.tipo,
@@ -276,7 +296,23 @@ export function serializar(r) {
     estado: r.estado,
     creadaEn: r.creada_en,
     cancelable: esCancelable(r),
+    // Pago: cómo se cobra, cuánto vale, cuánto entró y cuánto falta.
+    cobro: r.cobro ?? null,
+    precio: r.precio ?? null,
+    aPagar: r.a_pagar ?? null,
+    pagado,
+    saldo: r.precio != null ? Math.max(r.precio - pagado, 0) : null,
+    // Hasta cuándo puede empezar a pagar: lo que se le promete al jugador.
+    venceHora: r.estado === 'pendiente' && r.vence_en
+      ? T.horaDeISO(new Date(Date.parse(r.vence_en) - GRACIA_MINUTOS * 60_000).toISOString())
+      : null,
   };
+}
+
+/** Lo mismo, sin los datos de contacto: para lo que se puede ver sólo con el código. */
+export function serializarPublico(r) {
+  const { telefono, email, ...resto } = serializar(r);
+  return resto;
 }
 
 /** ¿Todavía estamos a tiempo de cancelar sin cargo? */

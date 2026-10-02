@@ -79,6 +79,9 @@
   <symbol id="i-usuario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="8.2" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>
   </symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/>
+  </symbol>
   <symbol id="i-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
     <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/>
   </symbol>
@@ -161,6 +164,11 @@
         </div>
       </div>
 
+      <div class="aviso aviso--alerta" id="aviso-pagos" hidden style="margin-top:1.5rem">
+        <svg width="20" height="20" style="flex:none"><use href="#i-tarjeta"/></svg>
+        <div data-texto-aviso-pagos></div>
+      </div>
+
       <div class="barra-admin">
         <div class="barra-admin__fecha">
           <button class="boton boton--fantasma boton--chico" id="dia-anterior" aria-label="Día anterior">←</button>
@@ -170,6 +178,8 @@
         </div>
         <div class="barra-admin__derecha">
           <span class="plomo" style="font-size:.85rem" id="etiqueta-fecha"></span>
+          <!-- Para cargar los turnos que piden por WhatsApp: sólo con cuenta propia, que dice quién lo hizo. -->
+          <a class="boton boton--fantasma boton--chico" id="reservar-cliente" href="/reservar" hidden>Reservar para un cliente</a>
           <button class="boton boton--chico" id="nuevo-bloqueo">Bloquear cancha</button>
         </div>
       </div>
@@ -182,6 +192,7 @@
       </div>
       <div class="leyenda">
         <span><i style="background:var(--naranja)"></i> Turno reservado</span>
+        <span><i style="background:repeating-linear-gradient(45deg,rgba(255,107,20,.35),rgba(255,107,20,.35) 4px,rgba(255,107,20,.18) 4px,rgba(255,107,20,.18) 8px)"></i> Esperando el pago</span>
         <span><i style="background:repeating-linear-gradient(45deg,#4A4F58,#4A4F58 4px,#5A6069 4px,#5A6069 8px)"></i> Bloqueo del club</span>
         <span><i style="background:var(--papel-2);border:1px solid var(--linea)"></i> Libre</span>
         <span><i style="background:var(--papel-3)"></i> Fuera de horario</span>
@@ -194,12 +205,30 @@
           <thead>
             <tr>
               <th>Hora</th><th>Cancha</th><th>Deporte</th><th>A nombre de</th>
-              <th>Teléfono</th><th>Código</th><th>Nota</th><th></th>
+              <th>Teléfono</th><th>Pago</th><th>Código</th><th>Nota</th><th></th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
+
+      <!-- ── Pagos para revisar ────────────────────────────────────────── -->
+      <section id="seccion-pagos" hidden>
+        <h2 class="display-sm" style="margin:2.75rem 0 .6rem">Pagos para revisar</h2>
+        <p class="plomo" style="font-size:.88rem;margin-bottom:.9rem;max-width:72ch">
+          Plata que entró por Mercado Pago y no corresponde a un turno firme: alguien
+          canceló un turno pagado, pagó dos veces o pagó cuando el turno ya era de otro.
+          Devolvela con un clic, o marcala como resuelta si la arreglaste de otra forma.
+        </p>
+        <div class="tabla-envoltorio">
+          <table class="tabla-reservas" id="tabla-pagos">
+            <thead>
+              <tr><th>Turno</th><th>A nombre de</th><th>Monto</th><th>Por qué</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
 
       <!-- ── Personal del club ─────────────────────────────────────────── -->
       <h2 class="display-sm" style="margin:2.75rem 0 .9rem">Quién entra al panel</h2>
@@ -318,6 +347,7 @@
     <h2 class="display-sm">Cancelar este turno</h2>
     <p class="plomo" id="detalle-cancelacion" style="font-size:.93rem"></p>
     <p class="plomo" style="font-size:.86rem">El horario vuelve a quedar libre para reservas online.</p>
+    <p class="aviso aviso--alerta" data-aviso-pago hidden style="font-size:.86rem"></p>
     <div class="aviso aviso--error" id="error-cancelacion" hidden><span></span></div>
     <div class="modal__acciones">
       <button class="boton boton--fantasma boton--chico" type="button" data-cerrar>Volver</button>

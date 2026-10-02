@@ -1,5 +1,5 @@
 /** Panel del club: grilla del día, cancelaciones y bloqueos. */
-import { pedir, traerConfig, iniciarCabecera, esc, duracionTexto } from './comun.js';
+import { pedir, traerConfig, iniciarCabecera, esc, pesos, duracionTexto, pagoEnPalabras } from './comun.js';
 
 const $ = (sel) => document.querySelector(sel);
 const LLAVE = 'naranjos:clave-panel';
@@ -68,6 +68,9 @@ async function verificar() {
     const r = await pedir('/api/admin/sesion', { method: 'POST', headers: cabeceras() });
     $('#aviso-clave').hidden = !r.avisoTokenPorDefecto;
     $('#aviso-sin-personal').hidden = !r.sinPersonal;
+    avisarPagos(r.pagos);
+    // Reservar para un cliente deja la firma de quien lo hizo: con la clave compartida no hay a quién.
+    $('#reservar-cliente').hidden = r.conClaveMaestra;
     $('#quien-entro').hidden = false;
     $('#quien-entro').querySelector('[data-quien]').textContent = r.quien;
     return true;
@@ -126,9 +129,77 @@ function entrar() {
   $('#pantalla-panel').hidden = false;
   $('#salir').hidden = false;
   cargarDia();
+  cargarPagos();
   cargarPersonal();
   cargarMovimientos();
 }
+
+/** Avisa si los pagos online están en prueba o a medio configurar. */
+function avisarPagos(pagos) {
+  const caja = $('#aviso-pagos');
+  let texto = '';
+  if (pagos?.pasarela === 'simulado') {
+    texto = '<b>Pagos en modo de prueba.</b> Los pagos online pasan por una pantalla de prueba y nadie paga ' +
+      'de verdad. Sirve para mostrar el sistema; antes de abrirlo al público hay que conectar la cuenta de ' +
+      'Mercado Pago del club.';
+  } else if (!pagos?.pasarela && pagos?.montosCargados) {
+    texto = '<b>Los pagos online están apagados.</b> Hay montos cargados, pero falta conectar Mercado Pago: ' +
+      'mientras tanto, los turnos se reservan sin seña.';
+  } else if (pagos?.pasarela === 'mercadopago' && !pagos.activos) {
+    texto = '<b>Mercado Pago está conectado, pero no hay montos.</b> Falta cargar la seña o el precio del ' +
+      'turno: mientras tanto, los turnos se reservan sin seña.';
+  }
+  caja.hidden = !texto;
+  caja.querySelector('[data-texto-aviso-pagos]').innerHTML = texto;
+}
+
+/* ── Pagos para revisar ───────────────────────────────────────────────────── */
+async function cargarPagos() {
+  const seccion = $('#seccion-pagos');
+  const cuerpo = $('#tabla-pagos').querySelector('tbody');
+  try {
+    const { aRevisar } = await pedir('/api/admin/pagos', { headers: cabeceras() });
+    seccion.hidden = aRevisar.length === 0;
+    cuerpo.innerHTML = aRevisar.map((p) => `
+      <tr>
+        <td class="numeros"><b>${esc(p.reserva.fechaLarga)}</b><br>
+          <span style="color:var(--tinta-3)">${esc(p.reserva.hora)} · ${esc(p.reserva.canchaNombre)} · <code>${esc(p.reserva.codigo)}</code></span></td>
+        <td>${esc(p.reserva.nombre || '—')}${p.reserva.telefono
+          ? `<br><a class="enlace-linea" href="tel:${esc(p.reserva.telefono)}">${esc(p.reserva.telefono)}</a>` : ''}</td>
+        <td class="numeros"><b>${esc(pesos(p.monto))}</b></td>
+        <td style="max-width:240px;color:var(--tinta-2)">${esc(p.motivo || '')}</td>
+        <td style="white-space:nowrap">
+          <button class="boton boton--chico" data-devolver="${p.id}" data-monto="${esc(pesos(p.monto))}">Devolver</button>
+          <button class="boton boton--fantasma boton--chico" data-resolver="${p.id}">Ya lo resolví</button>
+        </td>
+      </tr>`).join('');
+  } catch (err) {
+    seccion.hidden = false;
+    cuerpo.innerHTML = `<tr><td colspan="5" style="padding:1.2rem">${esc(err.message)}</td></tr>`;
+  }
+}
+
+$('#tabla-pagos').addEventListener('click', async (e) => {
+  const devolver = e.target.closest('[data-devolver]');
+  const resolver = e.target.closest('[data-resolver]');
+  const boton = devolver || resolver;
+  if (!boton) return;
+  const pregunta = devolver
+    ? `¿Devolver ${devolver.dataset.monto} por Mercado Pago?\n\nLa plata vuelve al medio con el que pagó. No se puede deshacer.`
+    : '¿Marcar este pago como resuelto sin devolverlo?\n\nUsalo si lo arreglaste de otra forma: lo pasaste a otro turno, lo devolviste en efectivo…';
+  if (!confirm(pregunta)) return;
+  boton.disabled = true;
+  try {
+    await pedir(devolver ? '/api/admin/pagos/devolver' : '/api/admin/pagos/resolver', {
+      method: 'POST', headers: cabeceras(), body: { id: Number(boton.dataset.devolver || boton.dataset.resolver) },
+    });
+    cargarPagos();
+    cargarMovimientos();
+  } catch (err) {
+    alert(err.message);
+    boton.disabled = false;
+  }
+});
 
 /* ── Personal del club ────────────────────────────────────────────────────── */
 async function cargarPersonal() {
@@ -263,11 +334,16 @@ function pintarResumen() {
     : 0;
   const ocupacion = horasDia ? Math.round((dia.resumen.horasVendidas / horasDia) * 100) : 0;
 
+  const r = dia.resumen;
   $('#resumen').innerHTML = `
-    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.turnos}</b><span>Turnos reservados</span></div>
-    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.horasVendidas}</b><span>Horas de cancha</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${r.turnos}</b><span>Turnos reservados</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${r.horasVendidas}</b><span>Horas de cancha</span></div>
     <div class="tarjeta-resumen"><b class="numeros">${ocupacion}%</b><span>Ocupación del día</span></div>
-    <div class="tarjeta-resumen"><b class="numeros">${dia.resumen.bloqueos}</b><span>Bloqueos activos</span></div>`;
+    ${r.cobradoOnline || r.esperandoPago
+      ? `<div class="tarjeta-resumen"><b class="numeros">${esc(pesos(r.cobradoOnline || 0))}</b><span>Cobrado online${
+          r.esperandoPago ? ` · ${r.esperandoPago} esperando pago` : ''}</span></div>`
+      : ''}
+    <div class="tarjeta-resumen"><b class="numeros">${r.bloqueos}</b><span>Bloqueos activos</span></div>`;
 }
 
 const aMin = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
@@ -305,8 +381,11 @@ function pintarGrilla() {
         return `<td><button class="celda" type="button" data-libre data-cancha="${esc(c.id)}" data-hora="${aHora(m)}" aria-label="Bloquear ${esc(c.nombre)} a las ${aHora(m)}"></button></td>`;
       }
       const { reserva, esInicio } = uso;
-      const clase = reserva.tipo === 'bloqueo' ? 'celda celda--ocupada celda--bloqueo' : 'celda celda--ocupada';
-      const titulo = `${reserva.hora}–${reserva.fin} · ${reserva.canchaNombre} · ${reserva.nombre || 'Bloqueo'}`;
+      const clase = reserva.tipo === 'bloqueo' ? 'celda celda--ocupada celda--bloqueo'
+        : reserva.estado === 'pendiente' ? 'celda celda--ocupada celda--pendiente'
+        : 'celda celda--ocupada';
+      const pago = pagoEnPalabras(reserva);
+      const titulo = `${reserva.hora}–${reserva.fin} · ${reserva.canchaNombre} · ${reserva.nombre || 'Bloqueo'}${pago ? ` · ${pago.texto}` : ''}`;
       return `<td><button class="${clase}" type="button" data-codigo="${esc(reserva.codigo)}" title="${esc(titulo)}">${
         esInicio ? esc((reserva.nombre || 'Bloqueo').split(' ')[0]) : ''}</button></td>`;
     }).join('');
@@ -320,7 +399,7 @@ function pintarTabla() {
   const cuerpo = $('#tabla-reservas').querySelector('tbody');
   const turnos = dia.reservas;
   if (!turnos.length) {
-    cuerpo.innerHTML = '<tr><td colspan="8" style="padding:1.5rem;color:var(--tinta-3)">Todavía no hay turnos para este día.</td></tr>';
+    cuerpo.innerHTML = '<tr><td colspan="9" style="padding:1.5rem;color:var(--tinta-3)">Todavía no hay turnos para este día.</td></tr>';
     return;
   }
   cuerpo.innerHTML = turnos.map((r) => `
@@ -330,11 +409,17 @@ function pintarTabla() {
       <td>${r.tipo === 'bloqueo' ? '<span class="pildora pildora--gris">Bloqueo</span>' : esc(r.disciplinaNombre)}</td>
       <td>${esc(r.nombre || '—')}</td>
       <td>${r.telefono ? `<a class="enlace-linea" href="tel:${esc(r.telefono)}">${esc(r.telefono)}</a>` : '—'}</td>
+      <td>${pildoraDePago(r)}</td>
       <td><code>${esc(r.codigo)}</code></td>
       <td style="max-width:180px;color:var(--tinta-2)">${esc(r.notas || '')}</td>
       <td><button class="boton boton--fantasma boton--chico" data-cancelar="${esc(r.codigo)}">
         ${r.tipo === 'bloqueo' ? 'Liberar' : 'Cancelar'}</button></td>
     </tr>`).join('');
+}
+
+function pildoraDePago(r) {
+  const pago = pagoEnPalabras(r);
+  return pago ? `<span class="pildora pildora--${pago.tono}" style="white-space:nowrap">${esc(pago.texto)}</span>` : '—';
 }
 
 /* ── Bloqueos ─────────────────────────────────────────────────────────────── */
@@ -395,6 +480,12 @@ function abrirCancelacion(codigo) {
   codigoAcancelar = codigo;
   $('#detalle-cancelacion').textContent =
     `${r.hora}–${r.fin} · ${r.canchaNombre} · ${r.nombre || 'Bloqueo'} · ${duracionTexto(r.duracionMin)}`;
+  // Si hay plata de por medio, que se sepa antes de tocar el botón.
+  const aviso = $('#modal-cancelar').querySelector('[data-aviso-pago]');
+  aviso.hidden = !(r.pagado > 0 || r.estado === 'pendiente');
+  aviso.textContent = r.pagado > 0
+    ? `Este turno tiene ${pesos(r.pagado)} pagados por Mercado Pago. Al cancelarlo, el pago queda en "Pagos para revisar" para devolverlo.`
+    : 'Este turno está esperando el pago: si lo cancelás y la persona paga igual, el pago queda en "Pagos para revisar".';
   $('#error-cancelacion').hidden = true;
   $('#modal-cancelar').showModal();
 }
@@ -406,6 +497,7 @@ $('#confirmar-cancelacion').addEventListener('click', async () => {
     });
     $('#modal-cancelar').close();
     cargarDia();
+    cargarPagos();
     cargarMovimientos();
   } catch (err) {
     const caja = $('#error-cancelacion');
