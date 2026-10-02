@@ -1,0 +1,528 @@
+# Los Naranjos — sitio web y sistema de turnos
+
+Sitio institucional y sistema de reservas online para **Los Naranjos**, club de
+pádel de Dorrego 333, Mar del Plata: 7 canchas, todas techadas.
+
+El gimnasio y las canchas de fútbol que aparecen en los directorios están en el
+mismo predio, pero los maneja otra gente: el sitio es del pádel y así lo dice.
+
+- **Sitio público** — presentación del club, instalaciones, tarifas y ubicación.
+- **Reservas online** — grilla en tiempo real, confirmación al instante y código de turno.
+- **Pagos online** — el jugador paga la seña o el turno entero con Mercado Pago,
+  y el turno queda firme cuando entra la plata. La plata va directo a la cuenta
+  del club.
+- **Cuentas de jugador** — se registran con el teléfono y reservan sin volver a
+  escribir sus datos. Tener cuenta es opcional: quien no quiera sigue reservando
+  como visitante.
+- **Panel del socio** — consultá y cancelá tus turnos con el teléfono y el código.
+- **Panel del club** — grilla del día por cancha, cancelaciones y bloqueos.
+  Cada persona que atiende entra con su teléfono y su contraseña, y todo lo que
+  se hace desde el panel queda anotado con nombre y hora.
+
+Está hecho **sin dependencias externas**: sólo Node 22 y su SQLite embebido.
+No hay `npm install` ni build, y el único servicio de terceros es Mercado Pago,
+para cobrar.
+
+---
+
+## Ver el sitio
+
+Un repositorio guarda archivos, no páginas funcionando. Hay tres formas de ver esto:
+
+### 1. La vista previa, sin instalar nada
+
+`vista-previa/index.html` es el sitio entero en **un solo archivo**: se abre con
+doble clic y anda. Se puede navegar, reservar un turno de verdad y después
+consultarlo o cancelarlo. El sistema de turnos corre dentro del navegador y los
+datos quedan guardados en ese dispositivo, así que **no le llegan al club** —hay
+un cartel arriba que lo aclara—. También se puede subir a cualquier hosting
+estático o mandar por mail.
+
+La reserva pide la seña y se paga en una pantalla de prueba, con montos de
+ejemplo mientras el club no confirme los reales: no se cobra nada.
+
+Trae también el panel del club, con turnos y personal de demostración: se entra
+con el teléfono 223 555-1212 y la contraseña `demo1234` (o con `demo1234` como
+clave del panel). Lo único que no incluye es el botón de agendar en el
+calendario.
+
+Para regenerarla después de tocar textos, colores o configuración:
+
+```bash
+npm run vista-previa
+```
+
+### 2. Corriendo el proyecto
+
+```bash
+npm start        # → http://localhost:3000
+```
+
+Es el sitio completo, con el sistema de turnos y el panel del club de verdad.
+
+### 3. Publicado en una dirección propia
+
+Ver [Publicar](#publicar), más abajo.
+
+---
+
+## Arrancar
+
+```bash
+cd los-naranjos
+npm start           # http://localhost:3000
+```
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm start` | Levanta el sitio y el API en el puerto 3000. |
+| `npm run dev` | Igual, pero reinicia solo al guardar un archivo. |
+| `PAGOS_SIMULADOS=si npm run dev` | Igual, con la pantalla de pago de prueba en vez de Mercado Pago (ver [Pagos](#pagos)). |
+| `npm test` | Corre las pruebas del sistema de turnos. |
+| `node server/seed.js --limpiar` | Llena la base con turnos de ejemplo para ver el panel. |
+| `npm run vista-previa` | Regenera `vista-previa/index.html`, el sitio en un solo archivo. |
+
+Variables de entorno:
+
+| Variable | Para qué | Por defecto |
+| --- | --- | --- |
+| `PORT` | Puerto del servidor | `3000` |
+| `HOST` | Interfaz donde escucha | `0.0.0.0` |
+| `ADMIN_TOKEN` | **Clave del panel del club** | `naranjos-dev` |
+| `DB_PATH` | Ubicación de la base SQLite | `data/turnos.db` |
+| `MP_ACCESS_TOKEN` | **Access Token de Mercado Pago** del club: prende los pagos reales | — |
+| `MP_WEBHOOK_SECRET` | Clave secreta de los avisos de Mercado Pago | — |
+| `URL_PUBLICA` | Dirección pública del sitio, para la vuelta del pago y los avisos | la del pedido |
+| `PAGOS_SIMULADOS` | `si`: pagos con la pantalla de prueba. **Nunca con el sitio abierto al público** | — |
+
+> **Antes de publicar el sitio hay que definir `ADMIN_TOKEN`.** Con la clave por
+> defecto cualquiera entra al panel; el propio panel muestra un cartel de aviso
+> mientras eso no se cambie.
+
+---
+
+## Qué se toca para cambiar algo
+
+Casi todo vive en **`server/config.js`**, que es la única fuente de verdad y alimenta
+tanto al sistema de turnos como al sitio:
+
+| Querés cambiar… | Dónde |
+| --- | --- |
+| Dirección, teléfono, WhatsApp, mail, redes | `CLUB` en `server/config.js` |
+| Horarios de apertura por día | `HORARIOS` |
+| Feriados y cierres puntuales | `FERIADOS` |
+| Deportes, duraciones y precios | `DISCIPLINAS` |
+| Seña, formas de pago y tiempo para pagar | `PAGOS` |
+| Cantidad y nombre de las canchas | `CANCHAS` |
+| Anticipación, cancelaciones, topes | `RESERVAS` |
+| Publicar precios en el sitio | `PRECIOS_PUBLICADOS` |
+| Textos de la home | `public/index.html` |
+| Colores y tipografías | `public/css/base.css` (bloque `:root`) |
+
+### Publicar las tarifas
+
+Los precios arrancan ocultos: el sitio muestra “Consultar” en vez de números que
+podrían estar desactualizados. Para publicarlos:
+
+1. Completá `precios` en cada disciplina de `DISCIPLINAS`.
+2. Poné `PRECIOS_PUBLICADOS = true`.
+
+El sitio pasa a mostrar los importes formateados en pesos automáticamente.
+
+---
+
+## Cómo está armado
+
+```
+los-naranjos/
+├── server/
+│   ├── config.js     Datos del club, canchas, horarios y reglas  ← se edita acá
+│   ├── tiempo.js     Fechas y horas en zona horaria de Mar del Plata
+│   ├── db.js         SQLite: esquema, transacciones y consultas
+│   ├── turnos.js     Disponibilidad, validaciones y alta de reservas
+│   ├── cuentas.js    Registro, ingreso, sesiones y claves
+│   ├── pagos.js      Cobro de turnos: montos, apartado, confirmación, devoluciones
+│   ├── pasarela.js   Lo único que habla con Mercado Pago (y la pasarela de prueba)
+│   ├── api.js        Endpoints JSON
+│   ├── index.js      Servidor HTTP y archivos estáticos
+│   ├── seed.js       Turnos de ejemplo
+│   └── test.js       Pruebas
+├── public/
+│   ├── index.html        Home
+│   ├── reservar.html     Flujo de reserva
+│   ├── mis-turnos.html   Panel del socio
+│   ├── cuenta.html       Ingreso, registro y perfil del jugador
+│   ├── admin.html        Panel del club
+│   ├── pago-simulado.html  Pantalla de pago de prueba (sólo con PAGOS_SIMULADOS=si)
+│   ├── 404.html
+│   ├── css/{base,site,app}.css
+│   ├── js/{comun,reservar,mis-turnos,cuenta,admin,pago-simulado}.js
+│   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
+│                        vive en assets/iconos.svg y va incrustada en cada página)
+├── herramientas/
+│   ├── armar-vista-previa.mjs   Empaqueta el sitio en un solo archivo
+│   └── armar-pdf.mjs            Pasa la propuesta o la cartilla a PDF (necesita Playwright)
+├── vista-previa/
+│   └── index.html    Generado por `npm run vista-previa` — no editar a mano
+├── propuesta/
+│   ├── index.html                    Propuesta comercial para presentarle al club
+│   ├── Propuesta-Los-Naranjos.pdf    La misma propuesta en PDF, para descargar y mandar
+│   └── prompt-planilla-cowork.md     Prompt para pedirle a Cowork la propuesta en planilla
+├── cartilla/
+│   └── index.html    Cartilla económica — documento interno, no va al club
+├── CONTEXTO-ONCE-UNIDOS.md   Todo lo de este proyecto, para arrancar el del próximo club
+└── data/turnos.db    Base de datos (no se versiona)
+```
+
+### Cómo funcionan las cuentas
+
+El teléfono es el nombre de usuario: es el dato que el jugador ya usa para
+reservar y el que el club le pide por WhatsApp. De ahí para abajo:
+
+- La contraseña se guarda con **scrypt**, que viene en `node:crypto`. Nunca se
+  guarda ni se registra en limpio, y el perfil que viaja al navegador no la
+  incluye en ninguna forma.
+- La sesión es un token al azar en una **cookie HttpOnly**: ningún script la
+  puede leer. En la base queda sólo el hash del token, así que llevarse el
+  archivo de la base no alcanza para entrar en las cuentas.
+- Ocho intentos fallidos de ingreso, por teléfono y por IP, frenan la puerta
+  quince minutos. El conteo vive en memoria: si el servidor se reinicia, se
+  perdona.
+- Cambiar la contraseña cierra las sesiones abiertas en otros dispositivos, que
+  es de lo que se trata si alguien se metió en la cuenta.
+- Al registrarse, los turnos que ya había sacado con ese teléfono **pasan a su
+  cuenta**. Nadie quiere estrenar la cuenta vacía.
+- Con la sesión abierta, el nombre y el teléfono del turno los pone la cuenta,
+  no el formulario: no se puede reservar a nombre de otro sin querer.
+- Si un teléfono **tiene cuenta**, sus turnos se ven entrando, no escribiendo el
+  número. Para los visitantes sin cuenta, la consulta por teléfono sigue igual
+  que siempre.
+
+### Quién entra al panel del club
+
+Hay dos puertas, y la diferencia importa:
+
+- **La cuenta de cada persona.** Quien atiende el mostrador entra con su
+  teléfono y su contraseña, igual que un jugador; lo que cambia es el rol. Es
+  la puerta que queremos, porque todo lo que hace queda firmado.
+- **La clave compartida** (`ADMIN_TOKEN`). Sirve para arrancar —alguien tiene
+  que cargar a la primera persona— y como salida de emergencia si el club se
+  queda afuera. Mientras no haya nadie cargado, el panel lo avisa en pantalla.
+
+El rol vive en la misma cuenta: el dueño que además juega usa una sola, con su
+teléfono de siempre. Dar de alta a alguien que ya tiene cuenta de jugador
+**no le toca la contraseña** —entra con la suya—, porque poder escribirle una
+clave nueva a una cuenta ajena sería una forma cómoda de robársela. Y darle de
+baja no borra nada: vuelve a ser jugador, con sus turnos y su historial, y se
+le cierran las sesiones abiertas.
+
+La **bitácora** anota ingresos, cancelaciones, bloqueos y altas o bajas de
+personal, con quién, cuándo y sobre qué. Es la respuesta a "¿quién canceló este
+turno?", que con una clave compartida no tenía respuesta.
+
+### Cómo se evita la doble reserva
+
+Cada turno ocupa casilleros de 30 minutos en la tabla `ocupacion`, cuya clave
+primaria es `(cancha_id, fecha, slot)`. Dos personas no pueden tomar el mismo
+casillero de la misma cancha: la segunda reserva choca contra la base y recibe
+un `409`. El alta corre dentro de una transacción `BEGIN IMMEDIATE`, así que la
+regla se cumple aunque entren dos pedidos en el mismo instante.
+Los turnos que se están pagando ocupan la cancha igual, hasta que vencen.
+
+---
+
+<a id="pagos"></a>
+
+## Pagos con Mercado Pago
+
+El club trabaja con seña, así que un turno sacado por la web queda firme recién
+cuando el jugador paga: la seña o, si prefiere, el turno entero. La plata entra
+directo a la cuenta de Mercado Pago del club; el sistema no la toca nunca.
+
+### Cómo lo vive el jugador
+
+1. Elige día, horario y cancha y, en el último paso, cómo paga: la seña o el
+   turno entero, cada una con su monto.
+2. Va a Mercado Pago. Mientras paga, el turno queda **apartado** para él:
+   15 minutos, más 5 de changüí para el que toca "pagar" sobre la hora.
+3. Paga con tarjeta, débito o dinero en cuenta y vuelve al sitio con el turno
+   confirmado y su código.
+4. Si el pago no sale, vuelve igual: ve por qué y puede probar de nuevo —con la
+   misma opción o con la otra— o soltar el turno. Si no paga a tiempo, la cancha
+   se libera sola.
+
+Rapipago y Pago Fácil quedan afuera: se acreditan días después, y el turno capaz
+es hoy.
+
+### Cómo lo vive el club
+
+- En la grilla del panel, un turno apartado se ve rayado: alguien lo está
+  pagando. En la tabla del día, cada turno dice cómo está: "Seña pagada · resta
+  $…", "Pagado", "Paga en el club" o "Falta pagar".
+- El resumen del día suma lo **cobrado online**.
+- **Pagos para revisar**: plata que entró y no corresponde a un turno firme —un
+  turno pagado que se canceló, alguien que pagó dos veces o que pagó cuando el
+  turno ya era de otro—. "Devolver" le pide a Mercado Pago que devuelva el pago
+  entero; "Ya lo resolví" deja anotado que se arregló de otra forma. Las dos
+  cosas quedan en la bitácora, y lo que detecta el sistema solo, también.
+- **Los turnos que piden por WhatsApp o por teléfono** los carga el personal con
+  su cuenta, desde "Reservar para un cliente": salen a nombre del cliente, sin
+  pago online, y se cobran en el mostrador.
+
+### Por qué es seguro
+
+- El monto lo pone el servidor, desde la config. Lo que mande el navegador no
+  cuenta.
+- Un turno se confirma sólo cuando **la API de Mercado Pago, consultada con la
+  credencial del club**, dice que el pago está aprobado, en pesos y por lo que
+  corresponde. Ni el aviso de Mercado Pago ni la vuelta del jugador
+  (`?status=approved`) alcanzan solos: los dos se pueden fraguar.
+- Con `MP_WEBHOOK_SECRET`, los avisos se validan con la firma `x-signature`
+  (HMAC-SHA256), igual que en los SDK oficiales.
+- Cada pago cuenta una sola vez aunque el aviso llegue repetido.
+- Los turnos esperando el pago cuentan para el tope de turnos por teléfono:
+  nadie puede apartar media grilla sin pagar.
+- Devolver usa siempre la misma clave de idempotencia por pago: si dos personas
+  tocan "Devolver" a la vez, se devuelve una vez.
+- Lo que hace que el servidor le pregunte algo a Mercado Pago desde afuera —la
+  vuelta del jugador, un nuevo intento, un aviso sin firma— tiene tope por IP:
+  nadie puede usar el sitio para gastar la cuota de la API del club.
+- El Access Token vive en una variable de entorno del servidor. No va al
+  navegador ni al repositorio.
+
+### Qué se configura
+
+| Qué | Dónde |
+| --- | --- |
+| Monto de la seña: fijo o porcentaje del turno | `PAGOS.seña` en `server/config.js` |
+| Precio del turno, que es también lo que se cobra entero | `precios` de cada disciplina en `DISCIPLINAS` |
+| Qué opciones se ofrecen y en qué orden | `PAGOS.opciones` |
+| Si se puede reservar por la web sin pagar | `PAGOS.obligatorio` |
+| Minutos para pagar | `PAGOS.minutosParaPagar` |
+| Lo que aparece en el resumen de la tarjeta | `PAGOS.descriptor` |
+
+Mientras falte un monto, esa opción no se ofrece; si no queda ninguna, se
+reserva como antes, sin pago.
+
+### Conectar la cuenta del club (se hace una vez)
+
+1. Con la cuenta de Mercado Pago del club, en **Mercado Pago Developers → Tus
+   integraciones**, crear una aplicación de pagos online (Checkout Pro).
+2. En sus **credenciales de producción**, copiar el **Access Token**. Es la llave
+   de la caja: va como `MP_ACCESS_TOKEN` en el servidor y no se manda por
+   WhatsApp ni se pega en el código.
+3. En **Webhooks**, cargar `https://<dominio>/api/pagos/aviso` con el evento de
+   pagos, y copiar su clave secreta a `MP_WEBHOOK_SECRET`.
+4. Definir `URL_PUBLICA` con la dirección del sitio.
+5. Hacer un pago real chico de punta a punta y devolverlo desde el panel.
+
+### Probar sin plata
+
+- **Pantalla de prueba:** con montos cargados en la config, `PAGOS_SIMULADOS=si
+  npm run dev`. El botón de pagar lleva a `/pago-simulado`, donde se aprueba o se
+  rechaza, y todo lo demás —vuelta, confirmación, panel, devoluciones— funciona
+  igual que con Mercado Pago.
+- **Mercado Pago de prueba:** con las credenciales de prueba de la aplicación y
+  sus tarjetas de prueba (con titular `APRO` el pago se aprueba, con `OTHE` se
+  rechaza). Para avisar, Mercado Pago necesita una dirección pública con https;
+  en una máquina local no la hay, y el turno se confirma igual cuando el jugador
+  vuelve al sitio.
+- `npm test` prueba los dos caminos contra un Mercado Pago de mentira.
+
+### Lo que cuesta
+
+Mercado Pago le cobra al club un porcentaje de cada pago, que baja cuanto más
+días acepte esperar para tener la plata disponible. Eso es entre el club y
+Mercado Pago: el sistema no cobra ninguna comisión.
+
+---
+
+## API
+
+Todo devuelve JSON. Las rutas de `/api/admin/` piden la sesión abierta de alguien
+del club o, como llave maestra, `Authorization: Bearer <ADMIN_TOKEN>`. La sesión
+de las cuentas viaja en la cookie `ln_sesion`.
+
+| Método | Ruta | Para qué |
+| --- | --- | --- |
+| `GET` | `/api/config` | Datos del club, disciplinas, canchas y reglas |
+| `GET` | `/api/disponibilidad?fecha=&disciplina=&duracion=` | Grilla de horarios con canchas libres |
+| `POST` | `/api/reservas` | Crear un turno |
+| `GET` | `/api/reservas?telefono=&codigo=` | Consultar turnos |
+| `POST` | `/api/reservas/cancelar` | Cancelar con código + teléfono, o con la sesión abierta |
+| `POST` | `/api/cuenta/registro` | Crear la cuenta de un jugador (deja la sesión abierta) |
+| `POST` | `/api/cuenta/ingreso` | Entrar con teléfono y contraseña |
+| `POST` | `/api/cuenta/salir` | Cerrar la sesión |
+| `GET` | `/api/cuenta` | Perfil, próximos turnos e historial (`usuario: null` si no entró) |
+| `POST` | `/api/cuenta/perfil` | Cambiar nombre y correo |
+| `POST` | `/api/cuenta/clave` | Cambiar la contraseña (cierra las otras sesiones) |
+| `POST` | `/api/admin/sesion` | Entrar al panel: cuenta del club o llave maestra |
+| `GET` | `/api/admin/dia?fecha=` | Grilla y turnos del día |
+| `GET` | `/api/admin/agenda?desde=&hasta=` | Turnos de un rango de fechas |
+| `POST` | `/api/admin/bloqueos` | Bloquear una cancha |
+| `POST` | `/api/admin/cancelar` | Cancelar cualquier turno |
+| `GET` | `/api/admin/personal` | Quiénes entran al panel |
+| `POST` | `/api/admin/personal` | Dar de alta a alguien del club |
+| `POST` | `/api/admin/personal/baja` | Sacarle el acceso al panel a alguien |
+| `GET` | `/api/admin/movimientos` | Últimos movimientos de la bitácora |
+| `GET` | `/api/pagos/estado?codigo=&pago_id=` | Cómo está el pago de un turno: lo pide la pantalla de vuelta de Mercado Pago |
+| `POST` | `/api/pagos/reintentar` | Otro intento de pago para un turno apartado |
+| `POST` | `/api/pagos/abandonar` | Soltar un turno apartado sin pagar |
+| `POST` | `/api/pagos/aviso` | Aviso (webhook) de Mercado Pago |
+| `GET` `POST` | `/api/pagos/simulado` | Pantalla de pago de prueba (sólo con `PAGOS_SIMULADOS=si`) |
+| `GET` | `/api/admin/pagos` | Pagos para revisar |
+| `POST` | `/api/admin/pagos/devolver` | Devolver un pago por Mercado Pago |
+| `POST` | `/api/admin/pagos/resolver` | Dar por resuelto un pago sin devolverlo |
+
+Reglas que aplica el servidor: horarios de apertura, anticipación mínima para
+turnos de hoy, tope de días para adelante, duraciones permitidas por disciplina,
+máximo de turnos activos por teléfono, límite de altas por IP y hora, ventana
+de cancelación, montos a cobrar y vencimiento de los turnos sin pagar.
+
+---
+
+<a id="publicar"></a>
+
+## Publicar
+
+El proyecto es un servidor Node común: sirve en cualquier VPS, Railway, Render,
+Fly.io o una máquina propia.
+
+```bash
+ADMIN_TOKEN='una-clave-larga-y-propia' \
+MP_ACCESS_TOKEN='APP_USR-…' MP_WEBHOOK_SECRET='…' URL_PUBLICA='https://losnaranjos.com.ar' \
+PORT=3000 npm start
+```
+
+Detrás de Nginx o Caddy conviene pasar `X-Forwarded-For` para que el límite por
+IP funcione bien, y `X-Forwarded-Proto` para que la cookie de sesión y la vuelta
+de Mercado Pago usen https. La base es un único archivo (`data/turnos.db`): para respaldar,
+alcanza con copiarlo.
+
+**Sobre hosting compartido:** un plan de hosting web clásico (tipo Hostinger sin
+Node) alcanza para el sitio, pero **no** para el sistema de turnos, que necesita
+un proceso Node corriendo. Si se publica sólo la carpeta `public/` como sitio
+estático, las páginas siguen funcionando y muestran el camino alternativo por
+WhatsApp y teléfono en lugar de la grilla.
+
+---
+
+## Pendiente de confirmar con el club
+
+Los datos se tomaron de fuentes públicas y **hay que verificarlos**. Están todos
+marcados con `⚠️ VERIFICAR` en `server/config.js`.
+
+### Lo que ya sabemos
+
+- **No usan ninguna plataforma de reservas.** Desde Instagram mandan a WhatsApp,
+  y ahí se arregla cada turno a mano. No hay que migrar nada ni convivir con un
+  sistema existente.
+- **No tienen sitio web.** Sólo Instagram y WhatsApp. Aparecen en directorios de
+  terceros, pero no hay una página propia del complejo.
+- **El WhatsApp de reservas es el 223 547-0343** (distinto del fijo). Ya está
+  cargado en `CLUB.whatsapp`.
+- **El club no publica su horario.** Los últimos turnos que ofrece en Instagram
+  son a las 22:00 y a las 22:30, lo que encaja con un cierre a las 23:30: ver la
+  explicación en `HORARIOS` dentro de `server/config.js`. Falta la hora de
+  apertura, para la que no hay ningún dato propio del club.
+- **Trabajan con seña.** Ya está hecho el cobro online con Mercado Pago; falta
+  el monto y conectar la cuenta del club.
+- **El club sólo ofrece pádel.** Nada de pickleball ni de fútbol: se sacó del
+  sitio, de la configuración y de la propuesta. Son 7 canchas, todas techadas.
+
+### Datos del club
+
+- [x] ~~**Número de WhatsApp** de reservas~~ → 223 547-0343, ya cargado.
+- [ ] **Correo** de contacto y reservas. Hasta que lo den, `CLUB.email` va en
+      `null` y el sitio no muestra ninguno: es preferible un dato de menos que
+      uno inventado.
+- [x] ~~**Instagram** del club~~ → `@losnaranjos_mdq`, ya cargado.
+- [ ] **Hora de apertura y de cierre.** La apertura (7:30) sale de directorios
+      de terceros. Y el cierre tiene una cuenta que ya no cierra: se les vieron
+      turnos arrancando a las 22:00 y a las 22:30, y ahora que sabemos que todos
+      los turnos son de 90 minutos, el de las 22:30 terminaría a las 00:00. O
+      cierran más tarde de lo que supusimos, o ese 22:30 era una clase. Está
+      puesto 23:30, que es lo prudente; si cierran a las 00:00, hoy estamos
+      tirando el último turno del día.
+- [ ] **Dominio** definitivo, para el canónico y los datos estructurados.
+- [ ] **Coordenadas** exactas del predio, para el mapa.
+
+### Canchas
+
+- [x] ~~**Cuántas canchas de pádel** hay~~ → 7, todas techadas, ya cargadas.
+- [x] ~~**¿Dan clases y arman torneos?**~~ → sí, las dos cosas. Falta cargar
+      días, niveles y cupos de la escuela.
+- [x] ~~**Cuánto dura un turno**~~ → 90 minutos, todos. Los de 60 son clases con
+      profesor y no se reservan online: se arreglan con el club.
+- [ ] **Cuál de las siete es la central.** Tienen una cancha principal con
+      gradas; hoy está marcada la número 1 (`CANCHA_CENTRAL` en `config.js`)
+      porque es lo más común, pero hay que confirmarlo.
+- [ ] **Cómo se llaman/numeran** las canchas, si tienen nombre propio.
+- [ ] **Blindex o muro**: no se sabe la mezcla real, hoy no se distingue por cancha.
+
+### Tarifas y reglas
+
+- [ ] **Precios** por disciplina y duración, y si cambian según el horario o el día.
+- [ ] **Valor de las clases**, de la escuela y de la inscripción a torneos.
+- [x] ~~**Seña**: ¿se cobra al reservar?~~ → sí. El cobro online ya está hecho
+      (ver [Pagos](#pagos)).
+- [ ] **Monto de la seña** —fijo o porcentaje— y **precio del turno**, que es
+      también lo que se cobra cuando alguien paga entero. Hasta tenerlos, el
+      sitio reserva sin pago.
+- [ ] **Si devuelven la seña** cuando alguien cancela a tiempo, para decirlo
+      claro en el sitio.
+- [ ] **Cuenta de Mercado Pago del club** y en cuántos días quieren la plata
+      disponible: de eso depende cuánto les cobra Mercado Pago.
+- [ ] **Política de cancelación** real (hoy está puesta en 6 horas antes).
+- [ ] **Anticipación** con la que se puede reservar (hoy, 14 días).
+
+### Material
+
+- [ ] **Fotos** del club: canchas, vestuarios, bar y la fachada.
+      Es lo que más le falta al sitio; hoy la estética se resuelve con tipografía
+      y trazados de cancha.
+- [ ] **Logo** oficial en vector, si existe. El isotipo actual —una rodaja de
+      naranja que también es el plano de una cancha— es una propuesta.
+
+### Decisiones a tomar
+
+- [ ] ¿Hace falta **avisar por WhatsApp o mail** cuando alguien reserva? Eso
+      requiere contratar un servicio de envío.
+- [ ] ¿Quieren **turnos fijos semanales** para los grupos de siempre?
+- [x] ~~¿El panel del club lo usa **más de una persona**?~~ → resuelto: cada
+      persona entra con su propia cuenta y todo queda anotado en la bitácora.
+
+---
+
+## Dónde quedó todo
+
+| Qué | Dónde |
+| --- | --- |
+| Código | Rama `claude/los-naranjos-paddle-site-rp8ckw`, carpeta `los-naranjos/` |
+| Pull request | [Pizzeria-la-nieve#1](https://github.com/berchotmateo-spec/Pizzeria-la-nieve/pull/1) — abierto, sin conflictos |
+| Vista previa navegable | [claude.ai/code/artifact/ba140d58](https://claude.ai/code/artifact/ba140d58-7016-41d8-86d2-3780c339446d) (privada) |
+| Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
+| Propuesta para el club | `propuesta/index.html`, y publicada en [claude.ai/code/artifact/86d5b927](https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89) (privada) |
+| Propuesta en PDF | `propuesta/Propuesta-Los-Naranjos.pdf` — para descargar y mandar directamente |
+| Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
+| Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
+| Contexto para el próximo club | `CONTEXTO-ONCE-UNIDOS.md` — qué es, cómo está hecho, precios y lecciones |
+
+El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
+así que los dos sitios pueden convivir sin pisarse.
+
+> **Ojo con `cartilla/`.** Es la hoja de precios de trabajo: tiene el piso de
+> negociación y el margen. No va en ningún paquete que se le mande al club.
+
+### Los cuatro pasos siguientes
+
+1. **Completar los datos del club** en `server/config.js` (todo lo marcado con
+   `⚠️ VERIFICAR`). Lo que más destraba: el horario exacto —sobre todo el
+   cierre—, las tarifas y cuál de las siete es la cancha central.
+2. **Definir `ADMIN_TOKEN`** antes de publicar nada. Con la clave por defecto
+   cualquiera entra al panel del club; el propio panel lo avisa en pantalla.
+3. **Elegir dónde publicarlo.** El sistema de turnos necesita un hosting con
+   Node (Railway, Render, Fly.io o un VPS). Un hosting compartido común alcanza
+   sólo para el sitio, sin reservas online.
+4. **Conectar Mercado Pago** con la cuenta del club y cargar el monto de la seña
+   y el precio del turno (ver [Pagos](#pagos)).
