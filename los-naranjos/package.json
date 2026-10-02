@@ -11,7 +11,6 @@
     "start": "node --no-warnings server/index.js",
     "dev": "node --no-warnings --watch server/index.js",
     "test": "node --no-warnings server/test.js",
-    "reset": "node --no-warnings server/reset.js",
     "vista-previa": "node --no-warnings herramientas/armar-vista-previa.mjs"
   },
   "dependencies": {}

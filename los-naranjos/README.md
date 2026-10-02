@@ -34,7 +34,9 @@ datos quedan guardados en ese dispositivo, así que **no le llegan al club** —
 un cartel arriba que lo aclara—. También se puede subir a cualquier hosting
 estático o mandar por mail.
 
-No incluye el panel del club (necesita el servidor) ni el botón de agendar en el
+Trae también el panel del club, con turnos y personal de demostración: se entra
+con el teléfono 223 555-1212 y la contraseña `demo1234` (o con `demo1234` como
+clave del panel). Lo único que no incluye es el botón de agendar en el
 calendario.
 
 Para regenerarla después de tocar textos, colores o configuración:
@@ -142,7 +144,8 @@ los-naranjos/
 │   └── assets/          Logo, favicon e iconos (la copia maestra del sprite
 │                        vive en assets/iconos.svg y va incrustada en cada página)
 ├── herramientas/
-│   └── armar-vista-previa.mjs   Empaqueta el sitio en un solo archivo
+│   ├── armar-vista-previa.mjs   Empaqueta el sitio en un solo archivo
+│   └── armar-pdf.mjs            Pasa la propuesta o la cartilla a PDF (necesita Playwright)
 ├── vista-previa/
 │   └── index.html    Generado por `npm run vista-previa` — no editar a mano
 ├── propuesta/
@@ -151,6 +154,7 @@ los-naranjos/
 │   └── prompt-planilla-cowork.md     Prompt para pedirle a Cowork la propuesta en planilla
 ├── cartilla/
 │   └── index.html    Cartilla económica — documento interno, no va al club
+├── CONTEXTO-ONCE-UNIDOS.md   Todo lo de este proyecto, para arrancar el del próximo club
 └── data/turnos.db    Base de datos (no se versiona)
 ```
 
@@ -212,7 +216,9 @@ regla se cumple aunque entren dos pedidos en el mismo instante.
 
 ## API
 
-Todo devuelve JSON. Las rutas de administración necesitan `Authorization: Bearer <ADMIN_TOKEN>`.
+Todo devuelve JSON. Las rutas de `/api/admin/` piden la sesión abierta de alguien
+del club o, como llave maestra, `Authorization: Bearer <ADMIN_TOKEN>`. La sesión
+de las cuentas viaja en la cookie `ln_sesion`.
 
 | Método | Ruta | Para qué |
 | --- | --- | --- |
@@ -220,12 +226,22 @@ Todo devuelve JSON. Las rutas de administración necesitan `Authorization: Beare
 | `GET` | `/api/disponibilidad?fecha=&disciplina=&duracion=` | Grilla de horarios con canchas libres |
 | `POST` | `/api/reservas` | Crear un turno |
 | `GET` | `/api/reservas?telefono=&codigo=` | Consultar turnos |
-| `POST` | `/api/reservas/cancelar` | Cancelar con código + teléfono |
-| `POST` | `/api/admin/sesion` | Validar la clave del panel |
+| `POST` | `/api/reservas/cancelar` | Cancelar con código + teléfono, o con la sesión abierta |
+| `POST` | `/api/cuenta/registro` | Crear la cuenta de un jugador (deja la sesión abierta) |
+| `POST` | `/api/cuenta/ingreso` | Entrar con teléfono y contraseña |
+| `POST` | `/api/cuenta/salir` | Cerrar la sesión |
+| `GET` | `/api/cuenta` | Perfil, próximos turnos e historial (`usuario: null` si no entró) |
+| `POST` | `/api/cuenta/perfil` | Cambiar nombre y correo |
+| `POST` | `/api/cuenta/clave` | Cambiar la contraseña (cierra las otras sesiones) |
+| `POST` | `/api/admin/sesion` | Entrar al panel: cuenta del club o llave maestra |
 | `GET` | `/api/admin/dia?fecha=` | Grilla y turnos del día |
 | `GET` | `/api/admin/agenda?desde=&hasta=` | Turnos de un rango de fechas |
 | `POST` | `/api/admin/bloqueos` | Bloquear una cancha |
 | `POST` | `/api/admin/cancelar` | Cancelar cualquier turno |
+| `GET` | `/api/admin/personal` | Quiénes entran al panel |
+| `POST` | `/api/admin/personal` | Dar de alta a alguien del club |
+| `POST` | `/api/admin/personal/baja` | Sacarle el acceso al panel a alguien |
+| `GET` | `/api/admin/movimientos` | Últimos movimientos de la bitácora |
 
 Reglas que aplica el servidor: horarios de apertura, anticipación mínima para
 turnos de hoy, tope de días para adelante, duraciones permitidas por disciplina,
@@ -330,8 +346,8 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 - [ ] ¿Hace falta **avisar por WhatsApp o mail** cuando alguien reserva? Eso
       requiere contratar un servicio de envío.
 - [ ] ¿Quieren **turnos fijos semanales** para los grupos de siempre?
-- [ ] ¿El panel del club lo usa **más de una persona**? Hoy hay una sola clave
-      compartida; si hace falta, se puede pasar a usuarios con nombre.
+- [x] ~~¿El panel del club lo usa **más de una persona**?~~ → resuelto: cada
+      persona entra con su propia cuenta y todo queda anotado en la bitácora.
 
 ---
 
@@ -347,6 +363,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Propuesta en PDF | `propuesta/Propuesta-Los-Naranjos.pdf` — para descargar y mandar directamente |
 | Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
+| Contexto para el próximo club | `CONTEXTO-ONCE-UNIDOS.md` — qué es, cómo está hecho, precios y lecciones |
 
 El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
 así que los dos sitios pueden convivir sin pisarse.
@@ -357,8 +374,8 @@ así que los dos sitios pueden convivir sin pisarse.
 ### Los tres pasos siguientes
 
 1. **Completar los datos del club** en `server/config.js` (todo lo marcado con
-   `⚠️ VERIFICAR`). Lo que más destraba: cuántas canchas de pádel hay y cuáles
-   son techadas, los horarios exactos y las tarifas.
+   `⚠️ VERIFICAR`). Lo que más destraba: el horario exacto —sobre todo el
+   cierre—, las tarifas y cuál de las siete es la cancha central.
 2. **Definir `ADMIN_TOKEN`** antes de publicar nada. Con la clave por defecto
    cualquiera entra al panel del club; el propio panel lo avisa en pantalla.
 3. **Elegir dónde publicarlo.** El sistema de turnos necesita un hosting con

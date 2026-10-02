@@ -9,8 +9,9 @@
  * demostración que quedan guardados en el propio dispositivo.
  *
  * Sirve para mostrar el proyecto (al club, a un diseñador, a quien sea) sin
- * tener que publicarlo. No reemplaza al sitio real: el panel del club y las
- * reservas de verdad necesitan el servidor de Node.
+ * tener que publicarlo. Trae el panel del club con datos de demostración, pero
+ * no reemplaza al sitio real: lo que se reserva acá queda en el navegador y no
+ * le llega a nadie.
  */
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
