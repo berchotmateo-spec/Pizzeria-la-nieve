@@ -171,6 +171,7 @@ los-naranjos/
 ├── cartilla/
 │   └── index.html    Cartilla económica — documento interno, no va al club
 ├── CONTEXTO-ONCE-UNIDOS.md   Todo lo de este proyecto, para arrancar el del próximo club
+├── PROMPT-SISTEMA-DE-TURNOS.md  Prompt para armar otro sistema de turnos igual
 └── data/turnos.db    Base de datos (no se versiona)
 ```
 
@@ -507,6 +508,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
 | Contexto para el próximo club | `CONTEXTO-ONCE-UNIDOS.md` — qué es, cómo está hecho, precios y lecciones |
+| Prompt para armar otro sistema igual | `PROMPT-SISTEMA-DE-TURNOS.md` — para pegar en un proyecto nuevo |
 
 El proyecto vive en una carpeta propia dentro del repositorio de la pizzería,
 así que los dos sitios pueden convivir sin pisarse.
