@@ -1,0 +1,1205 @@
+/**
+ * Pruebas del sistema de turnos.
+ *   npm test
+ * Usa una base temporal, así que no toca los datos reales.
+ */
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { rmSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { createHmac } from 'node:crypto';
+
+const RUTA_DB = join(tmpdir(), `naranjos-test-${process.pid}.db`);
+process.env.DB_PATH = RUTA_DB;
+process.env.ADMIN_TOKEN = 'clave-de-prueba-1234';
+process.env.PORT = String(3100 + (process.pid % 400));
+
+const { rutas } = await import('./api.js');
+const { cuentas } = await import('./db.js');
+const T = await import('./tiempo.js');
+const { RESERVAS, CUENTAS, PAGOS, DISCIPLINAS } = await import('./config.js');
+const { db } = await import('./db.js');
+const { usuarioDeLaSolicitud, reiniciarIntentos } = await import('./cuentas.js');
+
+/**
+ * Día contra el que se prueba todo.
+ *
+ * Antes era "mañana", y eso hacía que la suite fallara los sábados: el domingo
+ * el club abre a las 09:00 y varios tests reservan a las 08:00 o a las 07:30.
+ * Un test que depende del día en que lo corrés no prueba nada, así que se elige
+ * el próximo miércoles, que siempre tiene el horario largo (07:30 a 23:30) y
+ * entra holgado en los 14 días de anticipación que permite el sistema.
+ */
+const MIERCOLES = 3;
+const PROXIMO_MIERCOLES = (() => {
+  const hoy = T.hoy();
+  const faltan = ((MIERCOLES - T.diaSemana(hoy) + 7) % 7) || 7;
+  return T.sumarDias(hoy, faltan);
+})();
+const params = (o) => new URLSearchParams(o);
+const admin = { headers: { authorization: 'Bearer clave-de-prueba-1234' } };
+
+const reservaBase = (extra = {}) => ({
+  disciplina: 'padel',
+  fecha: PROXIMO_MIERCOLES,
+  hora: '20:00',
+  duracionMin: 90,
+  nombre: 'Mateo Berchot',
+  telefono: '223 555-1234',
+  ...extra,
+});
+
+let contadorIp = 0;
+/** Cada llamada usa una IP distinta, salvo que el test pida una concreta. */
+const ipUnica = () => `10.0.${Math.floor(contadorIp / 250)}.${(contadorIp++ % 250) + 1}`;
+
+/** Ejecuta un handler y devuelve { ok, datos, error, status }. */
+async function llamar(clave, ctx = {}) {
+  try {
+    return { ok: true, datos: await rutas[clave]({ req: { headers: {} }, body: {}, query: params({}), ip: ipUnica(), ...ctx }) };
+  } catch (err) {
+    return { ok: false, error: err.message, status: err.status, code: err.code };
+  }
+}
+
+/**
+ * Simula un navegador: se guarda la cookie de sesión que devuelve el servidor
+ * y la manda en los pedidos siguientes, que es justo lo que hay que probar.
+ */
+function navegador(ip = ipUnica()) {
+  let cookie = '';
+  return {
+    get cookie() { return cookie; },
+    async llamar(clave, ctx = {}) {
+      const req = { headers: cookie ? { cookie } : {}, socket: {} };
+      const res = {
+        setHeader(nombre, valor) {
+          if (String(nombre).toLowerCase() !== 'set-cookie') return;
+          const par = String(valor).split(';')[0];
+          cookie = par.endsWith('=') ? '' : par; // Max-Age=0 borra la sesión
+        },
+      };
+      try {
+        const usuario = usuarioDeLaSolicitud(req);
+        const datos = await rutas[clave]({
+          req, res, body: {}, query: params({}), ip, usuario, ...ctx,
+        });
+        return { ok: true, datos };
+      } catch (err) {
+        return { ok: false, error: err.message, status: err.status, code: err.code };
+      }
+    },
+  };
+}
+
+const cuentaBase = (extra = {}) => ({
+  nombre: 'Jugadora de Prueba',
+  telefono: '223 555-9000',
+  clave: 'pelota-naranja-7',
+  ...extra,
+});
+
+after(() => {
+  for (const sufijo of ['', '-wal', '-shm']) rmSync(RUTA_DB + sufijo, { force: true });
+});
+
+test('la configuración pública no filtra la clave de administrador', async () => {
+  const { datos } = await llamar('GET /api/config');
+  assert.equal(datos.club.nombre, 'Los Naranjos');
+  assert.equal(datos.club.direccion, 'Dorrego 333');
+  assert.ok(!JSON.stringify(datos).includes('clave-de-prueba'));
+  assert.ok(datos.disciplinas.length >= 1);
+  assert.equal(datos.calendario.length, RESERVAS.diasAnticipacion + 1);
+});
+
+test('la disponibilidad respeta el horario del club', async () => {
+  const { datos } = await llamar('GET /api/disponibilidad', {
+    query: params({ fecha: PROXIMO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
+  });
+  assert.equal(datos.cerrado, false);
+  assert.ok(datos.horarios.length > 0);
+  const ultimo = datos.horarios.at(-1);
+  assert.ok(T.aMinutos(ultimo.fin) <= T.aMinutos(datos.cierra), 'ningún turno termina después del cierre');
+  assert.equal(datos.horarios[0].cantidad, datos.totalCanchas);
+});
+
+test('una reserva válida se crea y ocupa la cancha', async () => {
+  const { ok, datos } = await llamar('POST /api/reservas', { body: reservaBase() });
+  assert.ok(ok);
+  assert.match(datos.reserva.codigo, /^LN-[A-Z0-9]{5}$/);
+  assert.equal(datos.reserva.hora, '20:00');
+  assert.equal(datos.reserva.fin, '21:30');
+  assert.equal(datos.reserva.telefono, '2235551234', 'el teléfono se normaliza');
+
+  const disp = await llamar('GET /api/disponibilidad', {
+    query: params({ fecha: PROXIMO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
+  });
+  const slot = disp.datos.horarios.find((h) => h.hora === '20:00');
+  assert.equal(slot.cantidad, disp.datos.totalCanchas - 1);
+  assert.ok(!slot.libres.includes(datos.reserva.canchaId));
+});
+
+test('no se puede reservar dos veces la misma cancha en el mismo horario', async () => {
+  const primera = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '19:00', canchaId: 'padel-2', telefono: '2235550001' }),
+  });
+  assert.ok(primera.ok);
+  const segunda = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '19:00', canchaId: 'padel-2', telefono: '2235550002' }),
+  });
+  assert.equal(segunda.ok, false);
+  assert.equal(segunda.status, 409);
+});
+
+test('se detecta el solapamiento parcial de turnos', async () => {
+  await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '10:00', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550003' }),
+  });
+  // 11:00 cae dentro del turno de 10:00–11:30.
+  const choque = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '11:00', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550004' }),
+  });
+  assert.equal(choque.ok, false);
+  assert.equal(choque.status, 409);
+  // 11:30 arranca justo cuando el otro termina: tiene que entrar.
+  const pegado = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '11:30', duracionMin: 90, canchaId: 'padel-3', telefono: '2235550005' }),
+  });
+  assert.equal(pegado.ok, true);
+});
+
+test('se rechazan los datos incompletos o fuera de rango', async () => {
+  const casos = [
+    [{ nombre: 'A' }, 'nombre demasiado corto'],
+    [{ telefono: '123' }, 'teléfono inválido'],
+    [{ email: 'no-es-mail' }, 'correo inválido'],
+    [{ fecha: T.sumarDias(T.hoy(), -1) }, 'fecha pasada'],
+    [{ fecha: T.sumarDias(T.hoy(), RESERVAS.diasAnticipacion + 5) }, 'demasiado lejos'],
+    [{ hora: '03:00' }, 'fuera del horario de atención'],
+    [{ hora: '20:15' }, 'fuera de la grilla de 30 minutos'],
+    [{ duracionMin: 45 }, 'duración no permitida'],
+    [{ duracionMin: 60 }, 'los turnos de 60 son clases, no se reservan online'],
+    [{ disciplina: 'tenis' }, 'disciplina inexistente'],
+  ];
+  for (const [extra, motivo] of casos) {
+    const r = await llamar('POST /api/reservas', { body: reservaBase(extra) });
+    assert.equal(r.ok, false, `debería rechazar: ${motivo}`);
+    assert.equal(r.status, 400, `${motivo} → 400`);
+  }
+});
+
+test('se limita la cantidad de turnos activos por teléfono', async () => {
+  const tel = '2235558888';
+  for (let i = 0; i < RESERVAS.maxPorTelefono; i++) {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaBase({ hora: `${14 + i}:00`, duracionMin: 90, telefono: tel }),
+    });
+    assert.ok(r.ok, `la reserva ${i + 1} debería entrar`);
+  }
+  const extra = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '18:00', duracionMin: 90, telefono: tel }),
+  });
+  assert.equal(extra.ok, false);
+  assert.match(extra.error, /turnos activos/);
+});
+
+test('consulta y cancelación por parte del socio', async () => {
+  const tel = '2235557777';
+  const { datos } = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '09:00', duracionMin: 90, telefono: tel }),
+  });
+  const codigo = datos.reserva.codigo;
+
+  const ajeno = await llamar('GET /api/reservas', { query: params({ codigo, telefono: '2230000000' }) });
+  assert.equal(ajeno.ok, false, 'el teléfono equivocado no puede ver la reserva');
+  assert.equal(ajeno.status, 403);
+
+  const propia = await llamar('GET /api/reservas', { query: params({ codigo, telefono: tel }) });
+  assert.equal(propia.datos.reservas[0].codigo, codigo);
+
+  const malIntento = await llamar('POST /api/reservas/cancelar', { body: { codigo, telefono: '2230000000' } });
+  assert.equal(malIntento.ok, false);
+  assert.equal(malIntento.status, 403);
+
+  const cancelada = await llamar('POST /api/reservas/cancelar', { body: { codigo, telefono: tel } });
+  assert.equal(cancelada.datos.reserva.estado, 'cancelada');
+
+  const repetida = await llamar('POST /api/reservas/cancelar', { body: { codigo, telefono: tel } });
+  assert.equal(repetida.ok, false, 'no se cancela dos veces');
+});
+
+test('cancelar libera el horario para otra persona', async () => {
+  const { datos } = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556666' }),
+  });
+  const ocupado = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556665' }),
+  });
+  assert.equal(ocupado.status, 409);
+
+  await llamar('POST /api/reservas/cancelar', {
+    body: { codigo: datos.reserva.codigo, telefono: '2235556666' },
+  });
+  const libre = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '08:00', duracionMin: 90, canchaId: 'padel-4', telefono: '2235556665' }),
+  });
+  assert.ok(libre.ok, 'el horario quedó liberado');
+});
+
+test('el panel de administración exige la clave correcta', async () => {
+  const sinClave = await llamar('GET /api/admin/dia');
+  assert.equal(sinClave.status, 401);
+
+  const claveMala = await llamar('GET /api/admin/dia', { req: { headers: { authorization: 'Bearer incorrecta' } } });
+  assert.equal(claveMala.status, 401);
+
+  const conClave = await llamar('GET /api/admin/dia', { req: admin, query: params({ fecha: PROXIMO_MIERCOLES }) });
+  assert.ok(conClave.ok);
+  assert.ok(conClave.datos.resumen.turnos > 0);
+  assert.ok(conClave.datos.resumen.horasVendidas > 0);
+});
+
+test('el administrador puede bloquear una cancha y eso saca el turno de la grilla', async () => {
+  const bloqueo = await llamar('POST /api/admin/bloqueos', {
+    req: admin,
+    // Una cancha que no toca ningún otro test: con turnos de 90 minutos, los
+    // de más arriba se desparraman por las primeras canchas al asignarse solas.
+    body: { canchaId: 'padel-6', fecha: PROXIMO_MIERCOLES, hora: '16:00', duracionMin: 120, motivo: 'Torneo interno' },
+  });
+  assert.ok(bloqueo.ok, bloqueo.error);
+  assert.equal(bloqueo.datos.reserva.tipo, 'bloqueo');
+
+  const choque = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '17:00', duracionMin: 90, canchaId: 'padel-6', telefono: '2235554444' }),
+  });
+  assert.equal(choque.status, 409, 'no se puede reservar sobre un bloqueo');
+});
+
+test('el administrador puede cancelar cualquier turno', async () => {
+  const { datos } = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '12:30', duracionMin: 90, telefono: '2235553333' }),
+  });
+  const r = await llamar('POST /api/admin/cancelar', { req: admin, body: { codigo: datos.reserva.codigo } });
+  assert.equal(r.datos.reserva.estado, 'cancelada');
+});
+
+test('se frena la avalancha de reservas desde una misma IP', async () => {
+  const ip = '203.0.113.77';
+  let bloqueada = 0;
+  for (let i = 0; i < RESERVAS.maxPorIpHora + 3; i++) {
+    // Un horario distinto por intento: con sólo 7 canchas, reutilizar la
+    // misma hora agotaría la disponibilidad antes de llegar al límite de IP
+    // que este test quiere probar.
+    const r = await llamar('POST /api/reservas', {
+      ip,
+      body: reservaBase({
+        hora: T.aHora(7 * 60 + 30 + i * RESERVAS.slotMinutos),
+        duracionMin: 90,
+        telefono: `22355${String(i).padStart(5, '0')}`,
+      }),
+    });
+    if (!r.ok && r.status === 429) bloqueada++;
+  }
+  assert.ok(bloqueada > 0, 'después del límite por hora la IP queda frenada');
+});
+
+test('crear la cuenta abre la sesión y se queda con los turnos previos', async () => {
+  const tel = '2235557001';
+  // Primero reserva como visitante, sin cuenta.
+  const previa = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '09:00', duracionMin: 90, telefono: tel, nombre: 'Ana Invitada' }),
+  });
+  assert.ok(previa.ok);
+
+  const nav = navegador();
+  const alta = await nav.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Ana Registrada' }),
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.usuario.telefono, tel);
+  assert.equal(alta.datos.reservasAdoptadas, 1, 'el turno que ya tenía queda en su cuenta');
+  assert.ok(nav.cookie.startsWith('ln_sesion='), 'quedó la cookie de sesión');
+
+  // Y ahora ve ese turno sin escribir nada.
+  const mios = await nav.llamar('GET /api/reservas');
+  assert.equal(mios.datos.reservas.length, 1);
+  assert.equal(mios.datos.reservas[0].codigo, previa.datos.reserva.codigo);
+});
+
+test('no se puede abrir dos cuentas con el mismo teléfono', async () => {
+  const tel = '2235557002';
+  const primera = await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+  assert.ok(primera.ok);
+
+  const segunda = await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+  assert.equal(segunda.ok, false);
+  assert.equal(segunda.status, 409);
+  assert.equal(segunda.code, 'TELEFONO_EN_USO');
+});
+
+test('la contraseña no se guarda en limpio ni se devuelve nunca', async () => {
+  const tel = '2235557003';
+  const clave = 'clave-secreta-muy-linda';
+  const nav = navegador();
+  const alta = await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave }) });
+  assert.ok(alta.ok);
+  assert.ok(!JSON.stringify(alta.datos).includes(clave), 'no vuelve en la respuesta');
+
+  const fila = cuentas.porTelefono(tel);
+  assert.ok(fila.clave.startsWith('scrypt$'), 'se guarda hasheada');
+  assert.ok(!fila.clave.includes(clave));
+
+  const perfil = await nav.llamar('GET /api/cuenta');
+  assert.ok(!JSON.stringify(perfil.datos).includes(clave));
+  assert.ok(!JSON.stringify(perfil.datos).includes('scrypt$'), 'el hash tampoco se expone');
+});
+
+test('la contraseña corta no pasa y la equivocada no entra', async () => {
+  const tel = '2235557004';
+  const corta = await navegador().llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, clave: 'corta' }),
+  });
+  assert.equal(corta.ok, false);
+  assert.match(corta.error, new RegExp(String(CUENTAS.minClave)));
+
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave: 'la-correcta-1' }) });
+
+  const errada = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'la-equivocada-1' },
+  });
+  assert.equal(errada.ok, false);
+  assert.equal(errada.status, 401);
+
+  const buena = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'la-correcta-1' },
+  });
+  assert.ok(buena.ok, buena.error);
+  assert.equal(buena.datos.usuario.telefono, tel);
+});
+
+test('se frena el intento de adivinar la contraseña a fuerza bruta', async () => {
+  reiniciarIntentos();
+  const tel = '2235557005';
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  let frenados = 0;
+  for (let i = 0; i < CUENTAS.maxIntentos + 2; i++) {
+    const r = await navegador('198.51.100.7').llamar('POST /api/cuenta/ingreso', {
+      body: { telefono: tel, clave: `intento-numero-${i}` },
+    });
+    if (r.status === 429) frenados++;
+  }
+  assert.ok(frenados > 0, 'después del límite de intentos la puerta se cierra');
+  reiniciarIntentos();
+});
+
+test('con la sesión abierta el turno sale a nombre de la cuenta', async () => {
+  const tel = '2235557006';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Lucía Socia' }),
+  });
+
+  // El cuerpo miente a propósito: la cuenta manda.
+  const r = await nav.llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '10:00', duracionMin: 90, nombre: 'Otro Nombre', telefono: '2239999999' }),
+  });
+  assert.ok(r.ok, r.error);
+  assert.equal(r.datos.reserva.nombre, 'Lucía Socia');
+  assert.equal(r.datos.reserva.telefono, tel);
+
+  // Y lo puede cancelar sin escribir el teléfono.
+  const baja = await nav.llamar('POST /api/reservas/cancelar', { body: { codigo: r.datos.reserva.codigo } });
+  assert.ok(baja.ok, baja.error);
+  assert.equal(baja.datos.reserva.estado, 'cancelada');
+});
+
+test('el teléfono de alguien con cuenta no muestra sus turnos a un desconocido', async () => {
+  const tel = '2235557007';
+  await navegador().llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const curioso = await llamar('GET /api/reservas', { query: params({ telefono: tel }) });
+  assert.equal(curioso.ok, false);
+  assert.equal(curioso.status, 401);
+  assert.equal(curioso.code, 'NECESITA_SESION');
+
+  // El visitante sin cuenta sigue consultando por teléfono, como siempre.
+  const visitante = await llamar('GET /api/reservas', { query: params({ telefono: '2235558888' }) });
+  assert.ok(visitante.ok);
+});
+
+test('cambiar la contraseña cierra las sesiones abiertas en otro lado', async () => {
+  const tel = '2235557008';
+  const clave = 'la-de-siempre-9';
+  const compu = navegador();
+  await compu.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel, clave }) });
+
+  const celular = navegador();
+  await celular.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok((await celular.llamar('GET /api/cuenta')).datos.usuario, 'el celular está adentro');
+
+  const cambio = await compu.llamar('POST /api/cuenta/clave', {
+    body: { claveActual: clave, claveNueva: 'una-nueva-distinta-3' },
+  });
+  assert.ok(cambio.ok, cambio.error);
+
+  assert.equal((await celular.llamar('GET /api/cuenta')).datos.usuario, null, 'al celular lo echó');
+  assert.ok((await compu.llamar('GET /api/cuenta')).datos.usuario, 'la compu sigue adentro');
+});
+
+test('salir cierra la sesión y editar el perfil la mantiene', async () => {
+  const tel = '2235557009';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const perfil = await nav.llamar('POST /api/cuenta/perfil', {
+    body: { nombre: 'Nombre Corregido', email: 'jugadora@ejemplo.com' },
+  });
+  assert.ok(perfil.ok, perfil.error);
+  assert.equal(perfil.datos.usuario.nombre, 'Nombre Corregido');
+  assert.equal(perfil.datos.usuario.email, 'jugadora@ejemplo.com');
+
+  assert.ok((await nav.llamar('POST /api/cuenta/salir')).ok);
+  assert.equal(nav.cookie, '', 'la cookie se borró');
+  assert.equal((await nav.llamar('GET /api/cuenta')).datos.usuario, null);
+
+  const sinSesion = await nav.llamar('POST /api/cuenta/perfil', { body: { nombre: 'Colado' } });
+  assert.equal(sinSesion.status, 401);
+});
+
+test('alguien del club entra al panel con su cuenta, sin la clave maestra', async () => {
+  const tel = '2235557020';
+  const clave = 'mostrador-2026';
+
+  // La clave maestra sirve para cargar a la primera persona del club.
+  const conMaestra = navegador();
+  const alta = await conMaestra.llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Recepción Mañana', telefono: tel, clave },
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.usuario.rol, 'club');
+
+  // Y desde ahí entra con su propio teléfono y contraseña.
+  const nav = navegador();
+  assert.ok((await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } })).ok);
+
+  const sesion = await nav.llamar('POST /api/admin/sesion');
+  assert.ok(sesion.ok, sesion.error);
+  assert.equal(sesion.datos.quien, 'Recepción Mañana');
+  assert.equal(sesion.datos.conClaveMaestra, false);
+
+  const dia = await nav.llamar('GET /api/admin/dia', { query: params({ fecha: PROXIMO_MIERCOLES }) });
+  assert.ok(dia.ok, 've la grilla del día');
+});
+
+test('un jugador cualquiera no entra al panel del club', async () => {
+  const tel = '2235557021';
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/registro', { body: cuentaBase({ telefono: tel }) });
+
+  const intento = await nav.llamar('POST /api/admin/sesion');
+  assert.equal(intento.ok, false);
+  assert.equal(intento.status, 401);
+
+  const grilla = await nav.llamar('GET /api/admin/dia', { query: params({ fecha: PROXIMO_MIERCOLES }) });
+  assert.equal(grilla.status, 401, 'tampoco por la puerta de atrás');
+});
+
+test('queda registrado quién canceló cada turno', async () => {
+  const tel = '2235557022';
+  const clave = 'quien-fue-2026';
+  await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Lucas Mostrador', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+
+  const turno = await llamar('POST /api/reservas', {
+    body: reservaBase({ hora: '14:00', duracionMin: 90, telefono: '2235550077' }),
+  });
+  assert.ok(turno.ok, turno.error);
+
+  const baja = await nav.llamar('POST /api/admin/cancelar', {
+    body: { codigo: turno.datos.reserva.codigo },
+  });
+  assert.ok(baja.ok, baja.error);
+
+  const { datos } = await nav.llamar('GET /api/admin/movimientos');
+  const cancelacion = datos.movimientos.find(
+    (m) => m.accion === 'cancelación' && m.detalle.includes(turno.datos.reserva.codigo)
+  );
+  assert.ok(cancelacion, 'la cancelación quedó anotada');
+  assert.equal(cancelacion.quien, 'Lucas Mostrador');
+});
+
+test('dar de alta a alguien que ya juega no le pisa la contraseña', async () => {
+  const tel = '2235557023';
+  const suya = 'la-mia-de-siempre';
+
+  const jugadora = navegador();
+  await jugadora.llamar('POST /api/cuenta/registro', {
+    body: cuentaBase({ telefono: tel, nombre: 'Dueña Jugadora', clave: suya }),
+  });
+
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Dueña Jugadora', telefono: tel, clave: 'una-que-le-inventan' },
+  });
+  assert.ok(alta.ok, alta.error);
+  assert.equal(alta.datos.promovido, true);
+
+  // La clave inventada no entra; la suya sí, y ahora con acceso al panel.
+  const inventada = await navegador().llamar('POST /api/cuenta/ingreso', {
+    body: { telefono: tel, clave: 'una-que-le-inventan' },
+  });
+  assert.equal(inventada.ok, false, 'la contraseña ajena no se puede reescribir');
+
+  const nav = navegador();
+  assert.ok((await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave: suya } })).ok);
+  assert.ok((await nav.llamar('POST /api/admin/sesion')).ok, 'entra al panel con la suya');
+});
+
+test('la baja del personal corta el acceso pero deja la cuenta de jugador', async () => {
+  const tel = '2235557024';
+  const clave = 'hasta-luego-2026';
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Temporada Verano', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok((await nav.llamar('POST /api/admin/sesion')).ok);
+
+  const baja = await navegador().llamar('POST /api/admin/personal/baja', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { id: alta.datos.usuario.id },
+  });
+  assert.ok(baja.ok, baja.error);
+
+  // La sesión que tenía abierta ya no sirve para el panel.
+  assert.equal((await nav.llamar('POST /api/admin/sesion')).status, 401);
+
+  // Pero la cuenta sigue viva: entra como jugadora.
+  const otra = navegador();
+  const ingreso = await otra.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  assert.ok(ingreso.ok, 'la cuenta no se borró');
+  assert.equal(ingreso.datos.usuario.rol, 'jugador');
+});
+
+test('nadie puede sacarse a sí mismo del panel', async () => {
+  const tel = '2235557025';
+  const clave = 'no-me-borro-2026';
+  const alta = await navegador().llamar('POST /api/admin/personal', {
+    req: { headers: { authorization: 'Bearer clave-de-prueba-1234' }, socket: {} },
+    body: { nombre: 'Única Encargada', telefono: tel, clave },
+  });
+
+  const nav = navegador();
+  await nav.llamar('POST /api/cuenta/ingreso', { body: { telefono: tel, clave } });
+  const intento = await nav.llamar('POST /api/admin/personal/baja', {
+    body: { id: alta.datos.usuario.id },
+  });
+  assert.equal(intento.ok, false);
+  assert.match(intento.error, /a vos mismo/);
+});
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pagos
+   Van contra otro miércoles, con la grilla limpia: así no chocan con los
+   turnos que sacan las pruebas de arriba.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const OTRO_MIERCOLES = T.sumarDias(PROXIMO_MIERCOLES, 7);
+const SEÑA = 10000;
+const PRECIO = 40000;
+const ENV_PAGOS = ['PAGOS_SIMULADOS', 'MP_ACCESS_TOKEN', 'MP_API_URL', 'MP_WEBHOOK_SECRET', 'URL_PUBLICA'];
+
+/**
+ * Prende los pagos con montos de prueba mientras dura `fn` y después deja
+ * todo como estaba: el resto de las pruebas corre con los pagos apagados.
+ */
+async function conPagos(fn, { pasarela = 'simulado', seña = SEÑA, precio = PRECIO, env = {} } = {}) {
+  const antes = {
+    seña: PAGOS.seña,
+    precio: DISCIPLINAS[0].precios[90],
+    env: Object.fromEntries(ENV_PAGOS.map((k) => [k, process.env[k]])),
+  };
+  PAGOS.seña = { tipo: 'fijo', valor: seña };
+  DISCIPLINAS[0].precios[90] = precio;
+  for (const k of ENV_PAGOS) delete process.env[k];
+  if (pasarela === 'simulado') process.env.PAGOS_SIMULADOS = 'si';
+  Object.assign(process.env, env);
+  try {
+    return await fn();
+  } finally {
+    PAGOS.seña = antes.seña;
+    DISCIPLINAS[0].precios[90] = antes.precio;
+    for (const [k, v] of Object.entries(antes.env)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
+
+const reservaPaga = (extra = {}) => reservaBase({ fecha: OTRO_MIERCOLES, ...extra });
+const refDe = (url) => new URL(url, 'http://x').searchParams.get('ref');
+const libresA = async (hora) => {
+  const d = await llamar('GET /api/disponibilidad', {
+    query: params({ fecha: OTRO_MIERCOLES, disciplina: 'padel', duracion: '90' }),
+  });
+  return d.datos.horarios.find((h) => h.hora === hora).libres;
+};
+const vencer = (codigo) =>
+  db.prepare('UPDATE reservas SET vence_en = ? WHERE codigo = ?')
+    .run(new Date(Date.now() - 60_000).toISOString(), codigo);
+
+/** Un Mercado Pago de mentira: guarda preferencias, pagos y devoluciones. */
+async function mercadoPagoFalso() {
+  const estado = { preferencias: [], pagos: new Map(), devoluciones: [], pedidos: [] };
+  const servidor = createServer(async (req, res) => {
+    let texto = '';
+    for await (const trozo of req) texto += trozo;
+    const cuerpo = texto ? JSON.parse(texto) : null;
+    estado.pedidos.push({ metodo: req.method, ruta: req.url, cabeceras: req.headers, cuerpo });
+    const responder = (status, datos) => {
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(datos));
+    };
+    if (req.headers.authorization !== 'Bearer TOKEN-DE-PRUEBA') return responder(401, { message: 'invalid token' });
+
+    if (req.method === 'POST' && req.url === '/checkout/preferences') {
+      const id = `PREF-${estado.preferencias.length + 1}`;
+      estado.preferencias.push({ id, ...cuerpo });
+      return responder(201, { id, init_point: `https://mp.falso/checkout/${id}` });
+    }
+    const pago = req.url.match(/^\/v1\/payments\/([^/]+)$/);
+    if (req.method === 'GET' && pago) {
+      const p = estado.pagos.get(pago[1]);
+      return p ? responder(200, p) : responder(404, { message: 'Payment not found' });
+    }
+    const devolucion = req.url.match(/^\/v1\/payments\/([^/]+)\/refunds$/);
+    if (req.method === 'POST' && devolucion) {
+      estado.devoluciones.push({ id: devolucion[1], clave: req.headers['x-idempotency-key'] });
+      const p = estado.pagos.get(devolucion[1]);
+      if (p) p.status = 'refunded';
+      return responder(201, { id: 1, status: 'approved' });
+    }
+    return responder(404, { message: 'not found' });
+  });
+  await new Promise((r) => servidor.listen(0, '127.0.0.1', r));
+  return {
+    estado,
+    url: `http://127.0.0.1:${servidor.address().port}`,
+    ultimaPreferencia: () => estado.preferencias.at(-1),
+    /** Lo que pasaría si alguien paga en el checkout. */
+    pagar(preferencia, { id, status = 'approved', monto, detalle = 'accredited', moneda = 'ARS' }) {
+      estado.pagos.set(String(id), {
+        id: Number(id),
+        status,
+        status_detail: detalle,
+        transaction_amount: monto ?? preferencia.items[0].unit_price,
+        currency_id: moneda,
+        external_reference: preferencia.external_reference,
+      });
+    },
+    cerrar: () => new Promise((r) => { servidor.closeAllConnections(); servidor.close(r); }),
+  };
+}
+
+const SECRETO = 'secreto-de-prueba';
+const conMercadoPago = (mp) => ({
+  pasarela: 'mercadopago',
+  env: {
+    MP_ACCESS_TOKEN: 'TOKEN-DE-PRUEBA',
+    MP_API_URL: mp.url,
+    MP_WEBHOOK_SECRET: SECRETO,
+    URL_PUBLICA: 'https://losnaranjos.test',
+  },
+});
+
+/** El aviso que manda Mercado Pago cuando cambia un pago, firmado como lo firma él. */
+function aviso(idPago, { secreto = SECRETO, requestId = 'req-1' } = {}) {
+  const ts = String(Date.now());
+  const v1 = createHmac('sha256', secreto).update(`id:${idPago};request-id:${requestId};ts:${ts};`).digest('hex');
+  return {
+    query: params({ 'data.id': String(idPago), type: 'payment' }),
+    body: { action: 'payment.updated', type: 'payment', data: { id: String(idPago) } },
+    req: { headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': requestId } },
+  };
+}
+
+test('sin montos cargados no se cobra nada y el turno se confirma como siempre', async () => {
+  await conPagos(async () => {
+    const config = await llamar('GET /api/config');
+    assert.equal(config.datos.pagos.activos, false);
+    assert.equal(config.datos.pagos.montosCargados, false);
+
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '07:30', telefono: '2236000001' }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'confirmada');
+    assert.equal(r.datos.pago, undefined);
+  }, { seña: null, precio: null });
+});
+
+test('pagar la seña aparta la cancha y el pago la confirma', async () => {
+  await conPagos(async () => {
+    const config = await llamar('GET /api/config');
+    assert.equal(config.datos.pagos.activos, true);
+    assert.deepEqual(config.datos.pagos.montos.padel[90], { seña: SEÑA, total: PRECIO, precio: PRECIO });
+
+    const r = await llamar('POST /api/reservas', {
+      // El monto lo pone el servidor: lo que mande el navegador no cuenta.
+      body: reservaPaga({ hora: '09:00', canchaId: 'padel-1', telefono: '2236000002', cobro: 'seña', monto: 1 }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'pendiente');
+    assert.equal(r.datos.reserva.aPagar, SEÑA);
+    assert.match(r.datos.pago.url, /^\/pago-simulado\?ref=SIM-/);
+    assert.ok(!(await libresA('09:00')).includes('padel-1'), 'la cancha queda apartada mientras paga');
+
+    const ref = refDe(r.datos.pago.url);
+    const checkout = await llamar('GET /api/pagos/simulado', { query: params({ ref }) });
+    assert.equal(checkout.datos.monto, SEÑA);
+    assert.equal(checkout.datos.vigente, true);
+
+    const pagado = await llamar('POST /api/pagos/simulado', { body: { ref, resultado: 'aprobado' } });
+    assert.match(pagado.datos.volver, /payment_id=SIMP-/);
+
+    const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+    assert.equal(estado.datos.reserva.estado, 'confirmada');
+    assert.equal(estado.datos.reserva.cobro, 'seña');
+    assert.equal(estado.datos.reserva.pagado, SEÑA);
+    assert.equal(estado.datos.reserva.saldo, PRECIO - SEÑA);
+    assert.equal(estado.datos.reserva.telefono, undefined, 'con el código solo no se ve el teléfono');
+  });
+});
+
+test('un pago rechazado deja el turno apartado y se puede reintentar con el turno entero', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '10:30', canchaId: 'padel-1', telefono: '2236000003', cobro: 'seña' }),
+    });
+    const codigo = r.datos.reserva.codigo;
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'rechazado' } });
+
+    const rechazado = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(rechazado.datos.reserva.estado, 'pendiente');
+    assert.equal(rechazado.datos.pago.estado, 'rechazado');
+    assert.ok(rechazado.datos.pago.mensaje);
+    assert.deepEqual(rechazado.datos.opciones.map((o) => o.cobro), ['seña', 'total']);
+
+    const otra = await llamar('POST /api/pagos/reintentar', { body: { codigo, cobro: 'total' } });
+    assert.ok(otra.ok, otra.error);
+    assert.notEqual(refDe(otra.datos.url), refDe(r.datos.pago.url), 'cada intento es un cobro nuevo');
+    const checkout = await llamar('GET /api/pagos/simulado', { query: params({ ref: refDe(otra.datos.url) }) });
+    assert.equal(checkout.datos.monto, PRECIO);
+
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(otra.datos.url), resultado: 'aprobado' } });
+    const final = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(final.datos.reserva.estado, 'confirmada');
+    assert.equal(final.datos.reserva.cobro, 'total');
+    assert.equal(final.datos.reserva.pagado, PRECIO);
+    assert.equal(final.datos.reserva.saldo, 0);
+  });
+});
+
+test('si nadie paga a tiempo, la cancha se libera para otro', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '12:00', canchaId: 'padel-2', telefono: '2236000004', cobro: 'seña' }),
+    });
+    const codigo = r.datos.reserva.codigo;
+    assert.ok(!(await libresA('12:00')).includes('padel-2'));
+
+    vencer(codigo);
+    assert.ok((await libresA('12:00')).includes('padel-2'), 'el apartado vencido ya no ocupa la cancha');
+
+    const otro = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '12:00', canchaId: 'padel-2', telefono: '2236000005', cobro: 'seña' }),
+    });
+    assert.ok(otro.ok, otro.error);
+
+    const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo }) });
+    assert.equal(estado.datos.reserva.estado, 'vencida');
+    const tarde = await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'aprobado' } });
+    assert.equal(tarde.status, 410, 'el link de pago vencido ya no cobra');
+  });
+});
+
+test('un jugador no puede saltearse el pago', async () => {
+  await conPagos(async () => {
+    for (const cobro of [undefined, 'club', 'gratis']) {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '13:30', canchaId: 'padel-3', telefono: '2236000006', cobro }),
+      });
+      assert.equal(r.ok, false, `cobro ${cobro}`);
+      assert.match(r.error, /seña|turno/);
+    }
+    assert.ok((await libresA('13:30')).includes('padel-3'), 'no quedó nada apartado');
+  });
+});
+
+test('los turnos esperando el pago cuentan para el tope por teléfono', async () => {
+  await conPagos(async () => {
+    const tel = '2236000007';
+    for (let i = 0; i < RESERVAS.maxPorTelefono; i++) {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: T.aHora(15 * 60 + i * 90), canchaId: 'padel-4', telefono: tel, cobro: 'seña' }),
+      });
+      assert.ok(r.ok, r.error);
+    }
+    const otra = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '19:30', canchaId: 'padel-4', telefono: tel, cobro: 'seña' }),
+    });
+    assert.equal(otra.ok, false);
+    assert.match(otra.error, /turnos activos/);
+  });
+});
+
+test('el personal del club reserva para un cliente sin pago online', async () => {
+  await conPagos(async () => {
+    const alta = await llamar('POST /api/admin/personal', {
+      req: admin,
+      body: { nombre: 'Vale Recepción', telefono: '2236000010', clave: 'mostrador-2026' },
+    });
+    assert.ok(alta.ok, alta.error);
+    const mostrador = navegador();
+    await mostrador.llamar('POST /api/cuenta/ingreso', { body: { telefono: '2236000010', clave: 'mostrador-2026' } });
+
+    const r = await mostrador.llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '08:00', canchaId: 'padel-5', nombre: 'Cliente por WhatsApp', telefono: '2236000011' }),
+    });
+    assert.ok(r.ok, r.error);
+    assert.equal(r.datos.reserva.estado, 'confirmada');
+    assert.equal(r.datos.reserva.cobro, 'club');
+    assert.equal(r.datos.reserva.nombre, 'Cliente por WhatsApp', 'sale a nombre del cliente, no de quien atiende');
+
+    const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+    assert.ok(datos.movimientos.some((m) => m.accion === 'reserva para un cliente' && m.quien === 'Vale Recepción'));
+  });
+});
+
+test('Mercado Pago: el cobro sale con el monto, la referencia y los avisos correctos', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '09:30', canchaId: 'padel-6', telefono: '2236000020', cobro: 'seña', email: 'ana@ejemplo.com' }),
+      });
+      assert.ok(r.ok, r.error);
+      assert.equal(r.datos.pago.url, 'https://mp.falso/checkout/PREF-1');
+
+      const pedido = mp.estado.pedidos.at(-1);
+      assert.ok(pedido.cabeceras['x-idempotency-key'], 'las escrituras llevan clave de idempotencia');
+      const pref = mp.ultimaPreferencia();
+      const codigo = r.datos.reserva.codigo;
+      assert.equal(pref.items[0].unit_price, SEÑA);
+      assert.equal(pref.items[0].currency_id, 'ARS');
+      assert.equal(pref.external_reference, codigo);
+      assert.equal(pref.notification_url, 'https://losnaranjos.test/api/pagos/aviso');
+      assert.equal(pref.back_urls.success, `https://losnaranjos.test/reservar?pago=${codigo}`);
+      assert.equal(pref.auto_return, 'approved');
+      assert.equal(pref.binary_mode, true);
+      assert.deepEqual(pref.payment_methods.excluded_payment_types.map((x) => x.id).sort(), ['atm', 'ticket']);
+      assert.equal(pref.expires, true);
+      assert.match(pref.expiration_date_to, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$/);
+      assert.equal(pref.payer.email, 'ana@ejemplo.com');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('sin URL_PUBLICA, Mercado Pago vuelve a la dirección por la que entró el jugador', async () => {
+  const mp = await mercadoPagoFalso();
+  const { URL_PUBLICA, ...sinUrl } = conMercadoPago(mp).env;
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        req: { headers: { host: 'naranjos.up.railway.app', 'x-forwarded-proto': 'https' } },
+        body: reservaPaga({ hora: '07:30', canchaId: 'padel-6', telefono: '2236000031', cobro: 'seña' }),
+      });
+      assert.ok(r.ok, r.error);
+      const pref = mp.ultimaPreferencia();
+      assert.equal(pref.back_urls.success, `https://naranjos.up.railway.app/reservar?pago=${r.datos.reserva.codigo}`);
+      assert.equal(pref.notification_url, 'https://naranjos.up.railway.app/api/pagos/aviso');
+
+      // En una máquina local no hay https adonde avisar: queda la confirmación a la vuelta.
+      const local = await llamar('POST /api/reservas', {
+        req: { headers: { host: 'localhost:3000' } },
+        body: reservaPaga({ hora: '17:00', canchaId: 'padel-6', telefono: '2236000032', cobro: 'seña' }),
+      });
+      assert.ok(local.ok, local.error);
+      assert.equal(mp.ultimaPreferencia().back_urls.success, `http://localhost:3000/reservar?pago=${local.datos.reserva.codigo}`);
+      assert.equal(mp.ultimaPreferencia().notification_url, undefined);
+    }, { pasarela: 'mercadopago', env: sinUrl });
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('el aviso de Mercado Pago confirma el turno una sola vez aunque llegue repetido', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '11:00', canchaId: 'padel-6', telefono: '2236000021', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5001 });
+
+      const primero = await llamar('POST /api/pagos/aviso', aviso(5001));
+      assert.ok(primero.ok, primero.error);
+      assert.equal(primero.datos.resultado, 'confirmada');
+
+      const repetido = await llamar('POST /api/pagos/aviso', aviso(5001, { requestId: 'req-2' }));
+      assert.equal(repetido.datos.resultado, 'sin-cambios');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'confirmada');
+      assert.equal(estado.datos.reserva.pagado, SEÑA, 'el mismo pago no se cuenta dos veces');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('un aviso con la firma mal no toca nada', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '12:30', canchaId: 'padel-6', telefono: '2236000022', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5002 });
+
+      const trucho = await llamar('POST /api/pagos/aviso', aviso(5002, { secreto: 'otro-secreto' }));
+      assert.equal(trucho.status, 401);
+      assert.equal(trucho.code, 'FIRMA');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'pendiente');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('un pago por menos de lo pedido no confirma el turno', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '14:00', canchaId: 'padel-6', telefono: '2236000023', cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5003, monto: SEÑA / 2 });
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5003));
+      assert.equal(hecho.datos.resultado, 'a-devolver');
+
+      const estado = await llamar('GET /api/pagos/estado', { query: params({ codigo: r.datos.reserva.codigo }) });
+      assert.equal(estado.datos.reserva.estado, 'pendiente');
+      assert.equal(estado.datos.aDevolver, true);
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('al volver de Mercado Pago se confirma aunque el aviso no haya llegado', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '15:30', canchaId: 'padel-6', telefono: '2236000024', cobro: 'total' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5004 });
+      const estado = await llamar('GET /api/pagos/estado', {
+        query: params({ codigo: r.datos.reserva.codigo, pago_id: '5004' }),
+      });
+      assert.equal(estado.datos.reserva.estado, 'confirmada');
+      assert.equal(estado.datos.reserva.pagado, PRECIO);
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('si paga tarde y la cancha sigue libre, el turno es suyo', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '17:00', canchaId: 'padel-7', telefono: '2236000025', cobro: 'seña' }),
+      });
+      vencer(r.datos.reserva.codigo);
+      mp.pagar(mp.ultimaPreferencia(), { id: 5005 });
+
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5005));
+      assert.equal(hecho.datos.resultado, 'recuperada');
+      assert.ok(!(await libresA('17:00')).includes('padel-7'), 'la cancha vuelve a estar tomada');
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('si paga tarde y la cancha ya era de otro, la plata queda para devolver', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '18:30', canchaId: 'padel-7', telefono: '2236000026', cobro: 'seña' }),
+      });
+      const pref = mp.ultimaPreferencia();
+      vencer(r.datos.reserva.codigo);
+      const otro = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '18:30', canchaId: 'padel-7', telefono: '2236000027', cobro: 'seña' }),
+      });
+      assert.ok(otro.ok, otro.error);
+
+      mp.pagar(pref, { id: 5006 });
+      const hecho = await llamar('POST /api/pagos/aviso', aviso(5006));
+      assert.equal(hecho.datos.resultado, 'a-devolver');
+
+      const lista = await llamar('GET /api/admin/pagos', { req: admin });
+      const item = lista.datos.aRevisar.find((p) => p.externoId === '5006');
+      assert.ok(item, 'aparece en "Pagos para revisar"');
+      assert.match(item.motivo, /lo tomó otra persona/);
+
+      const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+      assert.ok(datos.movimientos.some((m) => m.quien === 'Sistema' && m.accion === 'pago para devolver'));
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('cancelar un turno pagado deja la plata para devolver y el club la devuelve una vez', async () => {
+  const mp = await mercadoPagoFalso();
+  try {
+    await conPagos(async () => {
+      const tel = '2236000028';
+      const r = await llamar('POST /api/reservas', {
+        body: reservaPaga({ hora: '20:00', canchaId: 'padel-7', telefono: tel, cobro: 'seña' }),
+      });
+      mp.pagar(mp.ultimaPreferencia(), { id: 5007 });
+      await llamar('POST /api/pagos/aviso', aviso(5007));
+
+      const cancelada = await llamar('POST /api/reservas/cancelar', {
+        body: { codigo: r.datos.reserva.codigo, telefono: tel },
+      });
+      assert.ok(cancelada.ok, cancelada.error);
+      assert.equal(cancelada.datos.reserva.pagado, 0, 'lo pagado ya no cuenta para el turno');
+
+      const lista = await llamar('GET /api/admin/pagos', { req: admin });
+      const item = lista.datos.aRevisar.find((p) => p.externoId === '5007');
+      assert.equal(item.motivo, 'Turno cancelado');
+
+      const devuelto = await llamar('POST /api/admin/pagos/devolver', { req: admin, body: { id: item.id } });
+      assert.ok(devuelto.ok, devuelto.error);
+      assert.deepEqual(mp.estado.devoluciones, [{ id: '5007', clave: 'devolucion-mercadopago-5007' }]);
+
+      const otraVez = await llamar('POST /api/admin/pagos/devolver', { req: admin, body: { id: item.id } });
+      assert.equal(otraVez.status, 409, 'no se devuelve dos veces');
+      assert.equal(mp.estado.devoluciones.length, 1);
+
+      const { datos } = await llamar('GET /api/admin/movimientos', { req: admin });
+      assert.ok(datos.movimientos.some((m) => m.accion === 'devolución'));
+    }, conMercadoPago(mp));
+  } finally {
+    await mp.cerrar();
+  }
+});
+
+test('el club puede dar por resuelto un pago sin devolverlo', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '21:30', canchaId: 'padel-7', telefono: '2236000029', cobro: 'seña' }),
+    });
+    await llamar('POST /api/pagos/simulado', { body: { ref: refDe(r.datos.pago.url), resultado: 'aprobado' } });
+    await llamar('POST /api/admin/cancelar', { req: admin, body: { codigo: r.datos.reserva.codigo } });
+
+    const lista = await llamar('GET /api/admin/pagos', { req: admin });
+    const item = lista.datos.aRevisar.find((p) => p.reserva.codigo === r.datos.reserva.codigo);
+    const resuelto = await llamar('POST /api/admin/pagos/resolver', { req: admin, body: { id: item.id } });
+    assert.ok(resuelto.ok, resuelto.error);
+
+    const despues = await llamar('GET /api/admin/pagos', { req: admin });
+    assert.ok(!despues.datos.aRevisar.some((p) => p.id === item.id));
+  });
+});
+
+test('los reintentos de pago desde una misma IP tienen tope', async () => {
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '19:00', canchaId: 'padel-5', telefono: '2236000033', cobro: 'seña' }),
+    });
+    const ip = '198.51.100.9';
+    let frenados = 0;
+    for (let i = 0; i < 23; i++) {
+      const intento = await llamar('POST /api/pagos/reintentar', { ip, body: { codigo: r.datos.reserva.codigo } });
+      if (intento.status === 429) frenados++;
+    }
+    assert.equal(frenados, 3, 'pasados los 20 intentos en 10 minutos, se frena');
+  });
+});
+
+test('si Mercado Pago no responde, el turno no queda apartado', async () => {
+  // Un puerto donde no escucha nadie.
+  await conPagos(async () => {
+    const r = await llamar('POST /api/reservas', {
+      body: reservaPaga({ hora: '16:00', canchaId: 'padel-5', telefono: '2236000030', cobro: 'seña' }),
+    });
+    assert.equal(r.status, 502);
+    assert.equal(r.code, 'PASARELA');
+    assert.ok((await libresA('16:00')).includes('padel-5'), 'la cancha sigue libre');
+  }, { pasarela: 'mercadopago', env: { MP_ACCESS_TOKEN: 'TOKEN-DE-PRUEBA', MP_API_URL: 'http://127.0.0.1:9' } });
+});
+
+test('el servidor HTTP sirve el sitio y el API', async () => {
+  const { servidor } = await import('./index.js');
+  await new Promise((r) => (servidor.listening ? r() : servidor.once('listening', r)));
+  const base = `http://127.0.0.1:${servidor.address().port}`;
+
+  try {
+    const home = await fetch(base + '/');
+    assert.equal(home.status, 200);
+    assert.match(home.headers.get('content-type'), /text\/html/);
+
+    const reservar = await fetch(base + '/reservar');
+    assert.equal(reservar.status, 200, 'las URLs limpias resuelven al .html');
+
+    const config = await fetch(base + '/api/config');
+    assert.equal(config.status, 200);
+
+    const inexistente = await fetch(base + '/api/no-existe');
+    assert.equal(inexistente.status, 404);
+
+    // No se puede escapar del directorio público.
+    const escape = await fetch(base + '/../server/config.js');
+    assert.notEqual(escape.status, 200);
+
+    const metodo = await fetch(base + '/', { method: 'DELETE' });
+    assert.equal(metodo.status, 405);
+
+    const simulado = await fetch(base + '/pago-simulado');
+    assert.equal(simulado.status, 200, 'existe la pantalla del pago de prueba');
+
+    // Un aviso que no es JSON no se rechaza: si no, Mercado Pago lo reintentaría para siempre.
+    const avisoRaro = await fetch(base + '/api/pagos/aviso?topic=merchant_order&id=1', {
+      method: 'POST', body: 'esto no es json',
+    });
+    assert.equal(avisoRaro.status, 200);
+  } finally {
+    // fetch mantiene la conexión viva: hay que cortarlas para que cierre.
+    servidor.closeAllConnections();
+    await new Promise((r) => servidor.close(r));
+  }
+});
