@@ -8,3 +8,6 @@ data/*.db-shm
 .env
 .DS_Store
 vista-previa/fragmento.html
+
+# Capturas, tipografías y cuadros intermedios del video: se regeneran.
+propuesta/video/.cache/
