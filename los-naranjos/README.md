@@ -167,6 +167,8 @@ los-naranjos/
 ├── propuesta/
 │   ├── index.html                    Propuesta comercial para presentarle al club
 │   ├── Propuesta-Los-Naranjos.pdf    La misma propuesta en PDF, para descargar y mandar
+│   ├── Los-Naranjos-propuesta.mp4    Video de un minuto, vertical, para mandar por WhatsApp
+│   ├── video/                        Cómo se arma el video (ver abajo)
 │   └── prompt-planilla-cowork.md     Prompt para pedirle a Cowork la propuesta en planilla
 ├── cartilla/
 │   └── index.html    Cartilla económica — documento interno, no va al club
@@ -505,6 +507,7 @@ marcados con `⚠️ VERIFICAR` en `server/config.js`.
 | Vista previa descargable | `vista-previa/index.html` en este mismo repositorio |
 | Propuesta para el club | `propuesta/index.html`, y publicada en [claude.ai/code/artifact/86d5b927](https://claude.ai/code/artifact/86d5b927-34d2-4c8d-a05f-25179114ee89) (privada) |
 | Propuesta en PDF | `propuesta/Propuesta-Los-Naranjos.pdf` — para descargar y mandar directamente |
+| Propuesta en video | `propuesta/Los-Naranjos-propuesta.mp4` — 59 segundos, vertical, sin voz (los textos van en pantalla). Se rearma con `node propuesta/video/capturar.mjs` y después `node propuesta/video/armar-video.mjs`: el primero saca las capturas del sitio de verdad desde la vista previa, el segundo arma el MP4 a partir de `propuesta/video/composicion.html`. Necesita Playwright y ffmpeg. Los montos que se ven son de ejemplo |
 | Cartilla económica | `cartilla/index.html` — **documento interno**, y publicada en [claude.ai/code/artifact/b49af6f0](https://claude.ai/code/artifact/b49af6f0-9d1b-41b7-9475-44ef35f4f8c1) (privada) |
 | Qué falta averiguar | La lista de acá arriba, "Pendiente de confirmar con el club" |
 | Contexto para el próximo club | `CONTEXTO-ONCE-UNIDOS.md` — qué es, cómo está hecho, precios y lecciones |

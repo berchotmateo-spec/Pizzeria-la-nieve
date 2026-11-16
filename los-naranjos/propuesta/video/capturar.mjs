@@ -183,11 +183,15 @@ async function abrir(opciones) {
   console.log('  ticket:', datos.codigo, '·', datos.pago);
 
   // La barra de arriba y el botón de WhatsApp, sueltos y con fondo transparente.
-  await p.addStyleTag({ content: '.cabecera { background: transparent !important; backdrop-filter: none !important; border-color: transparent !important; }' });
+  // El fondo crema es del <body>, no de la página: sin sacarlo, la barra saldría sobre crema.
+  await p.addStyleTag({ content: `
+    html, body { background: transparent !important; }
+    .cabecera { background: transparent !important; backdrop-filter: none !important; border-color: transparent !important; }
+    body > *:not(.cabecera):not(.wsp-flotante) { visibility: hidden !important; }` });
   await p.locator('.cabecera').screenshot({ path: CAPTURAS + 'cel-cabecera.png', omitBackground: true });
   datos.cabecera = { alto: Math.round((await p.locator('.cabecera').boundingBox()).height) };
   const wsp = await p.locator('.wsp-flotante').boundingBox();
-  await p.addStyleTag({ content: 'body > *:not(.wsp-flotante) { visibility: hidden !important; } html, body { background: transparent !important; }' });
+  await p.addStyleTag({ content: '.cabecera { visibility: hidden !important; }' });
   const margen = 30;
   await p.screenshot({
     path: CAPTURAS + 'cel-wsp.png', omitBackground: true,
@@ -330,7 +334,13 @@ async function abrir(opciones) {
 
   // Las tarjetas del resumen, de a dos por fila, como se ven en un celular.
   await p.setViewportSize({ width: 430, height: 900 });
-  await pieza('resumen', '#resumen');
+  const r = await pieza('resumen', '#resumen');
+  datos.panel.resumen.tarjetas = await p.evaluate(([x0, y0]) => [...document.querySelectorAll('#resumen .tarjeta-resumen')]
+    .map((el) => {
+      const b = el.getBoundingClientRect();
+      return { x: Math.round(b.left - x0), y: Math.round(b.top - y0), w: Math.round(b.width), h: Math.round(b.height), titulo: el.querySelector('span').textContent.trim(), valor: el.querySelector('b').textContent.trim() };
+    }), [r.x, r.y]);
+  datos.panel.resumen.radio = await p.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.tarjeta-resumen')).borderRadius));
 
   // La tabla de turnos del día y el registro de movimientos.
   await p.setViewportSize({ width: 1180, height: 1000 });
@@ -342,7 +352,8 @@ async function abrir(opciones) {
     .map((tr) => ({ y: Math.round(tr.getBoundingClientRect().top - y0), h: Math.round(tr.getBoundingClientRect().height), hora: tr.querySelector('td b')?.textContent, pago: tr.querySelector('.pildora')?.textContent?.trim() || '' })),
   t.y);
 
-  await p.setViewportSize({ width: 760, height: 1000 });
+  // Angosto a propósito: las cuatro columnas entran sin achicar la letra en el video.
+  await p.setViewportSize({ width: 580, height: 1200 });
   const m = await pieza('movimientos', '#tabla-movimientos');
   datos.panel.movimientos.filas = await p.evaluate((y0) => [...document.querySelectorAll('#tabla-movimientos tbody tr')]
     .map((tr) => ({ y: Math.round(tr.getBoundingClientRect().top - y0), h: Math.round(tr.getBoundingClientRect().height), texto: tr.textContent.replace(/\s+/g, ' ').trim() })),

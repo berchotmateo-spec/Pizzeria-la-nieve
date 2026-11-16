@@ -338,7 +338,7 @@ function pintarResumen() {
   const r = dia.resumen;
   $('#resumen').innerHTML = `
     <div class="tarjeta-resumen"><b class="numeros">${r.turnos}</b><span>Turnos reservados</span></div>
-    <div class="tarjeta-resumen"><b class="numeros">${r.horasVendidas}</b><span>Horas de cancha</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${r.horasVendidas.toLocaleString('es-AR')}</b><span>Horas de cancha</span></div>
     <div class="tarjeta-resumen"><b class="numeros">${ocupacion}%</b><span>Ocupación del día</span></div>
     ${r.cobradoOnline || r.esperandoPago
       ? `<div class="tarjeta-resumen"><b class="numeros">${esc(pesos(r.cobradoOnline || 0))}</b><span>Cobrado online${

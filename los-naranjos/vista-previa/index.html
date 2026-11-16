@@ -2001,7 +2001,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
           <div class="datos-grilla">
             <div class="campo">
               <label for="nombre">Nombre y apellido</label>
-              <input id="nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Mateo Berchot">
+              <input id="nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Juan Pérez">
               <p class="mensaje-error" data-error="nombre" hidden></p>
             </div>
             <div class="campo">
@@ -2012,7 +2012,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
             </div>
             <div class="campo ancho-total">
               <label for="email">Correo <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
-              <input id="email" name="email" type="email" autocomplete="email" placeholder="mateo@ejemplo.com">
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="juan@ejemplo.com">
               <p class="mensaje-error" data-error="email" hidden></p>
             </div>
             <div class="campo ancho-total">
@@ -2210,7 +2210,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
         <form id="form-registro" novalidate>
           <div class="campo">
             <label for="registro-nombre">Nombre y apellido</label>
-            <input id="registro-nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Mateo Berchot">
+            <input id="registro-nombre" name="nombre" type="text" autocomplete="name" required maxlength="80" placeholder="Juan Pérez">
           </div>
           <div class="campo">
             <label for="registro-telefono">Teléfono</label>
@@ -2219,7 +2219,7 @@ a.vivo__fila:hover { background: rgba(255,107,20,.12); border-color: rgba(255,10
           </div>
           <div class="campo">
             <label for="registro-email">Correo <span style="text-transform:none;letter-spacing:0;font-weight:400">(opcional)</span></label>
-            <input id="registro-email" name="email" type="email" autocomplete="email" placeholder="mateo@ejemplo.com">
+            <input id="registro-email" name="email" type="email" autocomplete="email" placeholder="juan@ejemplo.com">
           </div>
           <div class="campo">
             <label for="registro-clave">Contraseña</label>
@@ -5606,7 +5606,7 @@ function pintarResumen() {
   const r = dia.resumen;
   $('#resumen').innerHTML = `
     <div class="tarjeta-resumen"><b class="numeros">${r.turnos}</b><span>Turnos reservados</span></div>
-    <div class="tarjeta-resumen"><b class="numeros">${r.horasVendidas}</b><span>Horas de cancha</span></div>
+    <div class="tarjeta-resumen"><b class="numeros">${r.horasVendidas.toLocaleString('es-AR')}</b><span>Horas de cancha</span></div>
     <div class="tarjeta-resumen"><b class="numeros">${ocupacion}%</b><span>Ocupación del día</span></div>
     ${r.cobradoOnline || r.esperandoPago
       ? `<div class="tarjeta-resumen"><b class="numeros">${esc(pesos(r.cobradoOnline || 0))}</b><span>Cobrado online${
