@@ -1,0 +1,9 @@
+<!-- Plano de una cancha de pádel (20 x 10 m) usado como motivo gráfico. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" fill="none"
+     stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" role="presentation">
+  <rect x=".5" y=".5" width="199" height="99" stroke-width="1.6"/>
+  <path d="M100 0v100" stroke-width="1.6"/>
+  <path d="M70 0v100M130 0v100"/>
+  <path d="M70 50h60"/>
+  <path d="M0 50h14M186 50h14" opacity=".5"/>
+</svg>

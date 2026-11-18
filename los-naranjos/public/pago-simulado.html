@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pago de prueba — Los Naranjos</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B0C0E">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<!--
+  Pantalla de pago de PRUEBA. Sólo funciona cuando el servidor corre con
+  PAGOS_SIMULADOS=si: ahí reemplaza a Mercado Pago para poder probar y mostrar
+  el sistema sin mover plata. Con Mercado Pago configurado, el API contesta
+  que no existe y esta página no sirve para nada.
+-->
+<main id="contenido" class="pago-prueba-fondo">
+  <div class="pago-prueba" id="pago-prueba" data-estado="cargando">
+    <p class="pago-prueba__cinta">
+      <b>Pago de prueba.</b> Esta pantalla reemplaza a Mercado Pago mientras el
+      sistema funciona en modo de prueba: no se cobra nada.
+    </p>
+
+    <div class="pago-prueba__tarjeta">
+      <p class="etiqueta" data-prueba="que">Pago</p>
+      <p class="pago-prueba__monto numeros" data-prueba="monto">—</p>
+      <p class="pago-prueba__concepto" data-prueba="titulo"></p>
+      <p class="pago-prueba__vence" data-prueba="vence"></p>
+
+      <div class="aviso aviso--error" data-prueba-error hidden><span></span></div>
+
+      <div class="pago-prueba__acciones">
+        <button class="boton boton--ancho" id="aprobar-prueba" type="button">Aprobar el pago</button>
+        <button class="boton boton--fantasma boton--ancho" id="rechazar-prueba" type="button">Rechazarlo, para ver qué pasa</button>
+      </div>
+      <a class="enlace-linea pago-prueba__volver" id="volver-sin-pagar" href="/reservar">Volver sin pagar</a>
+    </div>
+
+    <p class="pago-prueba__nota">
+      En el sitio publicado, acá se abre Mercado Pago: tarjeta de crédito, débito
+      o dinero en cuenta.
+    </p>
+  </div>
+</main>
+<script type="module" src="/js/pago-simulado.js"></script>
+</body>
+</html>
